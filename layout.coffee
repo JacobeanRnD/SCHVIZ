@@ -76,6 +76,8 @@ layout = (g, stateList) ->
       node.attr('transform', (d) -> "translate(#{d.x},#{d.y})")
           .attr('cy', (d) -> d.y)
 
+    node.call(force.drag)
+
 
 top = svg.append('g')
     .attr('transform', "translate(#{width/2}, #{height/2})")
