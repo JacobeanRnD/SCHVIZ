@@ -52,18 +52,22 @@ layout = (g, stateList) ->
       .enter().append('g')
         .attr('class', 'node')
 
+    size = 30
+    for state in stateList
+        if state.children?
+            size += layout(node, state.children)
+
     force = d3.layout.force()
         .charge(-120)
-        .linkDistance(200)
+        .linkDistance(size * 1.3)
 
     force
         .nodes(nodes)
         .links(links)
         .start()
 
-    node.append('circle')
-        .attr('r', 5)
-        .style('fill', (d) -> color(d.group))
+    node.insert('circle', ':first-child')
+        .attr('r', size / 2)
         .append('title')
           .text((d) -> d.name)
 
@@ -77,6 +81,8 @@ layout = (g, stateList) ->
           .attr('cy', (d) -> d.y)
 
     node.call(force.drag)
+
+    return size
 
 
 top = svg.append('g')
