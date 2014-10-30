@@ -59,14 +59,14 @@ layout = (g, stateList) ->
 
     node = g.selectAll('.node')
         .data(nodes)
-      .enter().append('circle')
+      .enter().append('g')
         .attr('class', 'node')
+
+    node.append('circle')
         .attr('r', 5)
         .style('fill', (d) -> color(d.group))
-        .call(force.drag)
-
-    node.append('title')
-        .text((d) -> d.name)
+        .append('title')
+          .text((d) -> d.name)
 
     force.on 'tick', ->
       link.attr('x1', (d) -> d.source.x)
@@ -74,7 +74,7 @@ layout = (g, stateList) ->
           .attr('x2', (d) -> d.target.x)
           .attr('y2', (d) -> d.target.y)
 
-      node.attr('cx', (d) -> d.x)
+      node.attr('transform', (d) -> "translate(#{d.x},#{d.y})")
           .attr('cy', (d) -> d.y)
 
 
