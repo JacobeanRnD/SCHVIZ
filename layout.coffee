@@ -41,16 +41,6 @@ layout = (g, stateList) ->
             target = stateMap[tr.target]
             links.push({source: state._idx, target: target._idx})
 
-    force = d3.layout.force()
-        .charge(-120)
-        .linkDistance(30)
-        .size([width, height])
-
-    force
-        .nodes(nodes)
-        .links(links)
-        .start()
-
     link = g.selectAll('.link')
         .data(links)
       .enter().append('line')
@@ -61,6 +51,15 @@ layout = (g, stateList) ->
         .data(nodes)
       .enter().append('g')
         .attr('class', 'node')
+
+    force = d3.layout.force()
+        .charge(-120)
+        .linkDistance(200)
+
+    force
+        .nodes(nodes)
+        .links(links)
+        .start()
 
     node.append('circle')
         .attr('r', 5)
@@ -78,4 +77,6 @@ layout = (g, stateList) ->
           .attr('cy', (d) -> d.y)
 
 
-layout(svg.append('g'), tree)
+top = svg.append('g')
+    .attr('transform', "translate(#{width/2}, #{height/2})")
+layout(top, tree)
