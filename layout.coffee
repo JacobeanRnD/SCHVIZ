@@ -1,14 +1,23 @@
-layout = (g, state) ->
+drawState = (g, state) ->
+    size = 100
+
+    if state.children?
+        size += drawChildren(g, state.children)
+
+    return size
+
+
+drawChildren = (g, children) ->
     childNodes = []
     childLinks = []
     stateMap = {}
 
-    for child in state.children or []
+    for child in children
         child._idx = childNodes.length
         stateMap[child.name] = child
         childNodes.push({name: child.name})
 
-    for child in state.children or []
+    for child in children
         for tr in child.transitions or []
             target = stateMap[tr.target]
             childLinks.push({source: child._idx, target: target._idx})
@@ -24,10 +33,9 @@ layout = (g, state) ->
       .enter().append('g')
         .attr('class', 'cell')
 
-    size = 1000
-    for child in state.children or []
-        if child.children?
-            size += layout(cell, child) * 5
+    size = 0
+    for child in children
+        size += drawState(cell, child) * 3
 
     r = Math.sqrt(size)
 
@@ -75,7 +83,7 @@ demo = (tree) ->
       .append('g')
         .attr('transform', "translate(#{width/2}, #{height/2})")
 
-    layout(svg, {name: "_root", children: tree})
+    drawChildren(svg, tree)
 
 
 demo([
