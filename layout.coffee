@@ -1,33 +1,33 @@
-layout = (g, stateList) ->
-    nodes = []
-    links = []
+layout = (g, state) ->
+    childNodes = []
+    childLinks = []
     stateMap = {}
 
-    for state in stateList
-        state._idx = nodes.length
-        stateMap[state.name] = state
-        nodes.push({name: state.name})
+    for child in state.children or []
+        child._idx = childNodes.length
+        stateMap[child.name] = child
+        childNodes.push({name: child.name})
 
-    for state in stateList
-        for tr in state.transitions or []
+    for child in state.children or []
+        for tr in child.transitions or []
             target = stateMap[tr.target]
-            links.push({source: state._idx, target: target._idx})
+            childLinks.push({source: child._idx, target: target._idx})
 
     link = g.selectAll('.link')
-        .data(links)
+        .data(childLinks)
       .enter().append('line')
         .attr('class', 'link')
         .style('stroke-width', (d) -> Math.sqrt(d.value))
 
-    node = g.selectAll('.node')
-        .data(nodes)
+    cell = g.selectAll('.cell')
+        .data(childNodes)
       .enter().append('g')
-        .attr('class', 'node')
+        .attr('class', 'cell')
 
     size = 1000
-    for state in stateList
-        if state.children?
-            size += layout(node, state.children) * 5
+    for child in state.children or []
+        if child.children?
+            size += layout(cell, child) * 5
 
     r = Math.sqrt(size)
 
@@ -36,12 +36,12 @@ layout = (g, stateList) ->
         .linkDistance(r * 1.5)
 
     force
-        .nodes(nodes)
-        .links(links)
+        .nodes(childNodes)
+        .links(childLinks)
         .start()
 
-    node.insert('rect', ':first-child')
-        .attr('class', 'cell')
+    cell.insert('rect', ':first-child')
+        .attr('class', 'border')
         .attr('x', -r / 2)
         .attr('y', -r / 2)
         .attr('width', r)
@@ -57,10 +57,10 @@ layout = (g, stateList) ->
           .attr('x2', (d) -> d.target.x)
           .attr('y2', (d) -> d.target.y)
 
-      node.attr('transform', (d) -> "translate(#{d.x},#{d.y})")
+      cell.attr('transform', (d) -> "translate(#{d.x},#{d.y})")
           .attr('cy', (d) -> d.y)
 
-    node.call(force.drag)
+    cell.call(force.drag)
 
     return size
 
@@ -75,7 +75,7 @@ demo = (tree) ->
       .append('g')
         .attr('transform', "translate(#{width/2}, #{height/2})")
 
-    layout(svg, tree)
+    layout(svg, {name: "_root", children: tree})
 
 
 demo([
