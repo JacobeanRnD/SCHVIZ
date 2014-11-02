@@ -8,7 +8,7 @@ drawState = (cell, state) ->
     if state.children?
         g = cell.append('g').attr('class', 'children')
         node.children = drawChildren(g, state.children)
-        node.size += d3.sum(node.children, (d) -> d.size) * 4
+        node.size += d3.sum(node.children, (d) -> d.size) * Math.pow(node.children.length, 0.8) * 2
 
     r = Math.sqrt(node.size)
 
