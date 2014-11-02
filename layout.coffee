@@ -1,8 +1,23 @@
-drawState = (g, state) ->
-    size = 100
-
+drawState = (cell, state) ->
     if state.children?
-        size += drawChildren(g, state.children)
+        g = cell.append('g')
+        size = drawChildren(g, state.children)
+
+    else
+        size = 100
+
+    r = Math.sqrt(size)
+
+    cell.insert('rect', ':first-child')
+        .attr('class', 'border')
+        .attr('x', -r / 2)
+        .attr('y', -r / 2)
+        .attr('width', r)
+        .attr('height', r)
+        .attr('rx', 15)
+        .attr('ry', 15)
+      .append('title')
+        .text(state.name)
 
     return size
 
@@ -28,13 +43,14 @@ drawChildren = (g, children) ->
         .attr('class', 'link')
         .style('stroke-width', (d) -> Math.sqrt(d.value))
 
-    cell = g.selectAll('.cell')
-        .data(childNodes)
-      .enter().append('g')
-        .attr('class', 'cell')
+    cellList = []
 
     size = 0
     for child in children
+        cell = g.append('g')
+            .attr('class', 'cell')
+        cellList.push(cell)
+
         size += drawState(cell, child) * 3
 
     r = Math.sqrt(size)
@@ -48,27 +64,17 @@ drawChildren = (g, children) ->
         .links(childLinks)
         .start()
 
-    cell.insert('rect', ':first-child')
-        .attr('class', 'border')
-        .attr('x', -r / 2)
-        .attr('y', -r / 2)
-        .attr('width', r)
-        .attr('height', r)
-        .attr('rx', 15)
-        .attr('ry', 15)
-        .append('title')
-          .text((d) -> d.name)
-
     force.on 'tick', ->
       link.attr('x1', (d) -> d.source.x)
           .attr('y1', (d) -> d.source.y)
           .attr('x2', (d) -> d.target.x)
           .attr('y2', (d) -> d.target.y)
 
-      cell.attr('transform', (d) -> "translate(#{d.x},#{d.y})")
-          .attr('cy', (d) -> d.y)
-
-    cell.call(force.drag)
+      for child in children
+          cell = cellList[child._idx]
+          node = childNodes[child._idx]
+          cell.attr('transform', "translate(#{node.x},#{node.y})")
+              .attr('cy', node.y)
 
     return size
 
