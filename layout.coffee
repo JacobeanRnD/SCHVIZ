@@ -122,3 +122,23 @@ demo([
         ]}
     ]}
 ])
+
+
+demo([
+    {name: "O", children: [
+        {name: "A"}
+        {name: "B"}
+        {name: "C"}
+        {name: "D"}
+        {name: "E"}
+        {name: "F"}
+        {name: "X", transitions: [
+            {target: "A"}
+            {target: "B"}
+            {target: "C"}
+            {target: "D"}
+            {target: "E"}
+            {target: "F"}
+        ]}
+    ]}
+])
