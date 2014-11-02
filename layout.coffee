@@ -24,22 +24,30 @@ layout = (g, stateList) ->
       .enter().append('g')
         .attr('class', 'node')
 
-    size = 30
+    size = 1000
     for state in stateList
         if state.children?
-            size += layout(node, state.children)
+            size += layout(node, state.children) * 5
+
+    r = Math.sqrt(size)
 
     force = d3.layout.force()
-        .charge(-120)
-        .linkDistance(size * 1.3)
+        .charge(-r * 6)
+        .linkDistance(r * 1.5)
 
     force
         .nodes(nodes)
         .links(links)
         .start()
 
-    node.insert('circle', ':first-child')
-        .attr('r', size / 2)
+    node.insert('rect', ':first-child')
+        .attr('class', 'cell')
+        .attr('x', -r / 2)
+        .attr('y', -r / 2)
+        .attr('width', r)
+        .attr('height', r)
+        .attr('rx', 15)
+        .attr('ry', 15)
         .append('title')
           .text((d) -> d.name)
 
