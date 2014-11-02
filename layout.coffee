@@ -1,12 +1,15 @@
 drawState = (cell, state) ->
+    node = {
+        name: state.name
+        cell: cell
+        children: []
+    }
+
     if state.children?
-        g = cell.append('g')
-        size = drawChildren(g, state.children)
+        g = cell.append('g').attr('class', 'children')
+        node.children = drawChildren(g, state.children)
 
-    else
-        size = 100
-
-    r = Math.sqrt(size)
+    r = 20
 
     cell.insert('rect', ':first-child')
         .attr('class', 'border')
@@ -19,49 +22,45 @@ drawState = (cell, state) ->
       .append('title')
         .text(state.name)
 
-    return size
+    return node
 
 
-drawChildren = (g, children) ->
-    childNodes = []
-    childLinks = []
-    stateMap = {}
+drawChildren = (g, childStates) ->
+    children = []
+    childMap = {}
+
+    linkGroup = g.append('g').attr('class', 'linkGroup')
+
+    links = []
+
+    for state in childStates
+        cell = g.append('g').attr('class', 'cell')
+        child = drawState(cell, state)
+        child._idx = children.length
+        children.push(child)
+        childMap[child.name] = child
 
     for child in children
-        child._idx = childNodes.length
-        stateMap[child.name] = child
-        childNodes.push({name: child.name})
+        for tr in state.transitions or []
+            target = childMap[tr.target]
+            links.push({source: child._idx, target: target._idx})
 
-    for child in children
-        for tr in child.transitions or []
-            target = stateMap[tr.target]
-            childLinks.push({source: child._idx, target: target._idx})
-
-    link = g.selectAll('.link')
-        .data(childLinks)
+    link = linkGroup
+        .selectAll('.link')
+        .data(links)
       .enter().append('line')
         .attr('class', 'link')
         .style('stroke-width', (d) -> Math.sqrt(d.value))
 
-    cellList = []
-
-    size = 0
-    for child in children
-        cell = g.append('g')
-            .attr('class', 'cell')
-        cellList.push(cell)
-
-        size += drawState(cell, child) * 3
-
-    r = Math.sqrt(size)
+    r = 10
 
     force = d3.layout.force()
         .charge(-r * 6)
         .linkDistance(r * 1.5)
 
     force
-        .nodes(childNodes)
-        .links(childLinks)
+        .nodes(children)
+        .links(links)
         .start()
 
     force.on 'tick', ->
@@ -70,13 +69,10 @@ drawChildren = (g, children) ->
           .attr('x2', (d) -> d.target.x)
           .attr('y2', (d) -> d.target.y)
 
-      for child in children
-          cell = cellList[child._idx]
-          node = childNodes[child._idx]
-          cell.attr('transform', "translate(#{node.x},#{node.y})")
-              .attr('cy', node.y)
+      for node in children
+          node.cell.attr('transform', "translate(#{node.x},#{node.y})")
 
-    return size
+    return children
 
 
 demo = (tree) ->
