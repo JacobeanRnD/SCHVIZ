@@ -2,14 +2,15 @@ drawState = (cell, state) ->
     node = {
         name: state.name
         cell: cell
-        children: []
+        size: 1000
     }
 
     if state.children?
         g = cell.append('g').attr('class', 'children')
         node.children = drawChildren(g, state.children)
+        node.size += d3.sum(node.children, (d) -> d.size) * 4
 
-    r = 20
+    r = Math.sqrt(node.size)
 
     cell.insert('rect', ':first-child')
         .attr('class', 'border')
@@ -36,27 +37,24 @@ drawChildren = (g, childStates) ->
     for state in childStates
         cell = g.append('g').attr('class', 'cell')
         child = drawState(cell, state)
-        child._idx = children.length
         children.push(child)
         childMap[child.name] = child
 
-    for child in children
+    for state in childStates
+        child = childMap[state.name]
         for tr in state.transitions or []
             target = childMap[tr.target]
-            links.push({source: child._idx, target: target._idx})
+            links.push({source: child, target: target})
 
-    link = linkGroup
-        .selectAll('.link')
+    link = linkGroup.selectAll('.link')
         .data(links)
       .enter().append('line')
         .attr('class', 'link')
         .style('stroke-width', (d) -> Math.sqrt(d.value))
 
-    r = 10
-
     force = d3.layout.force()
-        .charge(-r * 6)
-        .linkDistance(r * 1.5)
+        .charge((d) -> -Math.sqrt(d.size) * 5)
+        .linkDistance((d) -> Math.sqrt(d.source.size) + Math.sqrt(d.target.size))
 
     force
         .nodes(children)
