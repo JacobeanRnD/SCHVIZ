@@ -73,10 +73,10 @@ drawChildren = (g, childStates) ->
     return children
 
 
-walk = (state, callback) ->
-    callback(state)
+walk = (state, callback, parent=null) ->
+    callback(state, parent)
     for child in state.children or []
-        walk(child, callback)
+        walk(child, callback, state)
 
 
 drawTree = (svg, tree) ->
@@ -84,13 +84,19 @@ drawTree = (svg, tree) ->
     nodeMap = {}
 
     for topState in tree
-        walk topState, (state) ->
+        walk topState, (state, parent) ->
             node = {
                 name: state.name
-                radius: 20
+                width: 40
+                height: 40
+                children: []
             }
             nodes.push(node)
             nodeMap[state.name] = node
+            if parent?
+                parentNode = nodeMap[parent.name]
+                node.parent = parentNode
+                parentNode.children.push(node)
 
     r = 40
 
@@ -101,10 +107,10 @@ drawTree = (svg, tree) ->
 
     cell.append('rect')
         .attr('class', 'border')
-        .attr('x', -r / 2)
-        .attr('y', -r / 2)
-        .attr('width', r)
-        .attr('height', r)
+        .attr('x', (node) -> - node.width / 2)
+        .attr('y', (node) -> - node.height / 2)
+        .attr('width', (node) -> node.width)
+        .attr('height', (node) -> node.height)
         .attr('rx', 5)
         .attr('ry', 5)
 
@@ -119,6 +125,17 @@ drawTree = (svg, tree) ->
         .call(force.drag)
 
     force.on 'tick', ->
+        for node in nodes
+            if node.children.length > 0
+                xMin = d3.min(node.children, (d) -> d.x - d.width / 2) - 5
+                xMax = d3.max(node.children, (d) -> d.x + d.width / 2) + 5
+                yMin = d3.min(node.children, (d) -> d.y - d.height / 2) - 5
+                yMax = d3.max(node.children, (d) -> d.y + d.height / 2) + 5
+                node.width = xMax - xMin
+                node.height = yMax - yMin
+                node.x = xMin + node.width / 2
+                node.y = yMin + node.height / 2
+
         q = d3.geom.quadtree(nodes)
 
         for i in [0 .. nodes.length - 1]
@@ -126,6 +143,12 @@ drawTree = (svg, tree) ->
 
         svg.selectAll('.cell')
             .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
+
+        svg.selectAll('.cell rect')
+            .attr('x', (node) -> - node.width / 2)
+            .attr('y', (node) -> - node.height / 2)
+            .attr('width', (node) -> node.width)
+            .attr('height', (node) -> node.height)
 
 
 collide = (node) ->
