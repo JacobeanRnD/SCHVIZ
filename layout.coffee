@@ -73,6 +73,83 @@ drawChildren = (g, childStates) ->
     return children
 
 
+walk = (state, callback) ->
+    callback(state)
+    for child in state.children or []
+        walk(child, callback)
+
+
+drawTree = (svg, tree) ->
+    nodes = []
+    nodeMap = {}
+
+    for topState in tree
+        walk topState, (state) ->
+            node = {
+                name: state.name
+                radius: 20
+            }
+            nodes.push(node)
+            nodeMap[state.name] = node
+
+    r = 40
+
+    svg.selectAll('.cell')
+        .data(nodes)
+      .enter().append('g')
+        .attr('class', 'cell')
+        .append('rect')
+          .attr('class', 'border')
+          .attr('x', -r / 2)
+          .attr('y', -r / 2)
+          .attr('width', r)
+          .attr('height', r)
+          .attr('rx', 5)
+          .attr('ry', 5)
+          .append('title')
+            .text((node) -> node.name)
+
+    force = d3.layout.force()
+        .nodes(nodes)
+        .start()
+
+    svg.selectAll('.cell')
+        .call(force.drag)
+
+    force.on 'tick', ->
+        q = d3.geom.quadtree(nodes)
+
+        for i in [0 .. nodes.length - 1]
+            q.visit(collide(nodes[i]))
+
+        svg.selectAll('.cell')
+            .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
+
+
+collide = (node) ->
+    r = node.radius + 50
+    nx1 = node.x - r
+    nx2 = node.x + r
+    ny1 = node.y - r
+    ny2 = node.y + r
+
+    fn = (quad, x1, y1, x2, y2) ->
+        if quad.point and (quad.point != node)
+            x = node.x - quad.point.x
+            y = node.y - quad.point.y
+            l = Math.sqrt(x * x + y * y)
+            r = node.radius + quad.point.radius
+            if l < r  # found a collision
+                l = (l - r) / l * .5
+                node.x -= (x *= l)
+                node.y -= (y *= l)
+                quad.point.x += x
+                quad.point.y += y
+        return x1 > nx2 or x2 < nx1 or y1 > ny2 or y2 < ny1
+
+    return fn
+
+
 demo = (tree) ->
     width = 400
     height = 400
@@ -83,7 +160,17 @@ demo = (tree) ->
       .append('g')
         .attr('transform', "translate(#{width/2}, #{height/2})")
 
-    drawChildren(svg, tree)
+    drawTree(svg, tree)
+
+
+demo([
+    {name: "A"}
+    {name: "B"}
+    {name: "C"}
+    {name: "D"}
+    {name: "E"}
+    {name: "F"}
+])
 
 
 demo([
