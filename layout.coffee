@@ -94,20 +94,22 @@ drawTree = (svg, tree) ->
 
     r = 40
 
-    svg.selectAll('.cell')
+    cell = svg.selectAll('.cell')
         .data(nodes)
       .enter().append('g')
         .attr('class', 'cell')
-        .append('rect')
-          .attr('class', 'border')
-          .attr('x', -r / 2)
-          .attr('y', -r / 2)
-          .attr('width', r)
-          .attr('height', r)
-          .attr('rx', 5)
-          .attr('ry', 5)
-          .append('title')
-            .text((node) -> node.name)
+
+    cell.append('rect')
+        .attr('class', 'border')
+        .attr('x', -r / 2)
+        .attr('y', -r / 2)
+        .attr('width', r)
+        .attr('height', r)
+        .attr('rx', 5)
+        .attr('ry', 5)
+
+    cell.append('text')
+        .text((node) -> node.name)
 
     force = d3.layout.force()
         .nodes(nodes)
