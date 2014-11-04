@@ -62,8 +62,12 @@ drawTree = (svg, tree) ->
                 yMax = d3.max(node.children, (d) -> d.y + d.height / 2) + 5
                 node.width = xMax - xMin
                 node.height = yMax - yMin
-                node.x = xMin + node.width / 2
-                node.y = yMin + node.height / 2
+                dx = xMin + node.width / 2 - node.x
+                dy = yMin + node.height / 2 - node.y
+                node.x += dx
+                node.y += dy
+                if node.fixed
+                    move(node, -dx, -dy)
 
         for node in nodes
             doCollisions(node.children)
