@@ -64,6 +64,7 @@ drawTree = (svg, tree) ->
         .data(links)
       .enter().append('line')
         .attr('class', 'link')
+        .on('click', -> d3.event.preventDefault())
 
     force = d3.layout.force()
         .charge(0)
