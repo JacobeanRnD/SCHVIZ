@@ -1,3 +1,11 @@
+pad = {
+    top: 20
+    bottom: 5
+    left: 5
+    right: 5
+}
+
+
 walk = (state, callback, parent=null) ->
     callback(state, parent)
     for child in state.children or []
@@ -68,10 +76,10 @@ drawTree = (svg, tree) ->
     force.on 'tick', ->
         for node in nodes
             if node.children.length > 0
-                xMin = d3.min(node.children, (d) -> d.x - d.width / 2) - 5
-                xMax = d3.max(node.children, (d) -> d.x + d.width / 2) + 5
-                yMin = d3.min(node.children, (d) -> d.y - d.height / 2) - 5
-                yMax = d3.max(node.children, (d) -> d.y + d.height / 2) + 5
+                xMin = d3.min(node.children, (d) -> d.x - d.width / 2) - pad.left
+                xMax = d3.max(node.children, (d) -> d.x + d.width / 2) + pad.right
+                yMin = d3.min(node.children, (d) -> d.y - d.height / 2) - pad.top
+                yMax = d3.max(node.children, (d) -> d.y + d.height / 2) + pad.bottom
                 node.width = xMax - xMin
                 node.height = yMax - yMin
                 dx = xMin + node.width / 2 - node.x
@@ -94,6 +102,9 @@ drawTree = (svg, tree) ->
             .attr('y', (node) -> - node.height / 2)
             .attr('width', (node) -> node.width)
             .attr('height', (node) -> node.height)
+
+        svg.selectAll('.cell text')
+            .attr('y', (node) -> pad.top - node.height / 2 - 5)
 
         link.attr('x1', (d) -> d.source.x)
             .attr('y1', (d) -> d.source.y)
