@@ -87,6 +87,13 @@ doCollisions = (children) ->
             q.visit(collide(child))
 
 
+move = (node, dx, dy) ->
+    node.x += dx
+    node.y += dy
+    for child in node.children
+        move(child, dx, dy)
+
+
 collide = (node) ->
     r = node.radius + 50
     nx1 = node.x - r
@@ -103,10 +110,8 @@ collide = (node) ->
             r = d3.max([node.width + other.width, node.height + other.height]) / 2
             if l < r  # found a collision
                 l = (l - r) / l * .5
-                node.x -= (dx *= l)
-                node.y -= (dy *= l)
-                other.x += dx
-                other.y += dy
+                move(node, - dx * l, - dy * l)
+                move(other, dx * l, dy * l)
         return x1 > nx2 or x2 < nx1 or y1 > ny2 or y2 < ny1
 
     return fn
