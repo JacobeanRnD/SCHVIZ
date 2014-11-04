@@ -43,6 +43,7 @@ drawTree = (svg, tree) ->
         .text((node) -> node.name)
 
     force = d3.layout.force()
+        .charge(0)
         .nodes(nodes)
         .start()
 
@@ -85,16 +86,17 @@ collide = (node) ->
 
     fn = (quad, x1, y1, x2, y2) ->
         if quad.point and (quad.point != node)
-            x = node.x - quad.point.x
-            y = node.y - quad.point.y
-            l = Math.sqrt(x * x + y * y)
+            dx = node.x - quad.point.x
+            dy = node.y - quad.point.y
+            l = Math.sqrt(dx * dx + dy * dy)
             r = node.radius + quad.point.radius
+            r = 30
             if l < r  # found a collision
                 l = (l - r) / l * .5
-                node.x -= (x *= l)
-                node.y -= (y *= l)
-                quad.point.x += x
-                quad.point.y += y
+                node.x -= (dx *= l)
+                node.y -= (dy *= l)
+                quad.point.x += dx
+                quad.point.y += dy
         return x1 > nx2 or x2 < nx1 or y1 > ny2 or y2 < ny1
 
     return fn
