@@ -5,6 +5,7 @@ walk = (state, callback, parent=null) ->
 
 
 drawTree = (svg, tree) ->
+    topNodes = []
     nodes = []
     nodeMap = {}
 
@@ -22,6 +23,8 @@ drawTree = (svg, tree) ->
                 parentNode = nodeMap[parent.name]
                 node.parent = parentNode
                 parentNode.children.push(node)
+            else
+                topNodes.push(node)
 
     r = 40
 
@@ -62,10 +65,10 @@ drawTree = (svg, tree) ->
                 node.x = xMin + node.width / 2
                 node.y = yMin + node.height / 2
 
-        q = d3.geom.quadtree(nodes)
+        for node in nodes
+            doCollisions(node.children)
 
-        for i in [0 .. nodes.length - 1]
-            q.visit(collide(nodes[i]))
+        doCollisions(topNodes)
 
         svg.selectAll('.cell')
             .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
@@ -77,6 +80,13 @@ drawTree = (svg, tree) ->
             .attr('height', (node) -> node.height)
 
 
+doCollisions = (children) ->
+    if children.length
+        q = d3.geom.quadtree(children)
+        for child in children
+            q.visit(collide(child))
+
+
 collide = (node) ->
     r = node.radius + 50
     nx1 = node.x - r
@@ -85,18 +95,18 @@ collide = (node) ->
     ny2 = node.y + r
 
     fn = (quad, x1, y1, x2, y2) ->
-        if quad.point and (quad.point != node)
-            dx = node.x - quad.point.x
-            dy = node.y - quad.point.y
+        other = quad.point
+        if other and (other != node)
+            dx = node.x - other.x
+            dy = node.y - other.y
             l = Math.sqrt(dx * dx + dy * dy)
-            r = node.radius + quad.point.radius
-            r = 30
+            r = d3.max([node.width + other.width, node.height + other.height]) / 2
             if l < r  # found a collision
                 l = (l - r) / l * .5
                 node.x -= (dx *= l)
                 node.y -= (dy *= l)
-                quad.point.x += dx
-                quad.point.y += dy
+                other.x += dx
+                other.y += dy
         return x1 > nx2 or x2 < nx1 or y1 > ny2 or y2 < ny1
 
     return fn
