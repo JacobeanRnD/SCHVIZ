@@ -22,8 +22,8 @@ drawTree = (svg, tree) ->
         walk topState, (state, parent) ->
             node = {
                 name: state.name
-                width: 40
-                height: 40
+                w: 40
+                h: 40
                 children: []
             }
             nodes.push(node)
@@ -50,10 +50,10 @@ drawTree = (svg, tree) ->
 
     cell.append('rect')
         .attr('class', 'border')
-        .attr('x', (node) -> - node.width / 2)
-        .attr('y', (node) -> - node.height / 2)
-        .attr('width', (node) -> node.width)
-        .attr('height', (node) -> node.height)
+        .attr('x', (node) -> - node.w / 2)
+        .attr('y', (node) -> - node.h / 2)
+        .attr('width', (node) -> node.w)
+        .attr('height', (node) -> node.h)
         .attr('rx', 5)
         .attr('ry', 5)
 
@@ -77,14 +77,14 @@ drawTree = (svg, tree) ->
     force.on 'tick', ->
         for node in nodes
             if node.children.length > 0
-                xMin = d3.min(node.children, (d) -> d.x - d.width / 2) - pad.left
-                xMax = d3.max(node.children, (d) -> d.x + d.width / 2) + pad.right
-                yMin = d3.min(node.children, (d) -> d.y - d.height / 2) - pad.top
-                yMax = d3.max(node.children, (d) -> d.y + d.height / 2) + pad.bottom
-                node.width = xMax - xMin
-                node.height = yMax - yMin
-                dx = xMin + node.width / 2 - node.x
-                dy = yMin + node.height / 2 - node.y
+                xMin = d3.min(node.children, (d) -> d.x - d.w / 2) - pad.left
+                xMax = d3.max(node.children, (d) -> d.x + d.w / 2) + pad.right
+                yMin = d3.min(node.children, (d) -> d.y - d.h / 2) - pad.top
+                yMax = d3.max(node.children, (d) -> d.y + d.h / 2) + pad.bottom
+                node.w = xMax - xMin
+                node.h = yMax - yMin
+                dx = xMin + node.w / 2 - node.x
+                dy = yMin + node.h / 2 - node.y
                 node.x += dx
                 node.y += dy
                 if node.fixed
@@ -99,13 +99,13 @@ drawTree = (svg, tree) ->
             .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
 
         svg.selectAll('.cell rect')
-            .attr('x', (node) -> - node.width / 2)
-            .attr('y', (node) -> - node.height / 2)
-            .attr('width', (node) -> node.width)
-            .attr('height', (node) -> node.height)
+            .attr('x', (node) -> - node.w / 2)
+            .attr('y', (node) -> - node.h / 2)
+            .attr('width', (node) -> node.w)
+            .attr('height', (node) -> node.h)
 
         svg.selectAll('.cell text')
-            .attr('y', (node) -> pad.top - node.height / 2 - 5)
+            .attr('y', (node) -> pad.top - node.h / 2 - 5)
 
         link.attr('x1', (d) -> d.source.x)
             .attr('y1', (d) -> d.source.y)
@@ -140,7 +140,7 @@ collide = (node) ->
             dx = node.x - other.x
             dy = node.y - other.y
             l = Math.sqrt(dx * dx + dy * dy)
-            r = d3.max([node.width + other.width, node.height + other.height]) * .7
+            r = d3.max([node.w + other.w, node.h + other.h]) * .7
             if l < r
                 l = (l - r) / l * .5
                 move(node, - dx * l, - dy * l)
