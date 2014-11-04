@@ -128,8 +128,8 @@ collide = (node) ->
             dx = node.x - other.x
             dy = node.y - other.y
             l = Math.sqrt(dx * dx + dy * dy)
-            r = d3.max([node.width + other.width, node.height + other.height]) / 2
-            if l < r  # found a collision
+            r = d3.max([node.width + other.width, node.height + other.height]) * .7
+            if l < r
                 l = (l - r) / l * .5
                 move(node, - dx * l, - dy * l)
                 move(other, dx * l, dy * l)
