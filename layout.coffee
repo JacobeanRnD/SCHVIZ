@@ -237,3 +237,19 @@ demo([
         ]}
     ]}
 ])
+
+
+demo([
+    {name: "A", children: [
+        {name: "A1", transitions: [{target: "B1"}]},
+        {name: "A2", transitions: [{target: "B2"}]},
+    ], transitions: [{target: "B"}]},
+    {name: "B", children: [
+        {name: "B1", transitions: [{target: "C1"}]},
+        {name: "B2", transitions: [{target: "C2"}]},
+    ], transitions: [{target: "C"}]},
+    {name: "C", children: [
+        {name: "C1", transitions: [{target: "A1"}]},
+        {name: "C2", transitions: [{target: "A2"}]},
+    ], transitions: [{target: "A"}]},
+])
