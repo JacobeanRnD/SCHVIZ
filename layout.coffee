@@ -8,6 +8,7 @@ drawTree = (svg, tree) ->
     topNodes = []
     nodes = []
     nodeMap = {}
+    links = []
 
     for topState in tree
         walk topState, (state, parent) ->
@@ -26,7 +27,13 @@ drawTree = (svg, tree) ->
             else
                 topNodes.push(node)
 
-    r = 40
+    for topState in tree
+        walk topState, (state) ->
+            for tr in state.transitions or []
+                links.push(
+                    source: nodeMap[state.name]
+                    target: nodeMap[tr.target]
+                )
 
     cell = svg.selectAll('.cell')
         .data(nodes)
@@ -44,6 +51,11 @@ drawTree = (svg, tree) ->
 
     cell.append('text')
         .text((node) -> node.name)
+
+    link = svg.selectAll('.link')
+        .data(links)
+      .enter().append('line')
+        .attr('class', 'link')
 
     force = d3.layout.force()
         .charge(0)
@@ -82,6 +94,11 @@ drawTree = (svg, tree) ->
             .attr('y', (node) -> - node.height / 2)
             .attr('width', (node) -> node.width)
             .attr('height', (node) -> node.height)
+
+        link.attr('x1', (d) -> d.source.x)
+            .attr('y1', (d) -> d.source.y)
+            .attr('x2', (d) -> d.target.x)
+            .attr('y2', (d) -> d.target.y)
 
 
 doCollisions = (children) ->
