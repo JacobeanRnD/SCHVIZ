@@ -1,0 +1,75 @@
+.force-layout {
+
+    .border {
+        fill: white;
+        fill-opacity: 0.5;
+        stroke: steelblue;
+        stroke-width: 2px;
+        cursor: pointer;
+
+        .fixed & {
+            stroke-width: 4px;
+        }
+
+        .parallel-child & {
+            stroke-dasharray: 10,5;
+        }
+    }
+
+
+    .transition {
+        path {
+            stroke: #555;
+            stroke-opacity: .6;
+            fill: none;
+
+            .highlight& {
+                stroke: black;
+                stroke-opacity: 1;
+            }
+        }
+    }
+
+
+    .arrow {
+        stroke-width: 1px;
+        fill: #555;
+    }
+
+
+    text {
+        text-anchor: middle;
+        cursor: pointer;
+    }
+
+
+    .gravity {
+        stroke: green;
+    }
+
+
+    .collision {
+        stroke: red;
+    }
+
+
+    .control {
+        stroke: #ccc;
+        stroke-width: 1px;
+        fill: none;
+    }
+
+
+    .transition, .force {
+        pointer-events: none;
+    }
+
+
+    .zoomRect {
+        fill: #fff;
+        stroke-width: 1px;
+        pointer-events: all;
+        stroke: black;
+    }
+
+}
