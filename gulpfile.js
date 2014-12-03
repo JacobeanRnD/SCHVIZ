@@ -4,7 +4,7 @@ var gulp = require('gulp'),
 
 
 gulp.task('build', function() {
-  gulp.src('layout.coffee', {read: false})
+  gulp.src('src/layout.coffee', {read: false})
     .pipe(browserify({
       transform: ['coffeeify'],
       debug: false
@@ -16,7 +16,7 @@ gulp.task('build', function() {
 
 gulp.task('auto', function() {
   gulp.start('build');
-  gulp.watch('**/*.coffee', ['build']);
+  gulp.watch('src/**/*.coffee', ['build']);
 });
 
 
