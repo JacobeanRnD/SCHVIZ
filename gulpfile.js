@@ -1,6 +1,7 @@
 var gulp = require('gulp'),
     rename = require('gulp-rename'),
-    browserify = require('gulp-browserify');
+    browserify = require('gulp-browserify'),
+    less = require('gulp-less');
 
 
 gulp.task('build', function() {
@@ -11,12 +12,17 @@ gulp.task('build', function() {
     }))
     .pipe(rename('forceLayout.js'))
     .pipe(gulp.dest('dist'));
+
+  gulp.src('src/layout.less')
+    .pipe(less())
+    .pipe(rename('forceLayout.css'))
+    .pipe(gulp.dest('dist'))
 });
 
 
 gulp.task('auto', function() {
   gulp.start('build');
-  gulp.watch('src/**/*.coffee', ['build']);
+  gulp.watch('src/**/*', ['build']);
 });
 
 
