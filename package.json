@@ -1,0 +1,10 @@
+{
+  "name": "desm-visualization",
+  "private": true,
+  "dependencies": {
+    "coffeeify": "~1.0.0",
+    "gulp": "~3.8.10",
+    "gulp-browserify": "~0.5.0",
+    "gulp-rename": "~1.2.0"
+  }
+}
