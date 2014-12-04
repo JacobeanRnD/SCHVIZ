@@ -59,6 +59,77 @@ exit = (cell, point) ->
   return {x: cell.x + d.x * e, y: cell.y + d.y * e}
 
 
+toKielerFormat = (state) ->
+  children = []
+  edges = []
+  for child in state.children or []
+    children.push(toKielerFormat(child))
+    for transition in child.transitions or []
+      edges.push(
+        source: child.id
+        target: transition.target
+      )
+  rv = {
+    id: state.id
+    children: children
+    edges: edges
+  }
+  if state.id?
+    rv.labels = [{text: state.id}]
+  if (state.children or []).length == 0
+    rv.width = CELL_MIN.w
+    rv.height = CELL_MIN.h
+  return rv
+
+
+applyKielerLayout = (state, kNode, x0 = null, y0 = null) ->
+  i = state._initial = {
+    w: kNode.width
+    h: kNode.height
+  }
+
+  unless x0? and y0?
+    x0 = -i.w/2
+    y0 = -i.h/2
+
+  i.x = x0 + kNode.x + i.w/2
+  i.y = y0 + kNode.y + i.h/2
+
+  for tr in state.transitions or []
+    tr._initial = {
+      x: x0 + 0
+      y: y0 + 0
+    }
+
+  childMap = {}
+  for child in state.children or []
+    if child.id? then childMap[child.id] = child
+
+  for kChild in kNode.children or []
+    unless (child = childMap[kChild.id])? then continue
+    applyKielerLayout(child, kChild, i.x - i.w/2, i.y - i.h/2)
+
+
+force.kielerLayout = (tree) ->
+  graph = toKielerFormat({id: 'root', children: tree})
+
+  form = {
+    graph: JSON.stringify(graph)
+    config: JSON.stringify({})
+    iFormat: 'org.json'
+    oFormat: 'org.json'
+    spacing: 100
+    algorithm: 'de.cau.cs.kieler.klay.layered'
+  }
+
+  return Q($.post('/kieler', form))
+    .then (resp) ->
+      graphLayout = JSON.parse(resp)[0]
+      treeCopy = JSON.parse(JSON.stringify(tree))
+      applyKielerLayout({id: 'root', children: treeCopy}, graphLayout)
+      return treeCopy
+
+
 force.drawTree = (container, defs, tree, debug) ->
   nodes = []
   controls = []
@@ -76,8 +147,10 @@ force.drawTree = (container, defs, tree, debug) ->
       node = {
         id: state.id
         type: state.type or 'state'
-        w: CELL_MIN.w
-        h: CELL_MIN.h
+        x: state._initial.x
+        y: state._initial.y
+        w: state._initial.w
+        h: state._initial.h
         children: []
         controls: []
       }
@@ -96,6 +169,8 @@ force.drawTree = (container, defs, tree, debug) ->
           parent: c or top
           w: CONTROL_RADIUS
           h: CONTROL_RADIUS
+          x: tr._initial.x
+          y: tr._initial.y
         }
         c.parent.controls.push(c)
         nodes.push(c)
@@ -280,6 +355,8 @@ force.drawTree = (container, defs, tree, debug) ->
                   .attr('x2', force.value[0] * DEBUG_FORCE_FACTOR)
                   .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
 
+  render()
+
 
 arrange = (node, tick) ->
   if node.children.length > 0
@@ -408,4 +485,6 @@ force.render = (options) ->
       .translate([width / 2, height / 2])
       .event(zoomNode)
 
-  force.drawTree(container, defs, tree, debug=debug)
+  force.kielerLayout(tree)
+    .done (treeWithLayout) ->
+      force.drawTree(container, defs, treeWithLayout, debug=debug)
