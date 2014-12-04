@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CELL_MIN, CELL_PAD, CONTROL_RADIUS, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, arrange, collide, def, exit, force, handleCollisions, move, nextId, parents, path, treeFromXml, walk;
+var CELL_MIN, CELL_PAD, CONTROL_RADIUS, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, applyKielerLayout, arrange, collide, def, exit, force, handleCollisions, move, nextId, parents, path, toKielerFormat, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
@@ -109,6 +109,114 @@ exit = function(cell, point) {
   };
 };
 
+toKielerFormat = function(state) {
+  var child, children, edges, rv, transition, _i, _j, _len, _len1, _ref, _ref1;
+  children = [];
+  edges = [];
+  _ref = state.children || [];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    child = _ref[_i];
+    children.push(toKielerFormat(child));
+    _ref1 = child.transitions || [];
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      transition = _ref1[_j];
+      edges.push({
+        source: child.id,
+        target: transition.target
+      });
+    }
+  }
+  rv = {
+    id: state.id,
+    children: children,
+    edges: edges
+  };
+  if (state.id != null) {
+    rv.labels = [
+      {
+        text: state.id
+      }
+    ];
+  }
+  if ((state.children || []).length === 0) {
+    rv.width = CELL_MIN.w;
+    rv.height = CELL_MIN.h;
+  }
+  return rv;
+};
+
+applyKielerLayout = function(state, kNode, x0, y0) {
+  var child, childMap, i, kChild, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+  if (x0 == null) {
+    x0 = null;
+  }
+  if (y0 == null) {
+    y0 = null;
+  }
+  i = state._initial = {
+    w: kNode.width,
+    h: kNode.height
+  };
+  if (!((x0 != null) && (y0 != null))) {
+    x0 = -i.w / 2;
+    y0 = -i.h / 2;
+  }
+  i.x = x0 + kNode.x + i.w / 2;
+  i.y = y0 + kNode.y + i.h / 2;
+  _ref = state.transitions || [];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    tr = _ref[_i];
+    tr._initial = {
+      x: x0 + 0,
+      y: y0 + 0
+    };
+  }
+  childMap = {};
+  _ref1 = state.children || [];
+  for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+    child = _ref1[_j];
+    if (child.id != null) {
+      childMap[child.id] = child;
+    }
+  }
+  _ref2 = kNode.children || [];
+  _results = [];
+  for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+    kChild = _ref2[_k];
+    if ((child = childMap[kChild.id]) == null) {
+      continue;
+    }
+    _results.push(applyKielerLayout(child, kChild, i.x - i.w / 2, i.y - i.h / 2));
+  }
+  return _results;
+};
+
+force.kielerLayout = function(tree) {
+  var form, graph;
+  graph = toKielerFormat({
+    id: 'root',
+    children: tree
+  });
+  form = {
+    graph: JSON.stringify(graph),
+    config: JSON.stringify({}),
+    iFormat: 'org.json',
+    oFormat: 'org.json',
+    spacing: 100,
+    algorithm: 'de.cau.cs.kieler.klay.layered'
+  };
+  return Q($.post('/kieler', form)).then(function(resp) {
+    var graphLayout, treeCopy;
+    graphLayout = JSON.parse(resp)[0];
+    treeCopy = JSON.parse(JSON.stringify(tree));
+    applyKielerLayout({
+      id: 'root',
+      children: treeCopy
+    }, graphLayout);
+    return treeCopy;
+  });
+};
+
 force.drawTree = function(container, defs, tree, debug) {
   var cell, cells, control, controls, drag, layout, links, lock, nodeMap, nodes, render, top, topState, transition, transitions, _arrow_id, _i, _j, _len, _len1;
   nodes = [];
@@ -128,8 +236,10 @@ force.drawTree = function(container, defs, tree, debug) {
       node = {
         id: state.id,
         type: state.type || 'state',
-        w: CELL_MIN.w,
-        h: CELL_MIN.h,
+        x: state._initial.x,
+        y: state._initial.y,
+        w: state._initial.w,
+        h: state._initial.h,
         children: [],
         controls: []
       };
@@ -153,7 +263,9 @@ force.drawTree = function(container, defs, tree, debug) {
           transition: tr,
           parent: c || top,
           w: CONTROL_RADIUS,
-          h: CONTROL_RADIUS
+          h: CONTROL_RADIUS,
+          x: tr._initial.x,
+          y: tr._initial.y
         };
         c.parent.controls.push(c);
         nodes.push(c);
@@ -302,7 +414,7 @@ force.drawTree = function(container, defs, tree, debug) {
       });
     }
   };
-  return layout.on('tick', function() {
+  layout.on('tick', function() {
     var node, tick, _k, _len2, _ref;
     render();
     tick = {
@@ -334,6 +446,7 @@ force.drawTree = function(container, defs, tree, debug) {
       });
     }
   });
+  return render();
 };
 
 arrange = function(node, tick) {
@@ -483,7 +596,9 @@ force.render = function(options) {
     return container.attr('transform', "translate(" + e.translate + "),scale(" + e.scale + ")");
   });
   zoom.size([width, height]).translate([width / 2, height / 2]).event(zoomNode);
-  return force.drawTree(container, defs, tree, debug = debug);
+  return force.kielerLayout(tree).done(function(treeWithLayout) {
+    return force.drawTree(container, defs, treeWithLayout, debug = debug);
+  });
 };
 
 
