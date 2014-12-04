@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="forceLayout.css">
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="forceLayout.js"></script>
+<script>
+  (function(){'use strict';
+    var m = window.location.search.match(/file=([^&]*)/) || [];
+    var debug = (window.location.search.indexOf('debug=on') > -1)
+    var file = m[1];
+
+    if(file) {
+      $.get(file, function(resp) {
+        forceLayout.render({parent: $('body')[0], doc: resp});
+      });
+      return;
+    }
+
+    function demo(tree) {
+      var parent = $('<div style="width:400px;height:400px;float:left">')[0];
+      $('body').append(parent);
+      forceLayout.render({parent: parent, tree: tree});
+    };
+
+
+    demo([
+      {id: "A"},
+      {id: "B"},
+      {id: "C"},
+      {id: "D"},
+      {id: "E"},
+      {id: "F"}
+    ]);
+
+
+    demo([
+      {id: "A", children: [
+        {id: "A1", transitions: [{target: "A2", event: "a1->a2", cond: "foo"}]},
+        {id: "A2", transitions: [{target: "A3", event: "a2->a3", cond: "bar"}]},
+        {id: "A3", transitions: [{target: "A1", event: "a2->a1", cond: "baz"}]}
+      ], transitions: [{target: "B"}]},
+      {id: "B", children: [
+        {id: "B1", transitions: [{target: "B2"}]},
+        {id: "B2", transitions: [{target: "B3"}]},
+        {id: "B3", transitions: [{target: "B1"}]}
+      ], transitions: [{target: "C"}]},
+      {id: "C", children: [
+        {id: "C1", transitions: [{target: "C2"}]},
+        {id: "C2", transitions: [{target: "C3"}]},
+        {id: "C3", transitions: [{target: "C1"}]}
+      ], transitions: [{target: "A"}]}
+    ]);
+
+
+    demo([
+      {id: "A", children: [
+        {id: "B", children: [
+          {id: "C", children: [
+            {id: "D", children: [
+              {id: "E", children: [
+                {id: "F", children: [
+                  {id: "G", children: [
+                    {id: "H"}
+                  ]}
+                ]}
+              ]}
+            ]}
+          ]}
+        ]}
+      ]}
+    ]);
+
+
+    demo([
+      {id: "A", children: [
+        {id: "B1", children: [
+          {id: "C11"},
+          {id: "C12"}
+        ]},
+        {id: "B2", children: [
+          {id: "C21"},
+          {id: "C22"}
+        ]}
+      ]}
+    ]);
+
+
+    demo([
+      {id: "O", children: [
+        {id: "A"},
+        {id: "B"},
+        {id: "C"},
+        {id: "D"},
+        {id: "E"},
+        {id: "F"},
+        {id: "X", transitions: [
+          {target: "A"},
+          {target: "B"},
+          {target: "C"},
+          {target: "D"},
+          {target: "E"},
+          {target: "F"}
+        ]}
+      ]}
+    ]);
+
+
+    demo([
+      {id: "A", children: [
+        {id: "A1", transitions: [{target: "B1"}]},
+        {id: "A2", transitions: [{target: "B2"}]},
+      ], transitions: [{target: "B"}]},
+      {id: "B", children: [
+        {id: "B1", transitions: [{target: "C1"}]},
+        {id: "B2", transitions: [{target: "C2"}]},
+      ], transitions: [{target: "C"}]},
+      {id: "C", children: [
+        {id: "C1", transitions: [{target: "A1"}]},
+        {id: "C2", transitions: [{target: "A2"}]},
+      ], transitions: [{target: "A"}]},
+    ]);
+  })();
+</script>
