@@ -27,6 +27,17 @@ function develApp() {
 }
 
 
+gulp.task('serve', function() {
+  var host = '0.0.0.0',
+      port = +(process.env.PORT || 5000);
+  http.createServer(develApp()).listen(port, host, function() {
+    console.log('devel server listening on ' + host + ':' + port);
+  })
+
+  return Q.defer().promise;
+});
+
+
 gulp.task('build', function() {
   gulp.src('src/layout.coffee', {read: false})
     .pipe(browserify({
@@ -49,17 +60,5 @@ gulp.task('auto', function() {
 });
 
 
-gulp.task('devel', function() {
-  gulp.start('auto');
-
-  var host = '0.0.0.0',
-      port = +(process.env.PORT || 5000);
-  http.createServer(develApp()).listen(port, host, function() {
-    console.log('devel server listening on ' + host + ':' + port);
-  })
-
-  return Q.defer().promise;
-});
-
-
+gulp.task('devel', ['auto', 'serve']);
 gulp.task('default', ['build']);
