@@ -5,9 +5,26 @@ var gulp = require('gulp'),
     Q = require('q'),
     http = require('http'),
     express = require('express'),
-    proxy = require('simple-http-proxy');
+    proxy = require('simple-http-proxy'),
+    async = require('async');
 
 var KIELER_URL = 'http://layout.rtsys.informatik.uni-kiel.de:9444/live';
+
+
+function develApp() {
+  var app = express(),
+      handler = proxy(KIELER_URL),
+      queue = async.queue(function(task, cb) { task(cb); }, 1);
+
+  app.use('/kieler', function(req, res, next) {
+    queue.push(function(cb) {
+      res.on('finish', function() { cb(); });
+      handler(req, res, next);
+    });
+  });
+  app.use(express.static(__dirname + '/dist'));
+  return app;
+}
 
 
 gulp.task('build', function() {
@@ -35,14 +52,9 @@ gulp.task('auto', function() {
 gulp.task('devel', function() {
   gulp.start('auto');
 
-  var app = express(),
-      host = '0.0.0.0',
+  var host = '0.0.0.0',
       port = +(process.env.PORT || 5000);
-
-  app.use('/kieler', proxy(KIELER_URL));
-  app.use(express.static(__dirname + '/dist'));
-
-  http.createServer(app).listen(port, host, function() {
+  http.createServer(develApp()).listen(port, host, function() {
     console.log('devel server listening on ' + host + ':' + port);
   })
 
