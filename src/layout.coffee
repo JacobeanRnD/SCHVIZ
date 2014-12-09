@@ -181,7 +181,6 @@ force.drawTree = (container, defs, tree, debug) ->
             target: target
           )
         label = tr.event or ''
-        if tr.cond? then label += "[#{tr.cond}]"
         transitions.push({
           a: a
           b: b

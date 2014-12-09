@@ -279,9 +279,6 @@ force.drawTree = function(container, defs, tree, debug) {
           });
         }
         label = tr.event || '';
-        if (tr.cond != null) {
-          label += "[" + tr.cond + "]";
-        }
         _results.push(transitions.push({
           a: a,
           b: b,
