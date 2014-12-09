@@ -21,7 +21,7 @@ CELL_PAD = {
   right: 5
 };
 
-LABEL_SPACE = 80;
+LABEL_SPACE = 400;
 
 CONTROL_RADIUS = 20;
 
