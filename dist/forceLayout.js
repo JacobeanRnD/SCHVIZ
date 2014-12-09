@@ -353,8 +353,60 @@ force.Layout = (function() {
     }
   };
 
+  Layout.prototype.updateSVG = function() {
+    this.container.selectAll('.cell').attr('transform', function(node) {
+      return "translate(" + node.x + "," + node.y + ")";
+    }).classed('fixed', function(node) {
+      return node.fixed;
+    });
+    this.container.selectAll('.cell').each(function(node) {
+      d3.select(this).select('rect').attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
+      return d3.select(this).select('text').attr('y', function(node) {
+        return CELL_PAD.top - node.h / 2 - 5;
+      });
+    });
+    this.container.selectAll('.selfie').remove();
+    this.transition.classed('highlight', function(tr) {
+      return tr.a.fixed || tr.b.fixed;
+    }).selectAll('path').attr('d', function(tr) {
+      var a, b, c, c1, c2, h, s, t, w, _ref;
+      _ref = [tr.a, tr.b, tr.c], a = _ref[0], b = _ref[1], c = _ref[2];
+      if (tr.selfie) {
+        w = c.x - a.x;
+        h = c.y - a.y;
+        c1 = {
+          x: c.x - h / 2,
+          y: c.y + w / 2
+        };
+        c2 = {
+          x: c.x + h / 2,
+          y: c.y - w / 2
+        };
+        s = exit(a, c1);
+        t = exit(b, c2);
+        return "M" + s.x + "," + s.y + " C" + c1.x + "," + c1.y + " " + c2.x + "," + c2.y + " " + t.x + "," + t.y;
+      } else {
+        s = exit(a, c);
+        t = exit(b, c);
+        return "M" + s.x + "," + s.y + " S" + c.x + "," + c.y + " " + t.x + "," + t.y;
+      }
+    });
+    this.transition.selectAll('text').attr('x', function(tr) {
+      return tr.c.x;
+    }).attr('y', function(tr) {
+      return tr.c.y;
+    });
+    if (this.debug) {
+      return control.attr('cx', function(d) {
+        return d.x;
+      }).attr('cy', function(d) {
+        return d.y;
+      });
+    }
+  };
+
   Layout.prototype.setupD3Layout = function() {
-    var drag, lock, render;
+    var drag, lock;
     this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start();
     lock = {
       node: null,
@@ -394,7 +446,7 @@ force.Layout = (function() {
         (lock.node = node).fixed = true;
         node.px = node.x;
         node.py = node.y;
-        return render();
+        return _this.updateSVG();
       };
     })(this)).on('mouseout', (function(_this) {
       return function(node) {
@@ -403,66 +455,13 @@ force.Layout = (function() {
         }
         lock.node = null;
         node.fixed = false;
-        return render();
+        return _this.updateSVG();
       };
     })(this)).call(drag);
-    render = (function(_this) {
-      return function() {
-        _this.container.selectAll('.cell').attr('transform', function(node) {
-          return "translate(" + node.x + "," + node.y + ")";
-        }).classed('fixed', function(node) {
-          return node.fixed;
-        });
-        _this.container.selectAll('.cell').each(function(node) {
-          d3.select(this).select('rect').attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
-          return d3.select(this).select('text').attr('y', function(node) {
-            return CELL_PAD.top - node.h / 2 - 5;
-          });
-        });
-        _this.container.selectAll('.selfie').remove();
-        _this.transition.classed('highlight', function(tr) {
-          return tr.a.fixed || tr.b.fixed;
-        }).selectAll('path').attr('d', function(tr) {
-          var a, b, c, c1, c2, h, s, t, w, _ref;
-          _ref = [tr.a, tr.b, tr.c], a = _ref[0], b = _ref[1], c = _ref[2];
-          if (tr.selfie) {
-            w = c.x - a.x;
-            h = c.y - a.y;
-            c1 = {
-              x: c.x - h / 2,
-              y: c.y + w / 2
-            };
-            c2 = {
-              x: c.x + h / 2,
-              y: c.y - w / 2
-            };
-            s = exit(a, c1);
-            t = exit(b, c2);
-            return "M" + s.x + "," + s.y + " C" + c1.x + "," + c1.y + " " + c2.x + "," + c2.y + " " + t.x + "," + t.y;
-          } else {
-            s = exit(a, c);
-            t = exit(b, c);
-            return "M" + s.x + "," + s.y + " S" + c.x + "," + c.y + " " + t.x + "," + t.y;
-          }
-        });
-        _this.transition.selectAll('text').attr('x', function(tr) {
-          return tr.c.x;
-        }).attr('y', function(tr) {
-          return tr.c.y;
-        });
-        if (_this.debug) {
-          return control.attr('cx', function(d) {
-            return d.x;
-          }).attr('cy', function(d) {
-            return d.y;
-          });
-        }
-      };
-    })(this);
     this.layout.on('tick', (function(_this) {
       return function() {
         var node, tick, _i, _len, _ref;
-        render();
+        _this.updateSVG();
         tick = {
           gravity: _this.layout.alpha() * 0.1,
           forces: {}
@@ -493,7 +492,7 @@ force.Layout = (function() {
         }
       };
     })(this));
-    return render();
+    return this.updateSVG();
   };
 
   return Layout;

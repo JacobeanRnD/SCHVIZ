@@ -262,6 +262,52 @@ class force.Layout
           .attr('class', 'control')
           .attr('r', CONTROL_RADIUS)
 
+  updateSVG: ->
+    @container.selectAll('.cell')
+        .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
+        .classed('fixed', (node) -> node.fixed)
+
+    @container.selectAll('.cell').each (node) ->
+        d3.select(this).select('rect')
+            .attr('x', - node.w / 2)
+            .attr('y', - node.h / 2)
+            .attr('width', node.w)
+            .attr('height', node.h)
+
+        d3.select(this).select('text')
+            .attr('y', (node) -> CELL_PAD.top - node.h / 2 - 5)
+
+    @container.selectAll('.selfie').remove()
+
+    @transition
+        .classed('highlight', (tr) -> tr.a.fixed or tr.b.fixed)
+      .selectAll('path')
+        .attr 'd', (tr) ->
+          [a, b, c] = [tr.a, tr.b, tr.c]
+
+          if tr.selfie
+            w = c.x - a.x
+            h = c.y - a.y
+            c1 = {x: c.x - h/2, y: c.y + w/2}
+            c2 = {x: c.x + h/2, y: c.y - w/2}
+            s = exit(a, c1)
+            t = exit(b, c2)
+            return "M#{s.x},#{s.y} C#{c1.x},#{c1.y} #{c2.x},#{c2.y} #{t.x},#{t.y}"
+
+          else
+            s = exit(a, c)
+            t = exit(b, c)
+            return "M#{s.x},#{s.y} S#{c.x},#{c.y} #{t.x},#{t.y}"
+
+    @transition.selectAll('text')
+        .attr('x', (tr) -> tr.c.x)
+        .attr('y', (tr) -> tr.c.y)
+
+    if @debug
+      control
+          .attr('cx', (d) -> d.x)
+          .attr('cy', (d) -> d.y)
+
   setupD3Layout: ->
     @layout = d3.layout.force()
         .charge(0)
@@ -298,62 +344,16 @@ class force.Layout
           (lock.node = node).fixed = true
           node.px = node.x
           node.py = node.y
-          render()
+          @updateSVG()
         .on 'mouseout', (node) =>
           if lock.drag then return
           lock.node = null
           node.fixed = false
-          render()
+          @updateSVG()
         .call(drag)
 
-    render = =>
-      @container.selectAll('.cell')
-          .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
-          .classed('fixed', (node) -> node.fixed)
-
-      @container.selectAll('.cell').each (node) ->
-          d3.select(this).select('rect')
-              .attr('x', - node.w / 2)
-              .attr('y', - node.h / 2)
-              .attr('width', node.w)
-              .attr('height', node.h)
-
-          d3.select(this).select('text')
-              .attr('y', (node) -> CELL_PAD.top - node.h / 2 - 5)
-
-      @container.selectAll('.selfie').remove()
-
-      @transition
-          .classed('highlight', (tr) -> tr.a.fixed or tr.b.fixed)
-        .selectAll('path')
-          .attr 'd', (tr) ->
-            [a, b, c] = [tr.a, tr.b, tr.c]
-
-            if tr.selfie
-              w = c.x - a.x
-              h = c.y - a.y
-              c1 = {x: c.x - h/2, y: c.y + w/2}
-              c2 = {x: c.x + h/2, y: c.y - w/2}
-              s = exit(a, c1)
-              t = exit(b, c2)
-              return "M#{s.x},#{s.y} C#{c1.x},#{c1.y} #{c2.x},#{c2.y} #{t.x},#{t.y}"
-
-            else
-              s = exit(a, c)
-              t = exit(b, c)
-              return "M#{s.x},#{s.y} S#{c.x},#{c.y} #{t.x},#{t.y}"
-
-      @transition.selectAll('text')
-          .attr('x', (tr) -> tr.c.x)
-          .attr('y', (tr) -> tr.c.y)
-
-      if @debug
-        control
-            .attr('cx', (d) -> d.x)
-            .attr('cy', (d) -> d.y)
-
     @layout.on 'tick', =>
-      render()
+      @updateSVG()
 
       tick = {
         gravity: @layout.alpha() * 0.1
@@ -377,7 +377,7 @@ class force.Layout
                     .attr('x2', force.value[0] * DEBUG_FORCE_FACTOR)
                     .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
 
-    render()
+    @updateSVG()
 
 
 arrange = (node, tick) ->
