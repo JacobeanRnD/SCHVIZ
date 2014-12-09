@@ -143,9 +143,14 @@ class force.Layout
 
   constructor: (options) ->
     @container = options.container
-    @defs = options.defs
-    @tree = options.tree
     @debug = options.debug
+
+    @loadTree(options.tree)
+    @renderDefs(options.defs)
+    @renderTree()
+    @setupD3Layout()
+
+  loadTree: (tree) ->
     @nodes = []
     @controls = []
     @cells = []
@@ -157,7 +162,7 @@ class force.Layout
       controls: []
     }
 
-    for topState in @tree
+    for topState in tree
       walk topState, (state, parent) =>
         node = {
           id: state.id
@@ -175,7 +180,7 @@ class force.Layout
         node.parent = if parent? then @nodeMap[parent.id] else @top
         node.parent.children.push(node)
 
-    for topState in @tree
+    for topState in tree
       walk topState, (state) =>
         for tr in state.transitions or []
           [a, c, b] = path(@nodeMap[state.id], @nodeMap[tr.target])
@@ -204,8 +209,9 @@ class force.Layout
             label: label
           })
 
-    @defs.append('marker')
-        .attr('id', (_arrow_id = nextId()))
+  renderDefs: (defs) ->
+    defs.append('marker')
+        .attr('id', (@_arrow_id = nextId()))
         .attr('refX', '7')
         .attr('refY', '5')
         .attr('markerWidth', '10')
@@ -215,6 +221,7 @@ class force.Layout
         .attr('d', 'M 0 0 L 10 5 L 0 10 z')
         .attr('class', 'arrow')
 
+  renderTree: ->
     cell = @container.selectAll('.cell')
         .data(@cells)
       .enter().append('g')
@@ -236,15 +243,15 @@ class force.Layout
           node.textWidth = d3.min([$(@).width() + 2 * ROUND_CORNER, LABEL_SPACE])
           node.w = d3.max([node.w, node.textWidth])
 
-    transition = @container.selectAll('.transition')
+    @transition = @container.selectAll('.transition')
         .data(@transitions)
       .enter().append('g')
         .attr('class', 'transition')
 
-    transition.append('path')
-        .attr('style', "marker-end: url(##{_arrow_id})")
+    @transition.append('path')
+        .attr('style', "marker-end: url(##{@_arrow_id})")
 
-    transition.append('text')
+    @transition.append('text')
         .attr('class', 'transition-label')
         .text((tr) -> tr.label)
 
@@ -255,7 +262,8 @@ class force.Layout
           .attr('class', 'control')
           .attr('r', CONTROL_RADIUS)
 
-    layout = d3.layout.force()
+  setupD3Layout: ->
+    @layout = d3.layout.force()
         .charge(0)
         .gravity(0)
         .linkStrength(LINK_STRENGTH)
@@ -276,7 +284,7 @@ class force.Layout
           d3.event.sourceEvent.stopPropagation()
           node.px = d3.event.x
           node.py = d3.event.y
-          layout.resume()
+          @layout.resume()
         .on 'dragend', (node) =>
           d3.event.sourceEvent.stopPropagation()
           lock.drag = false
@@ -315,7 +323,7 @@ class force.Layout
 
       @container.selectAll('.selfie').remove()
 
-      transition
+      @transition
           .classed('highlight', (tr) -> tr.a.fixed or tr.b.fixed)
         .selectAll('path')
           .attr 'd', (tr) ->
@@ -335,7 +343,7 @@ class force.Layout
               t = exit(b, c)
               return "M#{s.x},#{s.y} S#{c.x},#{c.y} #{t.x},#{t.y}"
 
-      transition.selectAll('text')
+      @transition.selectAll('text')
           .attr('x', (tr) -> tr.c.x)
           .attr('y', (tr) -> tr.c.y)
 
@@ -344,11 +352,11 @@ class force.Layout
             .attr('cx', (d) -> d.x)
             .attr('cy', (d) -> d.y)
 
-    layout.on 'tick', =>
+    @layout.on 'tick', =>
       render()
 
       tick = {
-        gravity: layout.alpha() * 0.1
+        gravity: @layout.alpha() * 0.1
         forces: {}
       }
 

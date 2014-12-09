@@ -228,11 +228,16 @@ force.drawTree = function(container, defs, tree, debug) {
 
 force.Layout = (function() {
   function Layout(options) {
-    var cell, control, drag, layout, lock, render, topState, transition, _arrow_id, _i, _j, _len, _len1, _ref, _ref1;
     this.container = options.container;
-    this.defs = options.defs;
-    this.tree = options.tree;
     this.debug = options.debug;
+    this.loadTree(options.tree);
+    this.renderDefs(options.defs);
+    this.renderTree();
+    this.setupD3Layout();
+  }
+
+  Layout.prototype.loadTree = function(tree) {
+    var topState, _i, _j, _len, _len1, _results;
     this.nodes = [];
     this.controls = [];
     this.cells = [];
@@ -243,9 +248,8 @@ force.Layout = (function() {
       children: [],
       controls: []
     };
-    _ref = this.tree;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      topState = _ref[_i];
+    for (_i = 0, _len = tree.length; _i < _len; _i++) {
+      topState = tree[_i];
       walk(topState, (function(_this) {
         return function(state, parent) {
           var node;
@@ -267,17 +271,17 @@ force.Layout = (function() {
         };
       })(this));
     }
-    _ref1 = this.tree;
-    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-      topState = _ref1[_j];
-      walk(topState, (function(_this) {
+    _results = [];
+    for (_j = 0, _len1 = tree.length; _j < _len1; _j++) {
+      topState = tree[_j];
+      _results.push(walk(topState, (function(_this) {
         return function(state) {
-          var a, b, c, label, source, target, tr, _k, _l, _len2, _len3, _ref2, _ref3, _ref4, _ref5, _results;
-          _ref2 = state.transitions || [];
-          _results = [];
-          for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-            tr = _ref2[_k];
-            _ref3 = path(_this.nodeMap[state.id], _this.nodeMap[tr.target]), a = _ref3[0], c = _ref3[1], b = _ref3[2];
+          var a, b, c, label, source, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results1;
+          _ref = state.transitions || [];
+          _results1 = [];
+          for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
+            tr = _ref[_k];
+            _ref1 = path(_this.nodeMap[state.id], _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
             c = {
               transition: tr,
               parent: c || _this.top,
@@ -289,16 +293,16 @@ force.Layout = (function() {
             c.parent.controls.push(c);
             _this.nodes.push(c);
             _this.controls.push(c);
-            _ref4 = d3.pairs([a, c, b]);
-            for (_l = 0, _len3 = _ref4.length; _l < _len3; _l++) {
-              _ref5 = _ref4[_l], source = _ref5[0], target = _ref5[1];
+            _ref2 = d3.pairs([a, c, b]);
+            for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
+              _ref3 = _ref2[_l], source = _ref3[0], target = _ref3[1];
               _this.links.push({
                 source: source,
                 target: target
               });
             }
             label = tr.event || '';
-            _results.push(_this.transitions.push({
+            _results1.push(_this.transitions.push({
               a: a,
               b: b,
               c: c,
@@ -306,11 +310,19 @@ force.Layout = (function() {
               label: label
             }));
           }
-          return _results;
+          return _results1;
         };
-      })(this));
+      })(this)));
     }
-    this.defs.append('marker').attr('id', (_arrow_id = nextId())).attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
+    return _results;
+  };
+
+  Layout.prototype.renderDefs = function(defs) {
+    return defs.append('marker').attr('id', (this._arrow_id = nextId())).attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
+  };
+
+  Layout.prototype.renderTree = function() {
+    var cell, control;
     cell = this.container.selectAll('.cell').data(this.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state');
     }).classed('parallel-child', function(cell) {
@@ -331,15 +343,19 @@ force.Layout = (function() {
       node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
       return node.w = d3.max([node.w, node.textWidth]);
     });
-    transition = this.container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition');
-    transition.append('path').attr('style', "marker-end: url(#" + _arrow_id + ")");
-    transition.append('text').attr('class', 'transition-label').text(function(tr) {
+    this.transition = this.container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition');
+    this.transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
+    this.transition.append('text').attr('class', 'transition-label').text(function(tr) {
       return tr.label;
     });
     if (this.debug) {
-      control = this.container.selectAll('.control').data(this.controls).enter().append('circle').attr('class', 'control').attr('r', CONTROL_RADIUS);
+      return control = this.container.selectAll('.control').data(this.controls).enter().append('circle').attr('class', 'control').attr('r', CONTROL_RADIUS);
     }
-    layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start();
+  };
+
+  Layout.prototype.setupD3Layout = function() {
+    var drag, lock, render;
+    this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start();
     lock = {
       node: null,
       drag: false
@@ -357,7 +373,7 @@ force.Layout = (function() {
         d3.event.sourceEvent.stopPropagation();
         node.px = d3.event.x;
         node.py = d3.event.y;
-        return layout.resume();
+        return _this.layout.resume();
       };
     })(this)).on('dragend', (function(_this) {
       return function(node) {
@@ -404,11 +420,11 @@ force.Layout = (function() {
           });
         });
         _this.container.selectAll('.selfie').remove();
-        transition.classed('highlight', function(tr) {
+        _this.transition.classed('highlight', function(tr) {
           return tr.a.fixed || tr.b.fixed;
         }).selectAll('path').attr('d', function(tr) {
-          var a, b, c, c1, c2, h, s, t, w, _ref2;
-          _ref2 = [tr.a, tr.b, tr.c], a = _ref2[0], b = _ref2[1], c = _ref2[2];
+          var a, b, c, c1, c2, h, s, t, w, _ref;
+          _ref = [tr.a, tr.b, tr.c], a = _ref[0], b = _ref[1], c = _ref[2];
           if (tr.selfie) {
             w = c.x - a.x;
             h = c.y - a.y;
@@ -429,7 +445,7 @@ force.Layout = (function() {
             return "M" + s.x + "," + s.y + " S" + c.x + "," + c.y + " " + t.x + "," + t.y;
           }
         });
-        transition.selectAll('text').attr('x', function(tr) {
+        _this.transition.selectAll('text').attr('x', function(tr) {
           return tr.c.x;
         }).attr('y', function(tr) {
           return tr.c.y;
@@ -443,17 +459,17 @@ force.Layout = (function() {
         }
       };
     })(this);
-    layout.on('tick', (function(_this) {
+    this.layout.on('tick', (function(_this) {
       return function() {
-        var node, tick, _k, _len2, _ref2;
+        var node, tick, _i, _len, _ref;
         render();
         tick = {
-          gravity: layout.alpha() * 0.1,
+          gravity: _this.layout.alpha() * 0.1,
           forces: {}
         };
-        _ref2 = _this.top.children;
-        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-          node = _ref2[_k];
+        _ref = _this.top.children;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          node = _ref[_i];
           walk(node, (function(node) {
             return arrange(node, tick);
           }), null, true);
@@ -465,11 +481,11 @@ force.Layout = (function() {
         if (_this.debug) {
           _this.container.selectAll('.cell .force').remove();
           return _this.container.selectAll('.cell').each(function(node) {
-            var _l, _len3, _ref3, _results;
-            _ref3 = tick.forces[node.id] || [];
+            var _j, _len1, _ref1, _results;
+            _ref1 = tick.forces[node.id] || [];
             _results = [];
-            for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
-              force = _ref3[_l];
+            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+              force = _ref1[_j];
               _results.push(d3.select(this).append('line').attr('class', "force " + force.cls).attr('x1', 0).attr('y1', 0).attr('x2', force.value[0] * DEBUG_FORCE_FACTOR).attr('y2', force.value[1] * DEBUG_FORCE_FACTOR));
             }
             return _results;
@@ -477,8 +493,8 @@ force.Layout = (function() {
         }
       };
     })(this));
-    render();
-  }
+    return render();
+  };
 
   return Layout;
 
