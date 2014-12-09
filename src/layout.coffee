@@ -131,12 +131,21 @@ force.kielerLayout = (tree) ->
 
 
 force.drawTree = (container, defs, tree, debug) ->
-  new force.Layout(container, defs, tree, debug)
+  new force.Layout(
+    container: container
+    defs: defs
+    tree: tree
+    debug: debug
+  )
 
 
 class force.Layout
 
-  constructor: (container, defs, tree, debug) ->
+  constructor: (options) ->
+    @container = options.container
+    @defs = options.defs
+    @tree = options.tree
+    @debug = options.debug
     @nodes = []
     @controls = []
     @cells = []
@@ -148,7 +157,7 @@ class force.Layout
       controls: []
     }
 
-    for topState in tree
+    for topState in @tree
       walk topState, (state, parent) =>
         node = {
           id: state.id
@@ -166,7 +175,7 @@ class force.Layout
         node.parent = if parent? then @nodeMap[parent.id] else @top
         node.parent.children.push(node)
 
-    for topState in tree
+    for topState in @tree
       walk topState, (state) =>
         for tr in state.transitions or []
           [a, c, b] = path(@nodeMap[state.id], @nodeMap[tr.target])
@@ -195,7 +204,7 @@ class force.Layout
             label: label
           })
 
-    defs.append('marker')
+    @defs.append('marker')
         .attr('id', (_arrow_id = nextId()))
         .attr('refX', '7')
         .attr('refY', '5')
@@ -206,7 +215,7 @@ class force.Layout
         .attr('d', 'M 0 0 L 10 5 L 0 10 z')
         .attr('class', 'arrow')
 
-    cell = container.selectAll('.cell')
+    cell = @container.selectAll('.cell')
         .data(@cells)
       .enter().append('g')
         .attr('class', (cell) -> "cell cell-#{cell.type or 'state'}")
@@ -227,7 +236,7 @@ class force.Layout
           node.textWidth = d3.min([$(@).width() + 2 * ROUND_CORNER, LABEL_SPACE])
           node.w = d3.max([node.w, node.textWidth])
 
-    transition = container.selectAll('.transition')
+    transition = @container.selectAll('.transition')
         .data(@transitions)
       .enter().append('g')
         .attr('class', 'transition')
@@ -239,8 +248,8 @@ class force.Layout
         .attr('class', 'transition-label')
         .text((tr) -> tr.label)
 
-    if debug
-      control = container.selectAll('.control')
+    if @debug
+      control = @container.selectAll('.control')
           .data(@controls)
         .enter().append('circle')
           .attr('class', 'control')
@@ -274,7 +283,7 @@ class force.Layout
           lock.node = null
           node.fixed = false
 
-    container.selectAll('.cell')
+    @container.selectAll('.cell')
         .on 'mouseover', (node) =>
           if lock.drag then return
           if lock.node then lock.node.fixed = false
@@ -290,11 +299,11 @@ class force.Layout
         .call(drag)
 
     render = =>
-      container.selectAll('.cell')
+      @container.selectAll('.cell')
           .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
           .classed('fixed', (node) -> node.fixed)
 
-      container.selectAll('.cell').each (node) ->
+      @container.selectAll('.cell').each (node) ->
           d3.select(this).select('rect')
               .attr('x', - node.w / 2)
               .attr('y', - node.h / 2)
@@ -304,7 +313,7 @@ class force.Layout
           d3.select(this).select('text')
               .attr('y', (node) -> CELL_PAD.top - node.h / 2 - 5)
 
-      container.selectAll('.selfie').remove()
+      @container.selectAll('.selfie').remove()
 
       transition
           .classed('highlight', (tr) -> tr.a.fixed or tr.b.fixed)
@@ -330,7 +339,7 @@ class force.Layout
           .attr('x', (tr) -> tr.c.x)
           .attr('y', (tr) -> tr.c.y)
 
-      if debug
+      if @debug
         control
             .attr('cx', (d) -> d.x)
             .attr('cy', (d) -> d.y)
@@ -347,10 +356,10 @@ class force.Layout
         walk(node, ((node) => arrange(node, tick)), null, true)
       handleCollisions(@top, {x: 0, y: 0}, tick)
 
-      if debug
-        container.selectAll('.cell .force').remove()
+      if @debug
+        @container.selectAll('.cell .force').remove()
 
-        container.selectAll('.cell')
+        @container.selectAll('.cell')
             .each (node) ->
               for force in tick.forces[node.id] or []
                 d3.select(@).append('line')
