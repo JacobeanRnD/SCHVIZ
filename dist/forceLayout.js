@@ -218,233 +218,260 @@ force.kielerLayout = function(tree) {
 };
 
 force.drawTree = function(container, defs, tree, debug) {
-  var cell, cells, control, controls, drag, layout, links, lock, nodeMap, nodes, render, top, topState, transition, transitions, _arrow_id, _i, _j, _len, _len1;
-  nodes = [];
-  controls = [];
-  cells = [];
-  nodeMap = {};
-  links = [];
-  transitions = [];
-  top = {
-    children: [],
-    controls: []
-  };
-  for (_i = 0, _len = tree.length; _i < _len; _i++) {
-    topState = tree[_i];
-    walk(topState, function(state, parent) {
-      var node;
-      node = {
-        id: state.id,
-        type: state.type || 'state',
-        x: state._initial.x,
-        y: state._initial.y,
-        w: state._initial.w,
-        h: state._initial.h,
-        children: [],
-        controls: []
-      };
-      nodes.push(node);
-      cells.push(node);
-      nodeMap[state.id] = node;
-      node.parent = parent != null ? nodeMap[parent.id] : top;
-      return node.parent.children.push(node);
-    });
-  }
-  for (_j = 0, _len1 = tree.length; _j < _len1; _j++) {
-    topState = tree[_j];
-    walk(topState, function(state) {
-      var a, b, c, label, source, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results;
-      _ref = state.transitions || [];
-      _results = [];
-      for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
-        tr = _ref[_k];
-        _ref1 = path(nodeMap[state.id], nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
-        c = {
-          transition: tr,
-          parent: c || top,
-          w: CONTROL_RADIUS,
-          h: CONTROL_RADIUS,
-          x: tr._initial.x,
-          y: tr._initial.y
+  return new force.Layout(container, defs, tree, debug);
+};
+
+force.Layout = (function() {
+  function Layout(container, defs, tree, debug) {
+    var cell, cells, control, controls, drag, layout, links, lock, nodeMap, nodes, render, top, topState, transition, transitions, _arrow_id, _i, _j, _len, _len1;
+    nodes = [];
+    controls = [];
+    cells = [];
+    nodeMap = {};
+    links = [];
+    transitions = [];
+    top = {
+      children: [],
+      controls: []
+    };
+    for (_i = 0, _len = tree.length; _i < _len; _i++) {
+      topState = tree[_i];
+      walk(topState, (function(_this) {
+        return function(state, parent) {
+          var node;
+          node = {
+            id: state.id,
+            type: state.type || 'state',
+            x: state._initial.x,
+            y: state._initial.y,
+            w: state._initial.w,
+            h: state._initial.h,
+            children: [],
+            controls: []
+          };
+          nodes.push(node);
+          cells.push(node);
+          nodeMap[state.id] = node;
+          node.parent = parent != null ? nodeMap[parent.id] : top;
+          return node.parent.children.push(node);
         };
-        c.parent.controls.push(c);
-        nodes.push(c);
-        controls.push(c);
-        _ref2 = d3.pairs([a, c, b]);
-        for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
-          _ref3 = _ref2[_l], source = _ref3[0], target = _ref3[1];
-          links.push({
-            source: source,
-            target: target
+      })(this));
+    }
+    for (_j = 0, _len1 = tree.length; _j < _len1; _j++) {
+      topState = tree[_j];
+      walk(topState, (function(_this) {
+        return function(state) {
+          var a, b, c, label, source, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results;
+          _ref = state.transitions || [];
+          _results = [];
+          for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
+            tr = _ref[_k];
+            _ref1 = path(nodeMap[state.id], nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
+            c = {
+              transition: tr,
+              parent: c || top,
+              w: CONTROL_RADIUS,
+              h: CONTROL_RADIUS,
+              x: tr._initial.x,
+              y: tr._initial.y
+            };
+            c.parent.controls.push(c);
+            nodes.push(c);
+            controls.push(c);
+            _ref2 = d3.pairs([a, c, b]);
+            for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
+              _ref3 = _ref2[_l], source = _ref3[0], target = _ref3[1];
+              links.push({
+                source: source,
+                target: target
+              });
+            }
+            label = tr.event || '';
+            _results.push(transitions.push({
+              a: a,
+              b: b,
+              c: c,
+              selfie: state.id === tr.target,
+              label: label
+            }));
+          }
+          return _results;
+        };
+      })(this));
+    }
+    defs.append('marker').attr('id', (_arrow_id = nextId())).attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
+    cell = container.selectAll('.cell').data(cells).enter().append('g').attr('class', function(cell) {
+      return "cell cell-" + (cell.type || 'state');
+    }).classed('parallel-child', function(cell) {
+      return cell.parent.type === 'parallel';
+    });
+    cell.append('rect').attr('class', 'border').attr('x', function(node) {
+      return -node.w / 2;
+    }).attr('y', function(node) {
+      return -node.h / 2;
+    }).attr('width', function(node) {
+      return node.w;
+    }).attr('height', function(node) {
+      return node.h;
+    }).attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
+    cell.append('text').text(function(node) {
+      return node.id;
+    }).each(function(node) {
+      node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
+      return node.w = d3.max([node.w, node.textWidth]);
+    });
+    transition = container.selectAll('.transition').data(transitions).enter().append('g').attr('class', 'transition');
+    transition.append('path').attr('style', "marker-end: url(#" + _arrow_id + ")");
+    transition.append('text').attr('class', 'transition-label').text(function(tr) {
+      return tr.label;
+    });
+    if (debug) {
+      control = container.selectAll('.control').data(controls).enter().append('circle').attr('class', 'control').attr('r', CONTROL_RADIUS);
+    }
+    layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(nodes).links(links).start();
+    lock = {
+      node: null,
+      drag: false
+    };
+    drag = d3.behavior.drag().origin(function(node) {
+      return node;
+    }).on('dragstart', (function(_this) {
+      return function(node) {
+        d3.event.sourceEvent.stopPropagation();
+        (lock.node = node).fixed = true;
+        return lock.drag = true;
+      };
+    })(this)).on('drag', (function(_this) {
+      return function(node) {
+        d3.event.sourceEvent.stopPropagation();
+        node.px = d3.event.x;
+        node.py = d3.event.y;
+        return layout.resume();
+      };
+    })(this)).on('dragend', (function(_this) {
+      return function(node) {
+        d3.event.sourceEvent.stopPropagation();
+        lock.drag = false;
+        lock.node = null;
+        return node.fixed = false;
+      };
+    })(this));
+    container.selectAll('.cell').on('mouseover', (function(_this) {
+      return function(node) {
+        if (lock.drag) {
+          return;
+        }
+        if (lock.node) {
+          lock.node.fixed = false;
+        }
+        (lock.node = node).fixed = true;
+        node.px = node.x;
+        node.py = node.y;
+        return render();
+      };
+    })(this)).on('mouseout', (function(_this) {
+      return function(node) {
+        if (lock.drag) {
+          return;
+        }
+        lock.node = null;
+        node.fixed = false;
+        return render();
+      };
+    })(this)).call(drag);
+    render = (function(_this) {
+      return function() {
+        container.selectAll('.cell').attr('transform', function(node) {
+          return "translate(" + node.x + "," + node.y + ")";
+        }).classed('fixed', function(node) {
+          return node.fixed;
+        });
+        container.selectAll('.cell').each(function(node) {
+          d3.select(this).select('rect').attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
+          return d3.select(this).select('text').attr('y', function(node) {
+            return CELL_PAD.top - node.h / 2 - 5;
+          });
+        });
+        container.selectAll('.selfie').remove();
+        transition.classed('highlight', function(tr) {
+          return tr.a.fixed || tr.b.fixed;
+        }).selectAll('path').attr('d', function(tr) {
+          var a, b, c, c1, c2, h, s, t, w, _ref;
+          _ref = [tr.a, tr.b, tr.c], a = _ref[0], b = _ref[1], c = _ref[2];
+          if (tr.selfie) {
+            w = c.x - a.x;
+            h = c.y - a.y;
+            c1 = {
+              x: c.x - h / 2,
+              y: c.y + w / 2
+            };
+            c2 = {
+              x: c.x + h / 2,
+              y: c.y - w / 2
+            };
+            s = exit(a, c1);
+            t = exit(b, c2);
+            return "M" + s.x + "," + s.y + " C" + c1.x + "," + c1.y + " " + c2.x + "," + c2.y + " " + t.x + "," + t.y;
+          } else {
+            s = exit(a, c);
+            t = exit(b, c);
+            return "M" + s.x + "," + s.y + " S" + c.x + "," + c.y + " " + t.x + "," + t.y;
+          }
+        });
+        transition.selectAll('text').attr('x', function(tr) {
+          return tr.c.x;
+        }).attr('y', function(tr) {
+          return tr.c.y;
+        });
+        if (debug) {
+          return control.attr('cx', function(d) {
+            return d.x;
+          }).attr('cy', function(d) {
+            return d.y;
           });
         }
-        label = tr.event || '';
-        _results.push(transitions.push({
-          a: a,
-          b: b,
-          c: c,
-          selfie: state.id === tr.target,
-          label: label
-        }));
-      }
-      return _results;
-    });
-  }
-  defs.append('marker').attr('id', (_arrow_id = nextId())).attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
-  cell = container.selectAll('.cell').data(cells).enter().append('g').attr('class', function(cell) {
-    return "cell cell-" + (cell.type || 'state');
-  }).classed('parallel-child', function(cell) {
-    return cell.parent.type === 'parallel';
-  });
-  cell.append('rect').attr('class', 'border').attr('x', function(node) {
-    return -node.w / 2;
-  }).attr('y', function(node) {
-    return -node.h / 2;
-  }).attr('width', function(node) {
-    return node.w;
-  }).attr('height', function(node) {
-    return node.h;
-  }).attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
-  cell.append('text').text(function(node) {
-    return node.id;
-  }).each(function(node) {
-    node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
-    return node.w = d3.max([node.w, node.textWidth]);
-  });
-  transition = container.selectAll('.transition').data(transitions).enter().append('g').attr('class', 'transition');
-  transition.append('path').attr('style', "marker-end: url(#" + _arrow_id + ")");
-  transition.append('text').attr('class', 'transition-label').text(function(tr) {
-    return tr.label;
-  });
-  if (debug) {
-    control = container.selectAll('.control').data(controls).enter().append('circle').attr('class', 'control').attr('r', CONTROL_RADIUS);
-  }
-  layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(nodes).links(links).start();
-  lock = {
-    node: null,
-    drag: false
-  };
-  drag = d3.behavior.drag().origin(function(node) {
-    return node;
-  }).on('dragstart', function(node) {
-    d3.event.sourceEvent.stopPropagation();
-    (lock.node = node).fixed = true;
-    return lock.drag = true;
-  }).on('drag', function(node) {
-    d3.event.sourceEvent.stopPropagation();
-    node.px = d3.event.x;
-    node.py = d3.event.y;
-    return layout.resume();
-  }).on('dragend', function(node) {
-    d3.event.sourceEvent.stopPropagation();
-    lock.drag = false;
-    lock.node = null;
-    return node.fixed = false;
-  });
-  container.selectAll('.cell').on('mouseover', function(node) {
-    if (lock.drag) {
-      return;
-    }
-    if (lock.node) {
-      lock.node.fixed = false;
-    }
-    (lock.node = node).fixed = true;
-    node.px = node.x;
-    node.py = node.y;
-    return render();
-  }).on('mouseout', function(node) {
-    if (lock.drag) {
-      return;
-    }
-    lock.node = null;
-    node.fixed = false;
-    return render();
-  }).call(drag);
-  render = function() {
-    container.selectAll('.cell').attr('transform', function(node) {
-      return "translate(" + node.x + "," + node.y + ")";
-    }).classed('fixed', function(node) {
-      return node.fixed;
-    });
-    container.selectAll('.cell').each(function(node) {
-      d3.select(this).select('rect').attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
-      return d3.select(this).select('text').attr('y', function(node) {
-        return CELL_PAD.top - node.h / 2 - 5;
-      });
-    });
-    container.selectAll('.selfie').remove();
-    transition.classed('highlight', function(tr) {
-      return tr.a.fixed || tr.b.fixed;
-    }).selectAll('path').attr('d', function(tr) {
-      var a, b, c, c1, c2, h, s, t, w, _ref;
-      _ref = [tr.a, tr.b, tr.c], a = _ref[0], b = _ref[1], c = _ref[2];
-      if (tr.selfie) {
-        w = c.x - a.x;
-        h = c.y - a.y;
-        c1 = {
-          x: c.x - h / 2,
-          y: c.y + w / 2
+      };
+    })(this);
+    layout.on('tick', (function(_this) {
+      return function() {
+        var node, tick, _k, _len2, _ref;
+        render();
+        tick = {
+          gravity: layout.alpha() * 0.1,
+          forces: {}
         };
-        c2 = {
-          x: c.x + h / 2,
-          y: c.y - w / 2
-        };
-        s = exit(a, c1);
-        t = exit(b, c2);
-        return "M" + s.x + "," + s.y + " C" + c1.x + "," + c1.y + " " + c2.x + "," + c2.y + " " + t.x + "," + t.y;
-      } else {
-        s = exit(a, c);
-        t = exit(b, c);
-        return "M" + s.x + "," + s.y + " S" + c.x + "," + c.y + " " + t.x + "," + t.y;
-      }
-    });
-    transition.selectAll('text').attr('x', function(tr) {
-      return tr.c.x;
-    }).attr('y', function(tr) {
-      return tr.c.y;
-    });
-    if (debug) {
-      return control.attr('cx', function(d) {
-        return d.x;
-      }).attr('cy', function(d) {
-        return d.y;
-      });
-    }
-  };
-  layout.on('tick', function() {
-    var node, tick, _k, _len2, _ref;
-    render();
-    tick = {
-      gravity: layout.alpha() * 0.1,
-      forces: {}
-    };
-    _ref = top.children;
-    for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
-      node = _ref[_k];
-      walk(node, (function(node) {
-        return arrange(node, tick);
-      }), null, true);
-    }
-    handleCollisions(top, {
-      x: 0,
-      y: 0
-    }, tick);
-    if (debug) {
-      container.selectAll('.cell .force').remove();
-      return container.selectAll('.cell').each(function(node) {
-        var _l, _len3, _ref1, _results;
-        _ref1 = tick.forces[node.id] || [];
-        _results = [];
-        for (_l = 0, _len3 = _ref1.length; _l < _len3; _l++) {
-          force = _ref1[_l];
-          _results.push(d3.select(this).append('line').attr('class', "force " + force.cls).attr('x1', 0).attr('y1', 0).attr('x2', force.value[0] * DEBUG_FORCE_FACTOR).attr('y2', force.value[1] * DEBUG_FORCE_FACTOR));
+        _ref = top.children;
+        for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
+          node = _ref[_k];
+          walk(node, (function(node) {
+            return arrange(node, tick);
+          }), null, true);
         }
-        return _results;
-      });
-    }
-  });
-  return render();
-};
+        handleCollisions(top, {
+          x: 0,
+          y: 0
+        }, tick);
+        if (debug) {
+          container.selectAll('.cell .force').remove();
+          return container.selectAll('.cell').each(function(node) {
+            var _l, _len3, _ref1, _results;
+            _ref1 = tick.forces[node.id] || [];
+            _results = [];
+            for (_l = 0, _len3 = _ref1.length; _l < _len3; _l++) {
+              force = _ref1[_l];
+              _results.push(d3.select(this).append('line').attr('class', "force " + force.cls).attr('x1', 0).attr('y1', 0).attr('x2', force.value[0] * DEBUG_FORCE_FACTOR).attr('y2', force.value[1] * DEBUG_FORCE_FACTOR));
+            }
+            return _results;
+          });
+        }
+      };
+    })(this));
+    render();
+  }
+
+  return Layout;
+
+})();
 
 arrange = function(node, tick) {
   var dx, dy, grow, xMax, xMin, yMax, yMin;

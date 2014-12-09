@@ -131,230 +131,236 @@ force.kielerLayout = (tree) ->
 
 
 force.drawTree = (container, defs, tree, debug) ->
-  nodes = []
-  controls = []
-  cells = []
-  nodeMap = {}
-  links = []
-  transitions = []
-  top = {
-    children: []
-    controls: []
-  }
+  new force.Layout(container, defs, tree, debug)
 
-  for topState in tree
-    walk topState, (state, parent) ->
-      node = {
-        id: state.id
-        type: state.type or 'state'
-        x: state._initial.x
-        y: state._initial.y
-        w: state._initial.w
-        h: state._initial.h
-        children: []
-        controls: []
-      }
-      nodes.push(node)
-      cells.push(node)
-      nodeMap[state.id] = node
-      node.parent = if parent? then nodeMap[parent.id] else top
-      node.parent.children.push(node)
 
-  for topState in tree
-    walk topState, (state) ->
-      for tr in state.transitions or []
-        [a, c, b] = path(nodeMap[state.id], nodeMap[tr.target])
-        c = {
-          transition: tr
-          parent: c or top
-          w: CONTROL_RADIUS
-          h: CONTROL_RADIUS
-          x: tr._initial.x
-          y: tr._initial.y
-        }
-        c.parent.controls.push(c)
-        nodes.push(c)
-        controls.push(c)
-        for [source, target] in d3.pairs([a, c, b])
-          links.push(
-            source: source
-            target: target
-          )
-        label = tr.event or ''
-        transitions.push({
-          a: a
-          b: b
-          c: c
-          selfie: state.id == tr.target
-          label: label
-        })
+class force.Layout
 
-  defs.append('marker')
-      .attr('id', (_arrow_id = nextId()))
-      .attr('refX', '7')
-      .attr('refY', '5')
-      .attr('markerWidth', '10')
-      .attr('markerHeight', '10')
-      .attr('orient', 'auto')
-    .append('path')
-      .attr('d', 'M 0 0 L 10 5 L 0 10 z')
-      .attr('class', 'arrow')
-
-  cell = container.selectAll('.cell')
-      .data(cells)
-    .enter().append('g')
-      .attr('class', (cell) -> "cell cell-#{cell.type or 'state'}")
-      .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
-
-  cell.append('rect')
-      .attr('class', 'border')
-      .attr('x', (node) -> - node.w / 2)
-      .attr('y', (node) -> - node.h / 2)
-      .attr('width', (node) -> node.w)
-      .attr('height', (node) -> node.h)
-      .attr('rx', ROUND_CORNER)
-      .attr('ry', ROUND_CORNER)
-
-  cell.append('text')
-      .text((node) -> node.id)
-      .each (node) ->
-        node.textWidth = d3.min([$(@).width() + 2 * ROUND_CORNER, LABEL_SPACE])
-        node.w = d3.max([node.w, node.textWidth])
-
-  transition = container.selectAll('.transition')
-      .data(transitions)
-    .enter().append('g')
-      .attr('class', 'transition')
-
-  transition.append('path')
-      .attr('style', "marker-end: url(##{_arrow_id})")
-
-  transition.append('text')
-      .attr('class', 'transition-label')
-      .text((tr) -> tr.label)
-
-  if debug
-    control = container.selectAll('.control')
-        .data(controls)
-      .enter().append('circle')
-        .attr('class', 'control')
-        .attr('r', CONTROL_RADIUS)
-
-  layout = d3.layout.force()
-      .charge(0)
-      .gravity(0)
-      .linkStrength(LINK_STRENGTH)
-      .linkDistance(LINK_DISTANCE)
-      .nodes(nodes)
-      .links(links)
-      .start()
-
-  lock = {node: null, drag: false}
-
-  drag = d3.behavior.drag()
-      .origin((node) -> node)
-      .on 'dragstart', (node) ->
-        d3.event.sourceEvent.stopPropagation()
-        (lock.node = node).fixed = true
-        lock.drag = true
-      .on 'drag', (node) ->
-        d3.event.sourceEvent.stopPropagation()
-        node.px = d3.event.x
-        node.py = d3.event.y
-        layout.resume()
-      .on 'dragend', (node) ->
-        d3.event.sourceEvent.stopPropagation()
-        lock.drag = false
-        lock.node = null
-        node.fixed = false
-
-  container.selectAll('.cell')
-      .on 'mouseover', (node) ->
-        if lock.drag then return
-        if lock.node then lock.node.fixed = false
-        (lock.node = node).fixed = true
-        node.px = node.x
-        node.py = node.y
-        render()
-      .on 'mouseout', (node) ->
-        if lock.drag then return
-        lock.node = null
-        node.fixed = false
-        render()
-      .call(drag)
-
-  render = ->
-    container.selectAll('.cell')
-        .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
-        .classed('fixed', (node) -> node.fixed)
-
-    container.selectAll('.cell').each (node) ->
-        d3.select(this).select('rect')
-            .attr('x', - node.w / 2)
-            .attr('y', - node.h / 2)
-            .attr('width', node.w)
-            .attr('height', node.h)
-
-        d3.select(this).select('text')
-            .attr('y', (node) -> CELL_PAD.top - node.h / 2 - 5)
-
-    container.selectAll('.selfie').remove()
-
-    transition
-        .classed('highlight', (tr) -> tr.a.fixed or tr.b.fixed)
-      .selectAll('path')
-        .attr 'd', (tr) ->
-          [a, b, c] = [tr.a, tr.b, tr.c]
-
-          if tr.selfie
-            w = c.x - a.x
-            h = c.y - a.y
-            c1 = {x: c.x - h/2, y: c.y + w/2}
-            c2 = {x: c.x + h/2, y: c.y - w/2}
-            s = exit(a, c1)
-            t = exit(b, c2)
-            return "M#{s.x},#{s.y} C#{c1.x},#{c1.y} #{c2.x},#{c2.y} #{t.x},#{t.y}"
-
-          else
-            s = exit(a, c)
-            t = exit(b, c)
-            return "M#{s.x},#{s.y} S#{c.x},#{c.y} #{t.x},#{t.y}"
-
-    transition.selectAll('text')
-        .attr('x', (tr) -> tr.c.x)
-        .attr('y', (tr) -> tr.c.y)
-
-    if debug
-      control
-          .attr('cx', (d) -> d.x)
-          .attr('cy', (d) -> d.y)
-
-  layout.on 'tick', ->
-    render()
-
-    tick = {
-      gravity: layout.alpha() * 0.1
-      forces: {}
+  constructor: (container, defs, tree, debug) ->
+    nodes = []
+    controls = []
+    cells = []
+    nodeMap = {}
+    links = []
+    transitions = []
+    top = {
+      children: []
+      controls: []
     }
 
-    for node in top.children
-      walk(node, ((node) -> arrange(node, tick)), null, true)
-    handleCollisions(top, {x: 0, y: 0}, tick)
+    for topState in tree
+      walk topState, (state, parent) =>
+        node = {
+          id: state.id
+          type: state.type or 'state'
+          x: state._initial.x
+          y: state._initial.y
+          w: state._initial.w
+          h: state._initial.h
+          children: []
+          controls: []
+        }
+        nodes.push(node)
+        cells.push(node)
+        nodeMap[state.id] = node
+        node.parent = if parent? then nodeMap[parent.id] else top
+        node.parent.children.push(node)
+
+    for topState in tree
+      walk topState, (state) =>
+        for tr in state.transitions or []
+          [a, c, b] = path(nodeMap[state.id], nodeMap[tr.target])
+          c = {
+            transition: tr
+            parent: c or top
+            w: CONTROL_RADIUS
+            h: CONTROL_RADIUS
+            x: tr._initial.x
+            y: tr._initial.y
+          }
+          c.parent.controls.push(c)
+          nodes.push(c)
+          controls.push(c)
+          for [source, target] in d3.pairs([a, c, b])
+            links.push(
+              source: source
+              target: target
+            )
+          label = tr.event or ''
+          transitions.push({
+            a: a
+            b: b
+            c: c
+            selfie: state.id == tr.target
+            label: label
+          })
+
+    defs.append('marker')
+        .attr('id', (_arrow_id = nextId()))
+        .attr('refX', '7')
+        .attr('refY', '5')
+        .attr('markerWidth', '10')
+        .attr('markerHeight', '10')
+        .attr('orient', 'auto')
+      .append('path')
+        .attr('d', 'M 0 0 L 10 5 L 0 10 z')
+        .attr('class', 'arrow')
+
+    cell = container.selectAll('.cell')
+        .data(cells)
+      .enter().append('g')
+        .attr('class', (cell) -> "cell cell-#{cell.type or 'state'}")
+        .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
+
+    cell.append('rect')
+        .attr('class', 'border')
+        .attr('x', (node) -> - node.w / 2)
+        .attr('y', (node) -> - node.h / 2)
+        .attr('width', (node) -> node.w)
+        .attr('height', (node) -> node.h)
+        .attr('rx', ROUND_CORNER)
+        .attr('ry', ROUND_CORNER)
+
+    cell.append('text')
+        .text((node) -> node.id)
+        .each (node) ->
+          node.textWidth = d3.min([$(@).width() + 2 * ROUND_CORNER, LABEL_SPACE])
+          node.w = d3.max([node.w, node.textWidth])
+
+    transition = container.selectAll('.transition')
+        .data(transitions)
+      .enter().append('g')
+        .attr('class', 'transition')
+
+    transition.append('path')
+        .attr('style', "marker-end: url(##{_arrow_id})")
+
+    transition.append('text')
+        .attr('class', 'transition-label')
+        .text((tr) -> tr.label)
 
     if debug
-      container.selectAll('.cell .force').remove()
+      control = container.selectAll('.control')
+          .data(controls)
+        .enter().append('circle')
+          .attr('class', 'control')
+          .attr('r', CONTROL_RADIUS)
 
+    layout = d3.layout.force()
+        .charge(0)
+        .gravity(0)
+        .linkStrength(LINK_STRENGTH)
+        .linkDistance(LINK_DISTANCE)
+        .nodes(nodes)
+        .links(links)
+        .start()
+
+    lock = {node: null, drag: false}
+
+    drag = d3.behavior.drag()
+        .origin((node) -> node)
+        .on 'dragstart', (node) =>
+          d3.event.sourceEvent.stopPropagation()
+          (lock.node = node).fixed = true
+          lock.drag = true
+        .on 'drag', (node) =>
+          d3.event.sourceEvent.stopPropagation()
+          node.px = d3.event.x
+          node.py = d3.event.y
+          layout.resume()
+        .on 'dragend', (node) =>
+          d3.event.sourceEvent.stopPropagation()
+          lock.drag = false
+          lock.node = null
+          node.fixed = false
+
+    container.selectAll('.cell')
+        .on 'mouseover', (node) =>
+          if lock.drag then return
+          if lock.node then lock.node.fixed = false
+          (lock.node = node).fixed = true
+          node.px = node.x
+          node.py = node.y
+          render()
+        .on 'mouseout', (node) =>
+          if lock.drag then return
+          lock.node = null
+          node.fixed = false
+          render()
+        .call(drag)
+
+    render = =>
       container.selectAll('.cell')
-          .each (node) ->
-            for force in tick.forces[node.id] or []
-              d3.select(@).append('line')
-                  .attr('class', "force #{force.cls}")
-                  .attr('x1', 0)
-                  .attr('y1', 0)
-                  .attr('x2', force.value[0] * DEBUG_FORCE_FACTOR)
-                  .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
+          .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
+          .classed('fixed', (node) -> node.fixed)
 
-  render()
+      container.selectAll('.cell').each (node) ->
+          d3.select(this).select('rect')
+              .attr('x', - node.w / 2)
+              .attr('y', - node.h / 2)
+              .attr('width', node.w)
+              .attr('height', node.h)
+
+          d3.select(this).select('text')
+              .attr('y', (node) -> CELL_PAD.top - node.h / 2 - 5)
+
+      container.selectAll('.selfie').remove()
+
+      transition
+          .classed('highlight', (tr) -> tr.a.fixed or tr.b.fixed)
+        .selectAll('path')
+          .attr 'd', (tr) ->
+            [a, b, c] = [tr.a, tr.b, tr.c]
+
+            if tr.selfie
+              w = c.x - a.x
+              h = c.y - a.y
+              c1 = {x: c.x - h/2, y: c.y + w/2}
+              c2 = {x: c.x + h/2, y: c.y - w/2}
+              s = exit(a, c1)
+              t = exit(b, c2)
+              return "M#{s.x},#{s.y} C#{c1.x},#{c1.y} #{c2.x},#{c2.y} #{t.x},#{t.y}"
+
+            else
+              s = exit(a, c)
+              t = exit(b, c)
+              return "M#{s.x},#{s.y} S#{c.x},#{c.y} #{t.x},#{t.y}"
+
+      transition.selectAll('text')
+          .attr('x', (tr) -> tr.c.x)
+          .attr('y', (tr) -> tr.c.y)
+
+      if debug
+        control
+            .attr('cx', (d) -> d.x)
+            .attr('cy', (d) -> d.y)
+
+    layout.on 'tick', =>
+      render()
+
+      tick = {
+        gravity: layout.alpha() * 0.1
+        forces: {}
+      }
+
+      for node in top.children
+        walk(node, ((node) => arrange(node, tick)), null, true)
+      handleCollisions(top, {x: 0, y: 0}, tick)
+
+      if debug
+        container.selectAll('.cell .force').remove()
+
+        container.selectAll('.cell')
+            .each (node) ->
+              for force in tick.forces[node.id] or []
+                d3.select(@).append('line')
+                    .attr('class', "force #{force.cls}")
+                    .attr('x1', 0)
+                    .attr('y1', 0)
+                    .attr('x2', force.value[0] * DEBUG_FORCE_FACTOR)
+                    .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
+
+    render()
 
 
 arrange = (node, tick) ->
