@@ -223,14 +223,14 @@ force.drawTree = function(container, defs, tree, debug) {
 
 force.Layout = (function() {
   function Layout(container, defs, tree, debug) {
-    var cell, cells, control, controls, drag, layout, links, lock, nodeMap, nodes, render, top, topState, transition, transitions, _arrow_id, _i, _j, _len, _len1;
-    nodes = [];
-    controls = [];
-    cells = [];
-    nodeMap = {};
-    links = [];
-    transitions = [];
-    top = {
+    var cell, control, drag, layout, lock, render, topState, transition, _arrow_id, _i, _j, _len, _len1;
+    this.nodes = [];
+    this.controls = [];
+    this.cells = [];
+    this.nodeMap = {};
+    this.links = [];
+    this.transitions = [];
+    this.top = {
       children: [],
       controls: []
     };
@@ -249,10 +249,10 @@ force.Layout = (function() {
             children: [],
             controls: []
           };
-          nodes.push(node);
-          cells.push(node);
-          nodeMap[state.id] = node;
-          node.parent = parent != null ? nodeMap[parent.id] : top;
+          _this.nodes.push(node);
+          _this.cells.push(node);
+          _this.nodeMap[state.id] = node;
+          node.parent = parent != null ? _this.nodeMap[parent.id] : _this.top;
           return node.parent.children.push(node);
         };
       })(this));
@@ -266,28 +266,28 @@ force.Layout = (function() {
           _results = [];
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
             tr = _ref[_k];
-            _ref1 = path(nodeMap[state.id], nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
+            _ref1 = path(_this.nodeMap[state.id], _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
             c = {
               transition: tr,
-              parent: c || top,
+              parent: c || _this.top,
               w: CONTROL_RADIUS,
               h: CONTROL_RADIUS,
               x: tr._initial.x,
               y: tr._initial.y
             };
             c.parent.controls.push(c);
-            nodes.push(c);
-            controls.push(c);
+            _this.nodes.push(c);
+            _this.controls.push(c);
             _ref2 = d3.pairs([a, c, b]);
             for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
               _ref3 = _ref2[_l], source = _ref3[0], target = _ref3[1];
-              links.push({
+              _this.links.push({
                 source: source,
                 target: target
               });
             }
             label = tr.event || '';
-            _results.push(transitions.push({
+            _results.push(_this.transitions.push({
               a: a,
               b: b,
               c: c,
@@ -300,7 +300,7 @@ force.Layout = (function() {
       })(this));
     }
     defs.append('marker').attr('id', (_arrow_id = nextId())).attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
-    cell = container.selectAll('.cell').data(cells).enter().append('g').attr('class', function(cell) {
+    cell = container.selectAll('.cell').data(this.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state');
     }).classed('parallel-child', function(cell) {
       return cell.parent.type === 'parallel';
@@ -320,15 +320,15 @@ force.Layout = (function() {
       node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
       return node.w = d3.max([node.w, node.textWidth]);
     });
-    transition = container.selectAll('.transition').data(transitions).enter().append('g').attr('class', 'transition');
+    transition = container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition');
     transition.append('path').attr('style', "marker-end: url(#" + _arrow_id + ")");
     transition.append('text').attr('class', 'transition-label').text(function(tr) {
       return tr.label;
     });
     if (debug) {
-      control = container.selectAll('.control').data(controls).enter().append('circle').attr('class', 'control').attr('r', CONTROL_RADIUS);
+      control = container.selectAll('.control').data(this.controls).enter().append('circle').attr('class', 'control').attr('r', CONTROL_RADIUS);
     }
-    layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(nodes).links(links).start();
+    layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start();
     lock = {
       node: null,
       drag: false
@@ -440,14 +440,14 @@ force.Layout = (function() {
           gravity: layout.alpha() * 0.1,
           forces: {}
         };
-        _ref = top.children;
+        _ref = _this.top.children;
         for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
           node = _ref[_k];
           walk(node, (function(node) {
             return arrange(node, tick);
           }), null, true);
         }
-        handleCollisions(top, {
+        handleCollisions(_this.top, {
           x: 0,
           y: 0
         }, tick);

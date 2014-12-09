@@ -137,13 +137,13 @@ force.drawTree = (container, defs, tree, debug) ->
 class force.Layout
 
   constructor: (container, defs, tree, debug) ->
-    nodes = []
-    controls = []
-    cells = []
-    nodeMap = {}
-    links = []
-    transitions = []
-    top = {
+    @nodes = []
+    @controls = []
+    @cells = []
+    @nodeMap = {}
+    @links = []
+    @transitions = []
+    @top = {
       children: []
       controls: []
     }
@@ -160,34 +160,34 @@ class force.Layout
           children: []
           controls: []
         }
-        nodes.push(node)
-        cells.push(node)
-        nodeMap[state.id] = node
-        node.parent = if parent? then nodeMap[parent.id] else top
+        @nodes.push(node)
+        @cells.push(node)
+        @nodeMap[state.id] = node
+        node.parent = if parent? then @nodeMap[parent.id] else @top
         node.parent.children.push(node)
 
     for topState in tree
       walk topState, (state) =>
         for tr in state.transitions or []
-          [a, c, b] = path(nodeMap[state.id], nodeMap[tr.target])
+          [a, c, b] = path(@nodeMap[state.id], @nodeMap[tr.target])
           c = {
             transition: tr
-            parent: c or top
+            parent: c or @top
             w: CONTROL_RADIUS
             h: CONTROL_RADIUS
             x: tr._initial.x
             y: tr._initial.y
           }
           c.parent.controls.push(c)
-          nodes.push(c)
-          controls.push(c)
+          @nodes.push(c)
+          @controls.push(c)
           for [source, target] in d3.pairs([a, c, b])
-            links.push(
+            @links.push(
               source: source
               target: target
             )
           label = tr.event or ''
-          transitions.push({
+          @transitions.push({
             a: a
             b: b
             c: c
@@ -207,7 +207,7 @@ class force.Layout
         .attr('class', 'arrow')
 
     cell = container.selectAll('.cell')
-        .data(cells)
+        .data(@cells)
       .enter().append('g')
         .attr('class', (cell) -> "cell cell-#{cell.type or 'state'}")
         .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
@@ -228,7 +228,7 @@ class force.Layout
           node.w = d3.max([node.w, node.textWidth])
 
     transition = container.selectAll('.transition')
-        .data(transitions)
+        .data(@transitions)
       .enter().append('g')
         .attr('class', 'transition')
 
@@ -241,7 +241,7 @@ class force.Layout
 
     if debug
       control = container.selectAll('.control')
-          .data(controls)
+          .data(@controls)
         .enter().append('circle')
           .attr('class', 'control')
           .attr('r', CONTROL_RADIUS)
@@ -251,8 +251,8 @@ class force.Layout
         .gravity(0)
         .linkStrength(LINK_STRENGTH)
         .linkDistance(LINK_DISTANCE)
-        .nodes(nodes)
-        .links(links)
+        .nodes(@nodes)
+        .links(@links)
         .start()
 
     lock = {node: null, drag: false}
@@ -343,9 +343,9 @@ class force.Layout
         forces: {}
       }
 
-      for node in top.children
+      for node in @top.children
         walk(node, ((node) => arrange(node, tick)), null, true)
-      handleCollisions(top, {x: 0, y: 0}, tick)
+      handleCollisions(@top, {x: 0, y: 0}, tick)
 
       if debug
         container.selectAll('.cell .force').remove()
