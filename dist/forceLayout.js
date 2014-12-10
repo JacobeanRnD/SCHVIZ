@@ -344,15 +344,7 @@ force.Layout = (function() {
     }).classed('parallel-child', function(cell) {
       return cell.parent.type === 'parallel';
     });
-    cell.append('rect').attr('class', 'border').attr('x', function(node) {
-      return -node.w / 2;
-    }).attr('y', function(node) {
-      return -node.h / 2;
-    }).attr('width', function(node) {
-      return node.w;
-    }).attr('height', function(node) {
-      return node.h;
-    }).attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
+    cell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
     cell.append('text').text(function(node) {
       return node.id;
     }).each(function(node) {

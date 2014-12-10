@@ -255,10 +255,6 @@ class force.Layout
 
     cell.append('rect')
         .attr('class', 'border')
-        .attr('x', (node) -> - node.w / 2)
-        .attr('y', (node) -> - node.h / 2)
-        .attr('width', (node) -> node.w)
-        .attr('height', (node) -> node.h)
         .attr('rx', ROUND_CORNER)
         .attr('ry', ROUND_CORNER)
 
