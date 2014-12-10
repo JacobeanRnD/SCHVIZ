@@ -501,7 +501,7 @@ class force.Layout
 
   start: ->
     @runSimulation = true
-    @layout.resume() if @layout?
+    @layout.start() if @layout?
 
   stop: ->
     @runSimulation = false

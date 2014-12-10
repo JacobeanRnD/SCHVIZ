@@ -642,7 +642,7 @@ force.Layout = (function() {
   Layout.prototype.start = function() {
     this.runSimulation = true;
     if (this.layout != null) {
-      return this.layout.resume();
+      return this.layout.start();
     }
   };
 
