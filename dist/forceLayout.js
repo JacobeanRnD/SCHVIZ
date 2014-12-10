@@ -191,7 +191,7 @@ applyKielerLayout = function(state, kNode, x0, y0) {
   return _results;
 };
 
-force.kielerLayout = function(tree) {
+force.kielerLayout = function(kielerURL, kielerAlgorithm, tree) {
   var form, graph;
   graph = toKielerFormat({
     id: 'root',
@@ -203,9 +203,9 @@ force.kielerLayout = function(tree) {
     iFormat: 'org.json',
     oFormat: 'org.json',
     spacing: 100,
-    algorithm: 'de.cau.cs.kieler.klay.layered'
+    algorithm: kielerAlgorithm
   };
-  return Q($.post('/kieler', form)).then(function(resp) {
+  return Q($.post(kielerURL, form)).then(function(resp) {
     var graphLayout, treeCopy;
     graphLayout = JSON.parse(resp)[0];
     treeCopy = JSON.parse(JSON.stringify(tree));
@@ -224,7 +224,7 @@ force.Layout = (function() {
     this.svgCreate(options.parent);
     this.runSimulation = false;
     tree = options.tree || treeFromXml(options.doc).sc;
-    force.kielerLayout(tree).then((function(_this) {
+    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, tree).then((function(_this) {
       return function(treeWithLayout) {
         _this.loadTree(treeWithLayout);
         _this.svgNodes();
@@ -325,6 +325,7 @@ force.Layout = (function() {
     height = $(parent).height() - 5;
     zoom = d3.behavior.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]);
     svg = d3.select(parent).append('svg').classed('force-layout', true).classed('debug', this.debug);
+    this.el = svg[0][0];
     defs = svg.append('defs');
     zoomNode = svg.append('g');
     this.container = zoomNode.call(zoom).append('g');

@@ -110,7 +110,7 @@ applyKielerLayout = (state, kNode, x0 = null, y0 = null) ->
     applyKielerLayout(child, kChild, i.x - i.w/2, i.y - i.h/2)
 
 
-force.kielerLayout = (tree) ->
+force.kielerLayout = (kielerURL, kielerAlgorithm, tree) ->
   graph = toKielerFormat({id: 'root', children: tree})
 
   form = {
@@ -119,10 +119,10 @@ force.kielerLayout = (tree) ->
     iFormat: 'org.json'
     oFormat: 'org.json'
     spacing: 100
-    algorithm: 'de.cau.cs.kieler.klay.layered'
+    algorithm: kielerAlgorithm
   }
 
-  return Q($.post('/kieler', form))
+  return Q($.post(kielerURL, form))
     .then (resp) ->
       graphLayout = JSON.parse(resp)[0]
       treeCopy = JSON.parse(JSON.stringify(tree))
@@ -138,7 +138,7 @@ class force.Layout
     @runSimulation = false
 
     tree = options.tree or treeFromXml(options.doc).sc
-    force.kielerLayout(tree)
+    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, tree)
       .then (treeWithLayout) =>
         @loadTree(treeWithLayout)
         @svgNodes()
@@ -217,6 +217,7 @@ class force.Layout
     svg = d3.select(parent).append('svg')
         .classed('force-layout', true)
         .classed('debug', @debug)
+    @el = svg[0][0]
     defs = svg.append('defs')
     zoomNode = svg.append('g')
     @container = zoomNode.call(zoom).append('g')

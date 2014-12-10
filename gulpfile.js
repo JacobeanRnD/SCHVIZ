@@ -8,15 +8,16 @@ var gulp = require('gulp'),
     proxy = require('simple-http-proxy'),
     async = require('async');
 
-var KIELER_URL = 'http://layout.rtsys.informatik.uni-kiel.de:9444/live';
+var KIELER_URL = 'http://layout.rtsys.informatik.uni-kiel.de:9444';
 
 
 function develApp() {
   var app = express(),
-      handler = proxy(KIELER_URL),
+      handler = proxy(KIELER_URL + '/live'),
       queue = async.queue(function(task, cb) { task(cb); }, 1);
 
-  app.use('/kieler', function(req, res, next) {
+  app.use('/kieler/menu', proxy(KIELER_URL + '/layout/serviceData'));
+  app.use('/kieler/layout', function(req, res, next) {
     queue.push(function(cb) {
       res.on('finish', function() { cb(); });
       handler(req, res, next);
