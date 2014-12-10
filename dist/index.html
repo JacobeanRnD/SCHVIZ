@@ -42,13 +42,11 @@ html, body { height: 100%; margin: 0; }
 
 
     function invokeLayout(options) {
-      forceLayout.render(options)
-        .done(function(layout) {
-          if(useForceLayout) { layout.start(); }
-          controls.on('force', function(start) {
-            if(start) { layout.start(); } else { layout.stop(); }
-          });
-        });
+      var layout = forceLayout.render(options)
+      if(useForceLayout) { layout.start(); }
+      controls.on('force', function(start) {
+        if(start) { layout.start(); } else { layout.stop(); }
+      });
     }
 
 

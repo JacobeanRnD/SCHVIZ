@@ -137,10 +137,12 @@ class force.Layout
     @debug = options.debug
     @runSimulation = false
 
-    @loadTree(options.tree)
-    @renderDefs(options.defs)
-    @renderTree()
-    @setupD3Layout()
+    force.kielerLayout(options.tree)
+      .then (treeWithLayout) =>
+        @loadTree(treeWithLayout)
+        @renderDefs(options.defs)
+        @renderTree()
+        @setupD3Layout()
 
   loadTree: (tree) ->
     @nodes = []
@@ -309,7 +311,8 @@ class force.Layout
         .nodes(@nodes)
         .links(@links)
         .start()
-        .stop()
+
+    @layout.stop() unless @runSimulation
 
     lock = {node: null, drag: false}
 
@@ -377,11 +380,11 @@ class force.Layout
 
   start: ->
     @runSimulation = true
-    _.defer => @layout.resume()
+    @layout.resume() if @layout?
 
   stop: ->
     @runSimulation = false
-    @layout.stop()
+    @layout.stop() if @layout?
 
 
 arrange = (node, tick) ->
@@ -511,11 +514,9 @@ force.render = (options) ->
       .translate([width / 2, height / 2])
       .event(zoomNode)
 
-  force.kielerLayout(tree)
-    .then (treeWithLayout) ->
-      new force.Layout(
-        container: container
-        defs: defs
-        tree: treeWithLayout
-        debug: debug
-      )
+  return new force.Layout(
+    container: container
+    defs: defs
+    tree: tree
+    debug: debug
+  )

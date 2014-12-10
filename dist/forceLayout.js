@@ -222,10 +222,14 @@ force.Layout = (function() {
     this.container = options.container;
     this.debug = options.debug;
     this.runSimulation = false;
-    this.loadTree(options.tree);
-    this.renderDefs(options.defs);
-    this.renderTree();
-    this.setupD3Layout();
+    force.kielerLayout(options.tree).then((function(_this) {
+      return function(treeWithLayout) {
+        _this.loadTree(treeWithLayout);
+        _this.renderDefs(options.defs);
+        _this.renderTree();
+        return _this.setupD3Layout();
+      };
+    })(this));
   }
 
   Layout.prototype.loadTree = function(tree) {
@@ -399,7 +403,10 @@ force.Layout = (function() {
 
   Layout.prototype.setupD3Layout = function() {
     var drag, lock;
-    this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start().stop();
+    this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start();
+    if (!this.runSimulation) {
+      this.layout.stop();
+    }
     lock = {
       node: null,
       drag: false
@@ -493,16 +500,16 @@ force.Layout = (function() {
 
   Layout.prototype.start = function() {
     this.runSimulation = true;
-    return _.defer((function(_this) {
-      return function() {
-        return _this.layout.resume();
-      };
-    })(this));
+    if (this.layout != null) {
+      return this.layout.resume();
+    }
   };
 
   Layout.prototype.stop = function() {
     this.runSimulation = false;
-    return this.layout.stop();
+    if (this.layout != null) {
+      return this.layout.stop();
+    }
   };
 
   return Layout;
@@ -656,13 +663,11 @@ force.render = function(options) {
     return container.attr('transform', "translate(" + e.translate + "),scale(" + e.scale + ")");
   });
   zoom.size([width, height]).translate([width / 2, height / 2]).event(zoomNode);
-  return force.kielerLayout(tree).then(function(treeWithLayout) {
-    return new force.Layout({
-      container: container,
-      defs: defs,
-      tree: treeWithLayout,
-      debug: debug
-    });
+  return new force.Layout({
+    container: container,
+    defs: defs,
+    tree: tree,
+    debug: debug
   });
 };
 
