@@ -219,10 +219,12 @@ force.kielerLayout = function(tree) {
 
 force.Layout = (function() {
   function Layout(options) {
+    var tree;
     this.debug = options.debug || false;
     this.svgCreate(options.parent);
     this.runSimulation = false;
-    force.kielerLayout(options.tree).then((function(_this) {
+    tree = options.tree || treeFromXml(options.doc).sc;
+    force.kielerLayout(tree).then((function(_this) {
       return function(treeWithLayout) {
         _this.loadTree(treeWithLayout);
         _this.svgNodes();
@@ -658,17 +660,7 @@ collide = function(node, tick) {
 };
 
 force.render = function(options) {
-  var tree;
-  if (options.tree != null) {
-    tree = options.tree;
-  } else {
-    tree = treeFromXml(options.doc).sc;
-  }
-  return new force.Layout({
-    parent: options.parent,
-    tree: tree,
-    debug: options.debug
-  });
+  return new force.Layout(options);
 };
 
 

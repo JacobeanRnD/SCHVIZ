@@ -137,7 +137,8 @@ class force.Layout
     @svgCreate(options.parent)
     @runSimulation = false
 
-    force.kielerLayout(options.tree)
+    tree = options.tree or treeFromXml(options.doc).sc
+    force.kielerLayout(tree)
       .then (treeWithLayout) =>
         @loadTree(treeWithLayout)
         @svgNodes()
@@ -507,13 +508,4 @@ collide = (node, tick) ->
 
 
 force.render = (options) ->
-  if options.tree?
-    tree = options.tree
-  else
-    tree = treeFromXml(options.doc).sc
-
-  return new force.Layout(
-    parent: options.parent
-    tree: tree
-    debug: options.debug
-  )
+  return new force.Layout(options)
