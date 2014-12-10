@@ -362,10 +362,13 @@ class force.Layout
           d3.event.sourceEvent.stopPropagation()
           node.px = d3.event.x
           node.py = d3.event.y
-          @layout.resume()
-          unless @runSimulation
-            @layout.tick()
-            @layout.stop()
+          if @runSimulation
+            @layout.resume()
+          else
+            node.x = node.px
+            node.y = node.py
+            @adjustLayout()
+            @svgUpdate()
         .on 'dragend', (node) =>
           d3.event.sourceEvent.stopPropagation()
           lock.drag = false

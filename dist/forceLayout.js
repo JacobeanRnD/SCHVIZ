@@ -448,10 +448,13 @@ force.Layout = (function() {
         d3.event.sourceEvent.stopPropagation();
         node.px = d3.event.x;
         node.py = d3.event.y;
-        _this.layout.resume();
-        if (!_this.runSimulation) {
-          _this.layout.tick();
-          return _this.layout.stop();
+        if (_this.runSimulation) {
+          return _this.layout.resume();
+        } else {
+          node.x = node.px;
+          node.y = node.py;
+          _this.adjustLayout();
+          return _this.svgUpdate();
         }
       };
     })(this)).on('dragend', (function(_this) {
