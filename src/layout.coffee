@@ -133,14 +133,13 @@ force.kielerLayout = (tree) ->
 class force.Layout
 
   constructor: (options) ->
-    @container = options.container
-    @debug = options.debug
+    @debug = options.debug or false
+    @svgCreate(options.parent)
     @runSimulation = false
 
     force.kielerLayout(options.tree)
       .then (treeWithLayout) =>
         @loadTree(treeWithLayout)
-        @svgDefs(options.defs)
         @svgNodes()
         @setupD3Layout()
 
@@ -203,7 +202,38 @@ class force.Layout
             label: label
           })
 
-  svgDefs: (defs) ->
+  svgCreate: (parent) ->
+    width = $(parent).width() - 5
+    height = $(parent).height() - 5
+
+    zoom = d3.behavior.zoom()
+        .scaleExtent([MIN_ZOOM, MAX_ZOOM])
+
+    svg = d3.select(parent).append('svg')
+        .classed('force-layout', true)
+        .classed('debug', @debug)
+    defs = svg.append('defs')
+    zoomNode = svg.append('g')
+    @container = zoomNode.call(zoom).append('g')
+    zoomRect = @container.append('rect')
+        .attr('class', 'zoomRect')
+
+    svg.attr('width', width).attr('height', height)
+
+    zoomRect
+        .attr('width', width / MIN_ZOOM)
+        .attr('height', height / MIN_ZOOM)
+        .attr('x', - width / 2 / MIN_ZOOM)
+        .attr('y', - height / 2 / MIN_ZOOM)
+
+    zoom.on 'zoom', =>
+        e = d3.event
+        @container.attr('transform', "translate(#{e.translate}),scale(#{e.scale})")
+
+    zoom.size([width, height])
+        .translate([width / 2, height / 2])
+        .event(zoomNode)
+
     defs.append('marker')
         .attr('id', (@_arrow_id = nextId()))
         .attr('refX', '7')
@@ -482,41 +512,8 @@ force.render = (options) ->
   else
     tree = treeFromXml(options.doc).sc
 
-  debug = options.debug or false
-  width = $(options.parent).width() - 5
-  height = $(options.parent).height() - 5
-
-  zoom = d3.behavior.zoom()
-      .scaleExtent([MIN_ZOOM, MAX_ZOOM])
-
-  svg = d3.select(options.parent).append('svg')
-      .classed('force-layout', true)
-      .classed('debug', debug)
-  defs = svg.append('defs')
-  zoomNode = svg.append('g')
-  container = zoomNode.call(zoom).append('g')
-  zoomRect = container.append('rect')
-      .attr('class', 'zoomRect')
-
-  svg.attr('width', width).attr('height', height)
-
-  zoomRect
-      .attr('width', width / MIN_ZOOM)
-      .attr('height', height / MIN_ZOOM)
-      .attr('x', - width / 2 / MIN_ZOOM)
-      .attr('y', - height / 2 / MIN_ZOOM)
-
-  zoom.on 'zoom', ->
-      e = d3.event
-      container.attr('transform', "translate(#{e.translate}),scale(#{e.scale})")
-
-  zoom.size([width, height])
-      .translate([width / 2, height / 2])
-      .event(zoomNode)
-
   return new force.Layout(
-    container: container
-    defs: defs
+    parent: options.parent
     tree: tree
-    debug: debug
+    debug: options.debug
   )

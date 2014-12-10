@@ -219,13 +219,12 @@ force.kielerLayout = function(tree) {
 
 force.Layout = (function() {
   function Layout(options) {
-    this.container = options.container;
-    this.debug = options.debug;
+    this.debug = options.debug || false;
+    this.svgCreate(options.parent);
     this.runSimulation = false;
     force.kielerLayout(options.tree).then((function(_this) {
       return function(treeWithLayout) {
         _this.loadTree(treeWithLayout);
-        _this.svgDefs(options.defs);
         _this.svgNodes();
         return _this.setupD3Layout();
       };
@@ -313,7 +312,26 @@ force.Layout = (function() {
     return _results;
   };
 
-  Layout.prototype.svgDefs = function(defs) {
+  Layout.prototype.svgCreate = function(parent) {
+    var defs, height, svg, width, zoom, zoomNode, zoomRect;
+    width = $(parent).width() - 5;
+    height = $(parent).height() - 5;
+    zoom = d3.behavior.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]);
+    svg = d3.select(parent).append('svg').classed('force-layout', true).classed('debug', this.debug);
+    defs = svg.append('defs');
+    zoomNode = svg.append('g');
+    this.container = zoomNode.call(zoom).append('g');
+    zoomRect = this.container.append('rect').attr('class', 'zoomRect');
+    svg.attr('width', width).attr('height', height);
+    zoomRect.attr('width', width / MIN_ZOOM).attr('height', height / MIN_ZOOM).attr('x', -width / 2 / MIN_ZOOM).attr('y', -height / 2 / MIN_ZOOM);
+    zoom.on('zoom', (function(_this) {
+      return function() {
+        var e;
+        e = d3.event;
+        return _this.container.attr('transform', "translate(" + e.translate + "),scale(" + e.scale + ")");
+      };
+    })(this));
+    zoom.size([width, height]).translate([width / 2, height / 2]).event(zoomNode);
     return defs.append('marker').attr('id', (this._arrow_id = nextId())).attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
   };
 
@@ -640,34 +658,16 @@ collide = function(node, tick) {
 };
 
 force.render = function(options) {
-  var container, debug, defs, height, svg, tree, width, zoom, zoomNode, zoomRect;
+  var tree;
   if (options.tree != null) {
     tree = options.tree;
   } else {
     tree = treeFromXml(options.doc).sc;
   }
-  debug = options.debug || false;
-  width = $(options.parent).width() - 5;
-  height = $(options.parent).height() - 5;
-  zoom = d3.behavior.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]);
-  svg = d3.select(options.parent).append('svg').classed('force-layout', true).classed('debug', debug);
-  defs = svg.append('defs');
-  zoomNode = svg.append('g');
-  container = zoomNode.call(zoom).append('g');
-  zoomRect = container.append('rect').attr('class', 'zoomRect');
-  svg.attr('width', width).attr('height', height);
-  zoomRect.attr('width', width / MIN_ZOOM).attr('height', height / MIN_ZOOM).attr('x', -width / 2 / MIN_ZOOM).attr('y', -height / 2 / MIN_ZOOM);
-  zoom.on('zoom', function() {
-    var e;
-    e = d3.event;
-    return container.attr('transform', "translate(" + e.translate + "),scale(" + e.scale + ")");
-  });
-  zoom.size([width, height]).translate([width / 2, height / 2]).event(zoomNode);
   return new force.Layout({
-    container: container,
-    defs: defs,
+    parent: options.parent,
     tree: tree,
-    debug: debug
+    debug: options.debug
   });
 };
 
