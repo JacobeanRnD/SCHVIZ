@@ -130,15 +130,6 @@ force.kielerLayout = (tree) ->
       return treeCopy
 
 
-force.drawTree = (container, defs, tree, debug) ->
-  new force.Layout(
-    container: container
-    defs: defs
-    tree: tree
-    debug: debug
-  )
-
-
 class force.Layout
 
   constructor: (options) ->
@@ -522,4 +513,9 @@ force.render = (options) ->
 
   force.kielerLayout(tree)
     .then (treeWithLayout) ->
-      force.drawTree(container, defs, treeWithLayout, debug=debug)
+      new force.Layout(
+        container: container
+        defs: defs
+        tree: treeWithLayout
+        debug: debug
+      )

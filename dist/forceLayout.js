@@ -217,15 +217,6 @@ force.kielerLayout = function(tree) {
   });
 };
 
-force.drawTree = function(container, defs, tree, debug) {
-  return new force.Layout({
-    container: container,
-    defs: defs,
-    tree: tree,
-    debug: debug
-  });
-};
-
 force.Layout = (function() {
   function Layout(options) {
     this.container = options.container;
@@ -666,7 +657,12 @@ force.render = function(options) {
   });
   zoom.size([width, height]).translate([width / 2, height / 2]).event(zoomNode);
   return force.kielerLayout(tree).then(function(treeWithLayout) {
-    return force.drawTree(container, defs, treeWithLayout, debug = debug);
+    return new force.Layout({
+      container: container,
+      defs: defs,
+      tree: treeWithLayout,
+      debug: debug
+    });
   });
 };
 
