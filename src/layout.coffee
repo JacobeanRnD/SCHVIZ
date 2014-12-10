@@ -143,6 +143,10 @@ class force.Layout
         @loadTree(treeWithLayout)
         @svgNodes()
         @setupD3Layout()
+        @layout.on 'tick', =>
+          @adjustLayout()
+          @svgUpdate()
+        @svgUpdate()
 
   loadTree: (tree) ->
     @nodes = []
@@ -378,32 +382,114 @@ class force.Layout
           @svgUpdate()
         .call(drag)
 
-    @layout.on 'tick', =>
-      @svgUpdate()
+  adjustLayout: ->
+    tick = {
+      gravity: @layout.alpha() * 0.1
+      forces: {}
+    }
 
-      tick = {
-        gravity: @layout.alpha() * 0.1
-        forces: {}
-      }
+    move = (node, dx, dy) ->
+      node.x += dx
+      node.y += dy
+      for child in node.children or []
+        move(child, dx, dy)
+      for control in node.controls or []
+        move(control, dx, dy)
 
-      for node in @top.children
-        walk(node, ((node) => arrange(node, tick)), null, true)
-      handleCollisions(@top, {x: 0, y: 0}, tick)
 
-      if @debug
-        @container.selectAll('.cell .force').remove()
+    handleCollisions = (parent, center, tick) =>
+      for child in parent.children
+        dx = (center.x - child.x) * tick.gravity
+        dy = (center.y - child.y) * tick.gravity
+        move(child, dx, dy)
+        def(tick.forces, child.id, []).push(value: [dx, dy], cls: 'gravity')
 
-        @container.selectAll('.cell')
-            .each (node) ->
-              for force in tick.forces[node.id] or []
-                d3.select(@).append('line')
-                    .attr('class', "force #{force.cls}")
-                    .attr('x1', 0)
-                    .attr('y1', 0)
-                    .attr('x2', force.value[0] * DEBUG_FORCE_FACTOR)
-                    .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
+      objects = [].concat(parent.children, parent.controls)
+      q = d3.geom.quadtree(objects)
 
-    @svgUpdate()
+      for node in objects
+        nx1 = node.x - node.w - 100
+        nx2 = node.x + node.w + 100
+        ny1 = node.y - node.h - 100
+        ny2 = node.y + node.h + 100
+
+        collide = (quad, x1, y1, x2, y2) =>
+          other = quad.point
+          if other and (other != node)
+            dx = node.x - other.x
+            dy = node.y - other.y
+            w = (node.w + other.w) / 2 + MARGIN
+            h = (node.h + other.h) / 2 + MARGIN
+
+            cx = w - Math.abs(dx)
+            cy = h - Math.abs(dy)
+            if cx > 0 and cy > 0
+              na = node.w * node.h
+              oa = other.w * other.h
+              f = oa / (oa + na)
+
+              if cx/w < cy/h
+                dy1 = dy2 = 0
+                s = if dx > 0 then 1 else -1
+                dx1 = s * f * cx
+                dx2 = s * (f-1) * cx
+
+              else
+                dx1 = dx2 = 0
+                s = if dy > 0 then 1 else -1
+                dy1 = s * f * cy
+                dy2 = s * (f-1) * cy
+
+              move(node, dx1, dy1)
+              move(other, dx2, dy2)
+              def(tick.forces, node.id, []).push(value: [dx1, dy1], cls: 'collision')
+              def(tick.forces, other.id, []).push(value: [dx2, dy2], cls: 'collision')
+
+          return x1 > nx2 or x2 < nx1 or y1 > ny2 or y2 < ny1
+
+        q.visit(collide)
+
+
+    adjustNode = (node) =>
+      if node.children.length > 0
+        handleCollisions(node, node, tick)
+
+        xMin = d3.min(node.children, (d) -> d.x - d.w / 2) - CELL_PAD.left
+        xMax = d3.max(node.children, (d) -> d.x + d.w / 2) + CELL_PAD.right
+        yMin = d3.min(node.children, (d) -> d.y - d.h / 2) - CELL_PAD.top
+        yMax = d3.max(node.children, (d) -> d.y + d.h / 2) + CELL_PAD.bottom
+        grow = node.textWidth - (xMax - xMin)
+        if grow > 0
+          xMin -= grow / 2
+          xMax += grow / 2
+        node.w = xMax - xMin
+        node.h = yMax - yMin
+        dx = xMin + node.w / 2 - node.x
+        dy = yMin + node.h / 2 - node.y
+        node.x += dx
+        node.y += dy
+        if node.fixed
+          move(node, -dx, -dy)
+
+      node.weight = node.w * node.h
+
+    for node in @top.children
+      walk(node, adjustNode, null, true)
+
+    handleCollisions(@top, {x: 0, y: 0}, tick)
+
+    if @debug
+      @container.selectAll('.cell .force').remove()
+
+      @container.selectAll('.cell')
+          .each (node) ->
+            for force in tick.forces[node.id] or []
+              d3.select(@).append('line')
+                  .attr('class', "force #{force.cls}")
+                  .attr('x1', 0)
+                  .attr('y1', 0)
+                  .attr('x2', force.value[0] * DEBUG_FORCE_FACTOR)
+                  .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
 
   start: ->
     @runSimulation = true
@@ -412,95 +498,6 @@ class force.Layout
   stop: ->
     @runSimulation = false
     @layout.stop() if @layout?
-
-
-arrange = (node, tick) ->
-  if node.children.length > 0
-    handleCollisions(node, node, tick)
-
-    xMin = d3.min(node.children, (d) -> d.x - d.w / 2) - CELL_PAD.left
-    xMax = d3.max(node.children, (d) -> d.x + d.w / 2) + CELL_PAD.right
-    yMin = d3.min(node.children, (d) -> d.y - d.h / 2) - CELL_PAD.top
-    yMax = d3.max(node.children, (d) -> d.y + d.h / 2) + CELL_PAD.bottom
-    grow = node.textWidth - (xMax - xMin)
-    if grow > 0
-      xMin -= grow / 2
-      xMax += grow / 2
-    node.w = xMax - xMin
-    node.h = yMax - yMin
-    dx = xMin + node.w / 2 - node.x
-    dy = yMin + node.h / 2 - node.y
-    node.x += dx
-    node.y += dy
-    if node.fixed
-      move(node, -dx, -dy)
-
-  node.weight = node.w * node.h
-
-
-move = (node, dx, dy) ->
-  node.x += dx
-  node.y += dy
-  for child in node.children or []
-    move(child, dx, dy)
-  for control in node.controls or []
-    move(control, dx, dy)
-
-
-handleCollisions = (parent, center, tick) ->
-  for child in parent.children
-    dx = (center.x - child.x) * tick.gravity
-    dy = (center.y - child.y) * tick.gravity
-    move(child, dx, dy)
-    def(tick.forces, child.id, []).push(value: [dx, dy], cls: 'gravity')
-
-  objects = [].concat(parent.children, parent.controls)
-  q = d3.geom.quadtree(objects)
-  for obj in objects
-    q.visit(collide(obj, tick))
-
-
-collide = (node, tick) ->
-  nx1 = node.x - node.w - 100
-  nx2 = node.x + node.w + 100
-  ny1 = node.y - node.h - 100
-  ny2 = node.y + node.h + 100
-
-  fn = (quad, x1, y1, x2, y2) ->
-    other = quad.point
-    if other and (other != node)
-      dx = node.x - other.x
-      dy = node.y - other.y
-      w = (node.w + other.w) / 2 + MARGIN
-      h = (node.h + other.h) / 2 + MARGIN
-
-      cx = w - Math.abs(dx)
-      cy = h - Math.abs(dy)
-      if cx > 0 and cy > 0
-        na = node.w * node.h
-        oa = other.w * other.h
-        f = oa / (oa + na)
-
-        if cx/w < cy/h
-          dy1 = dy2 = 0
-          s = if dx > 0 then 1 else -1
-          dx1 = s * f * cx
-          dx2 = s * (f-1) * cx
-
-        else
-          dx1 = dx2 = 0
-          s = if dy > 0 then 1 else -1
-          dy1 = s * f * cy
-          dy2 = s * (f-1) * cy
-
-        move(node, dx1, dy1)
-        move(other, dx2, dy2)
-        def(tick.forces, node.id, []).push(value: [dx1, dy1], cls: 'collision')
-        def(tick.forces, other.id, []).push(value: [dx2, dy2], cls: 'collision')
-
-    return x1 > nx2 or x2 < nx1 or y1 > ny2 or y2 < ny1
-
-  return fn
 
 
 force.render = (options) ->

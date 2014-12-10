@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CELL_MIN, CELL_PAD, CONTROL_RADIUS, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, applyKielerLayout, arrange, collide, def, exit, force, handleCollisions, move, nextId, parents, path, toKielerFormat, treeFromXml, walk;
+var CELL_MIN, CELL_PAD, CONTROL_RADIUS, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, applyKielerLayout, def, exit, force, nextId, parents, path, toKielerFormat, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
@@ -228,7 +228,12 @@ force.Layout = (function() {
       return function(treeWithLayout) {
         _this.loadTree(treeWithLayout);
         _this.svgNodes();
-        return _this.setupD3Layout();
+        _this.setupD3Layout();
+        _this.layout.on('tick', function() {
+          _this.adjustLayout();
+          return _this.svgUpdate();
+        });
+        return _this.svgUpdate();
       };
     })(this));
   }
@@ -450,7 +455,7 @@ force.Layout = (function() {
         return node.fixed = false;
       };
     })(this));
-    this.container.selectAll('.cell').on('mouseover', (function(_this) {
+    return this.container.selectAll('.cell').on('mouseover', (function(_this) {
       return function(node) {
         if (lock.drag) {
           return;
@@ -473,41 +478,155 @@ force.Layout = (function() {
         return _this.svgUpdate();
       };
     })(this)).call(drag);
-    this.layout.on('tick', (function(_this) {
-      return function() {
-        var node, tick, _i, _len, _ref;
-        _this.svgUpdate();
-        tick = {
-          gravity: _this.layout.alpha() * 0.1,
-          forces: {}
-        };
-        _ref = _this.top.children;
+  };
+
+  Layout.prototype.adjustLayout = function() {
+    var adjustNode, handleCollisions, move, node, tick, _i, _len, _ref;
+    tick = {
+      gravity: this.layout.alpha() * 0.1,
+      forces: {}
+    };
+    move = function(node, dx, dy) {
+      var child, control, _i, _j, _len, _len1, _ref, _ref1, _results;
+      node.x += dx;
+      node.y += dy;
+      _ref = node.children || [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        child = _ref[_i];
+        move(child, dx, dy);
+      }
+      _ref1 = node.controls || [];
+      _results = [];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        control = _ref1[_j];
+        _results.push(move(control, dx, dy));
+      }
+      return _results;
+    };
+    handleCollisions = (function(_this) {
+      return function(parent, center, tick) {
+        var child, collide, dx, dy, node, nx1, nx2, ny1, ny2, objects, q, _i, _j, _len, _len1, _ref, _results;
+        _ref = parent.children;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          node = _ref[_i];
-          walk(node, (function(node) {
-            return arrange(node, tick);
-          }), null, true);
-        }
-        handleCollisions(_this.top, {
-          x: 0,
-          y: 0
-        }, tick);
-        if (_this.debug) {
-          _this.container.selectAll('.cell .force').remove();
-          return _this.container.selectAll('.cell').each(function(node) {
-            var _j, _len1, _ref1, _results;
-            _ref1 = tick.forces[node.id] || [];
-            _results = [];
-            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-              force = _ref1[_j];
-              _results.push(d3.select(this).append('line').attr('class', "force " + force.cls).attr('x1', 0).attr('y1', 0).attr('x2', force.value[0] * DEBUG_FORCE_FACTOR).attr('y2', force.value[1] * DEBUG_FORCE_FACTOR));
-            }
-            return _results;
+          child = _ref[_i];
+          dx = (center.x - child.x) * tick.gravity;
+          dy = (center.y - child.y) * tick.gravity;
+          move(child, dx, dy);
+          def(tick.forces, child.id, []).push({
+            value: [dx, dy],
+            cls: 'gravity'
           });
         }
+        objects = [].concat(parent.children, parent.controls);
+        q = d3.geom.quadtree(objects);
+        _results = [];
+        for (_j = 0, _len1 = objects.length; _j < _len1; _j++) {
+          node = objects[_j];
+          nx1 = node.x - node.w - 100;
+          nx2 = node.x + node.w + 100;
+          ny1 = node.y - node.h - 100;
+          ny2 = node.y + node.h + 100;
+          collide = function(quad, x1, y1, x2, y2) {
+            var cx, cy, dx1, dx2, dy1, dy2, f, h, na, oa, other, s, w;
+            other = quad.point;
+            if (other && (other !== node)) {
+              dx = node.x - other.x;
+              dy = node.y - other.y;
+              w = (node.w + other.w) / 2 + MARGIN;
+              h = (node.h + other.h) / 2 + MARGIN;
+              cx = w - Math.abs(dx);
+              cy = h - Math.abs(dy);
+              if (cx > 0 && cy > 0) {
+                na = node.w * node.h;
+                oa = other.w * other.h;
+                f = oa / (oa + na);
+                if (cx / w < cy / h) {
+                  dy1 = dy2 = 0;
+                  s = dx > 0 ? 1 : -1;
+                  dx1 = s * f * cx;
+                  dx2 = s * (f - 1) * cx;
+                } else {
+                  dx1 = dx2 = 0;
+                  s = dy > 0 ? 1 : -1;
+                  dy1 = s * f * cy;
+                  dy2 = s * (f - 1) * cy;
+                }
+                move(node, dx1, dy1);
+                move(other, dx2, dy2);
+                def(tick.forces, node.id, []).push({
+                  value: [dx1, dy1],
+                  cls: 'collision'
+                });
+                def(tick.forces, other.id, []).push({
+                  value: [dx2, dy2],
+                  cls: 'collision'
+                });
+              }
+            }
+            return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+          };
+          _results.push(q.visit(collide));
+        }
+        return _results;
       };
-    })(this));
-    return this.svgUpdate();
+    })(this);
+    adjustNode = (function(_this) {
+      return function(node) {
+        var dx, dy, grow, xMax, xMin, yMax, yMin;
+        if (node.children.length > 0) {
+          handleCollisions(node, node, tick);
+          xMin = d3.min(node.children, function(d) {
+            return d.x - d.w / 2;
+          }) - CELL_PAD.left;
+          xMax = d3.max(node.children, function(d) {
+            return d.x + d.w / 2;
+          }) + CELL_PAD.right;
+          yMin = d3.min(node.children, function(d) {
+            return d.y - d.h / 2;
+          }) - CELL_PAD.top;
+          yMax = d3.max(node.children, function(d) {
+            return d.y + d.h / 2;
+          }) + CELL_PAD.bottom;
+          grow = node.textWidth - (xMax - xMin);
+          if (grow > 0) {
+            xMin -= grow / 2;
+            xMax += grow / 2;
+          }
+          node.w = xMax - xMin;
+          node.h = yMax - yMin;
+          dx = xMin + node.w / 2 - node.x;
+          dy = yMin + node.h / 2 - node.y;
+          node.x += dx;
+          node.y += dy;
+          if (node.fixed) {
+            move(node, -dx, -dy);
+          }
+        }
+        return node.weight = node.w * node.h;
+      };
+    })(this);
+    _ref = this.top.children;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      walk(node, adjustNode, null, true);
+    }
+    handleCollisions(this.top, {
+      x: 0,
+      y: 0
+    }, tick);
+    if (this.debug) {
+      this.container.selectAll('.cell .force').remove();
+      return this.container.selectAll('.cell').each(function(node) {
+        var _j, _len1, _ref1, _results;
+        _ref1 = tick.forces[node.id] || [];
+        _results = [];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          force = _ref1[_j];
+          _results.push(d3.select(this).append('line').attr('class', "force " + force.cls).attr('x1', 0).attr('y1', 0).attr('x2', force.value[0] * DEBUG_FORCE_FACTOR).attr('y2', force.value[1] * DEBUG_FORCE_FACTOR));
+        }
+        return _results;
+      });
+    }
   };
 
   Layout.prototype.start = function() {
@@ -527,129 +646,6 @@ force.Layout = (function() {
   return Layout;
 
 })();
-
-arrange = function(node, tick) {
-  var dx, dy, grow, xMax, xMin, yMax, yMin;
-  if (node.children.length > 0) {
-    handleCollisions(node, node, tick);
-    xMin = d3.min(node.children, function(d) {
-      return d.x - d.w / 2;
-    }) - CELL_PAD.left;
-    xMax = d3.max(node.children, function(d) {
-      return d.x + d.w / 2;
-    }) + CELL_PAD.right;
-    yMin = d3.min(node.children, function(d) {
-      return d.y - d.h / 2;
-    }) - CELL_PAD.top;
-    yMax = d3.max(node.children, function(d) {
-      return d.y + d.h / 2;
-    }) + CELL_PAD.bottom;
-    grow = node.textWidth - (xMax - xMin);
-    if (grow > 0) {
-      xMin -= grow / 2;
-      xMax += grow / 2;
-    }
-    node.w = xMax - xMin;
-    node.h = yMax - yMin;
-    dx = xMin + node.w / 2 - node.x;
-    dy = yMin + node.h / 2 - node.y;
-    node.x += dx;
-    node.y += dy;
-    if (node.fixed) {
-      move(node, -dx, -dy);
-    }
-  }
-  return node.weight = node.w * node.h;
-};
-
-move = function(node, dx, dy) {
-  var child, control, _i, _j, _len, _len1, _ref, _ref1, _results;
-  node.x += dx;
-  node.y += dy;
-  _ref = node.children || [];
-  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    child = _ref[_i];
-    move(child, dx, dy);
-  }
-  _ref1 = node.controls || [];
-  _results = [];
-  for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-    control = _ref1[_j];
-    _results.push(move(control, dx, dy));
-  }
-  return _results;
-};
-
-handleCollisions = function(parent, center, tick) {
-  var child, dx, dy, obj, objects, q, _i, _j, _len, _len1, _ref, _results;
-  _ref = parent.children;
-  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    child = _ref[_i];
-    dx = (center.x - child.x) * tick.gravity;
-    dy = (center.y - child.y) * tick.gravity;
-    move(child, dx, dy);
-    def(tick.forces, child.id, []).push({
-      value: [dx, dy],
-      cls: 'gravity'
-    });
-  }
-  objects = [].concat(parent.children, parent.controls);
-  q = d3.geom.quadtree(objects);
-  _results = [];
-  for (_j = 0, _len1 = objects.length; _j < _len1; _j++) {
-    obj = objects[_j];
-    _results.push(q.visit(collide(obj, tick)));
-  }
-  return _results;
-};
-
-collide = function(node, tick) {
-  var fn, nx1, nx2, ny1, ny2;
-  nx1 = node.x - node.w - 100;
-  nx2 = node.x + node.w + 100;
-  ny1 = node.y - node.h - 100;
-  ny2 = node.y + node.h + 100;
-  fn = function(quad, x1, y1, x2, y2) {
-    var cx, cy, dx, dx1, dx2, dy, dy1, dy2, f, h, na, oa, other, s, w;
-    other = quad.point;
-    if (other && (other !== node)) {
-      dx = node.x - other.x;
-      dy = node.y - other.y;
-      w = (node.w + other.w) / 2 + MARGIN;
-      h = (node.h + other.h) / 2 + MARGIN;
-      cx = w - Math.abs(dx);
-      cy = h - Math.abs(dy);
-      if (cx > 0 && cy > 0) {
-        na = node.w * node.h;
-        oa = other.w * other.h;
-        f = oa / (oa + na);
-        if (cx / w < cy / h) {
-          dy1 = dy2 = 0;
-          s = dx > 0 ? 1 : -1;
-          dx1 = s * f * cx;
-          dx2 = s * (f - 1) * cx;
-        } else {
-          dx1 = dx2 = 0;
-          s = dy > 0 ? 1 : -1;
-          dy1 = s * f * cy;
-          dy2 = s * (f - 1) * cy;
-        }
-        move(node, dx1, dy1);
-        move(other, dx2, dy2);
-        def(tick.forces, node.id, []).push({
-          value: [dx1, dy1],
-          cls: 'collision'
-        });
-        def(tick.forces, other.id, []).push({
-          value: [dx2, dy2],
-          cls: 'collision'
-        });
-      }
-    }
-    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-  };
-  return fn;
-};
 
 force.render = function(options) {
   return new force.Layout(options);
