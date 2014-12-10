@@ -237,15 +237,15 @@ class force.Layout
           node.textWidth = d3.min([$(@).width() + 2 * ROUND_CORNER, LABEL_SPACE])
           node.w = d3.max([node.w, node.textWidth])
 
-    @transition = @container.selectAll('.transition')
+    transition = @container.selectAll('.transition')
         .data(@transitions)
       .enter().append('g')
         .attr('class', 'transition')
 
-    @transition.append('path')
+    transition.append('path')
         .attr('style', "marker-end: url(##{@_arrow_id})")
 
-    @transition.append('text')
+    transition.append('text')
         .attr('class', 'transition-label')
         .text((tr) -> tr.label)
 
@@ -273,7 +273,7 @@ class force.Layout
 
     @container.selectAll('.selfie').remove()
 
-    @transition
+    @container.selectAll('.transition')
         .classed('highlight', (tr) -> tr.a.fixed or tr.b.fixed)
       .selectAll('path')
         .attr 'd', (tr) ->
@@ -293,7 +293,7 @@ class force.Layout
             t = exit(b, c)
             return "M#{s.x},#{s.y} S#{c.x},#{c.y} #{t.x},#{t.y}"
 
-    @transition.selectAll('text')
+    @container.selectAll('.transition').selectAll('text')
         .attr('x', (tr) -> tr.c.x)
         .attr('y', (tr) -> tr.c.y)
 

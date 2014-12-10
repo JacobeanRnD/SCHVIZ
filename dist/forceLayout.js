@@ -318,7 +318,7 @@ force.Layout = (function() {
   };
 
   Layout.prototype.renderTree = function() {
-    var cell, control;
+    var cell, control, transition;
     cell = this.container.selectAll('.cell').data(this.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state');
     }).classed('parallel-child', function(cell) {
@@ -339,9 +339,9 @@ force.Layout = (function() {
       node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
       return node.w = d3.max([node.w, node.textWidth]);
     });
-    this.transition = this.container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition');
-    this.transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
-    this.transition.append('text').attr('class', 'transition-label').text(function(tr) {
+    transition = this.container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition');
+    transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
+    transition.append('text').attr('class', 'transition-label').text(function(tr) {
       return tr.label;
     });
     if (this.debug) {
@@ -362,7 +362,7 @@ force.Layout = (function() {
       });
     });
     this.container.selectAll('.selfie').remove();
-    this.transition.classed('highlight', function(tr) {
+    this.container.selectAll('.transition').classed('highlight', function(tr) {
       return tr.a.fixed || tr.b.fixed;
     }).selectAll('path').attr('d', function(tr) {
       var a, b, c, c1, c2, h, s, t, w, _ref;
@@ -387,7 +387,7 @@ force.Layout = (function() {
         return "M" + s.x + "," + s.y + " S" + c.x + "," + c.y + " " + t.x + "," + t.y;
       }
     });
-    this.transition.selectAll('text').attr('x', function(tr) {
+    this.container.selectAll('.transition').selectAll('text').attr('x', function(tr) {
       return tr.c.x;
     }).attr('y', function(tr) {
       return tr.c.y;
