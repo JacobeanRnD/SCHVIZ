@@ -42,7 +42,7 @@ html, body { height: 100%; margin: 0; }
 
 
     function invokeLayout(options) {
-      var layout = forceLayout.render(options)
+      var layout = new forceLayout.Layout(options);
       if(useForceLayout) { layout.start(); }
       controls.on('force', function(start) {
         if(start) { layout.start(); } else { layout.stop(); }
