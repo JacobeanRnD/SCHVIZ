@@ -128,6 +128,8 @@ force.kielerLayout = (kielerURL, kielerAlgorithm, tree) ->
       treeCopy = JSON.parse(JSON.stringify(tree))
       applyKielerLayout({id: 'root', children: treeCopy}, graphLayout)
       return treeCopy
+    .catch (resp) ->
+      throw Error(resp.responseText)
 
 
 class force.Layout
@@ -147,6 +149,8 @@ class force.Layout
           @adjustLayout()
           @svgUpdate()
         @svgUpdate()
+      .catch (e) =>
+        @el = $('<div>').text(e.message).replaceAll(@el)[0]
 
   loadTree: (tree) ->
     @nodes = []

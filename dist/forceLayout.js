@@ -214,6 +214,8 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, tree) {
       children: treeCopy
     }, graphLayout);
     return treeCopy;
+  })["catch"](function(resp) {
+    throw Error(resp.responseText);
   });
 };
 
@@ -234,6 +236,10 @@ force.Layout = (function() {
           return _this.svgUpdate();
         });
         return _this.svgUpdate();
+      };
+    })(this))["catch"]((function(_this) {
+      return function(e) {
+        return _this.el = $('<div>').text(e.message).replaceAll(_this.el)[0];
       };
     })(this));
   }
