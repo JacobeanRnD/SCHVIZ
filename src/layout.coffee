@@ -140,8 +140,8 @@ class force.Layout
     force.kielerLayout(options.tree)
       .then (treeWithLayout) =>
         @loadTree(treeWithLayout)
-        @renderDefs(options.defs)
-        @renderTree()
+        @svgDefs(options.defs)
+        @svgNodes()
         @setupD3Layout()
 
   loadTree: (tree) ->
@@ -203,7 +203,7 @@ class force.Layout
             label: label
           })
 
-  renderDefs: (defs) ->
+  svgDefs: (defs) ->
     defs.append('marker')
         .attr('id', (@_arrow_id = nextId()))
         .attr('refX', '7')
@@ -215,7 +215,7 @@ class force.Layout
         .attr('d', 'M 0 0 L 10 5 L 0 10 z')
         .attr('class', 'arrow')
 
-  renderTree: ->
+  svgNodes: ->
     cell = @container.selectAll('.cell')
         .data(@cells)
       .enter().append('g')
@@ -256,7 +256,7 @@ class force.Layout
           .attr('class', 'control')
           .attr('r', CONTROL_RADIUS)
 
-  updateSVG: ->
+  svgUpdate: ->
     @container.selectAll('.cell')
         .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
         .classed('fixed', (node) -> node.fixed)
@@ -343,16 +343,16 @@ class force.Layout
           (lock.node = node).fixed = true
           node.px = node.x
           node.py = node.y
-          @updateSVG()
+          @svgUpdate()
         .on 'mouseout', (node) =>
           if lock.drag then return
           lock.node = null
           node.fixed = false
-          @updateSVG()
+          @svgUpdate()
         .call(drag)
 
     @layout.on 'tick', =>
-      @updateSVG()
+      @svgUpdate()
 
       tick = {
         gravity: @layout.alpha() * 0.1
@@ -376,7 +376,7 @@ class force.Layout
                     .attr('x2', force.value[0] * DEBUG_FORCE_FACTOR)
                     .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
 
-    @updateSVG()
+    @svgUpdate()
 
   start: ->
     @runSimulation = true

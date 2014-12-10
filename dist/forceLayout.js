@@ -225,8 +225,8 @@ force.Layout = (function() {
     force.kielerLayout(options.tree).then((function(_this) {
       return function(treeWithLayout) {
         _this.loadTree(treeWithLayout);
-        _this.renderDefs(options.defs);
-        _this.renderTree();
+        _this.svgDefs(options.defs);
+        _this.svgNodes();
         return _this.setupD3Layout();
       };
     })(this));
@@ -313,11 +313,11 @@ force.Layout = (function() {
     return _results;
   };
 
-  Layout.prototype.renderDefs = function(defs) {
+  Layout.prototype.svgDefs = function(defs) {
     return defs.append('marker').attr('id', (this._arrow_id = nextId())).attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
   };
 
-  Layout.prototype.renderTree = function() {
+  Layout.prototype.svgNodes = function() {
     var cell, control, transition;
     cell = this.container.selectAll('.cell').data(this.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state');
@@ -349,7 +349,7 @@ force.Layout = (function() {
     }
   };
 
-  Layout.prototype.updateSVG = function() {
+  Layout.prototype.svgUpdate = function() {
     this.container.selectAll('.cell').attr('transform', function(node) {
       return "translate(" + node.x + "," + node.y + ")";
     }).classed('fixed', function(node) {
@@ -449,7 +449,7 @@ force.Layout = (function() {
         (lock.node = node).fixed = true;
         node.px = node.x;
         node.py = node.y;
-        return _this.updateSVG();
+        return _this.svgUpdate();
       };
     })(this)).on('mouseout', (function(_this) {
       return function(node) {
@@ -458,13 +458,13 @@ force.Layout = (function() {
         }
         lock.node = null;
         node.fixed = false;
-        return _this.updateSVG();
+        return _this.svgUpdate();
       };
     })(this)).call(drag);
     this.layout.on('tick', (function(_this) {
       return function() {
         var node, tick, _i, _len, _ref;
-        _this.updateSVG();
+        _this.svgUpdate();
         tick = {
           gravity: _this.layout.alpha() * 0.1,
           forces: {}
@@ -495,7 +495,7 @@ force.Layout = (function() {
         }
       };
     })(this));
-    return this.updateSVG();
+    return this.svgUpdate();
   };
 
   Layout.prototype.start = function() {
