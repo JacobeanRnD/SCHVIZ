@@ -144,6 +144,7 @@ class force.Layout
   constructor: (options) ->
     @container = options.container
     @debug = options.debug
+    @runSimulation = false
 
     @loadTree(options.tree)
     @renderDefs(options.defs)
@@ -317,6 +318,7 @@ class force.Layout
         .nodes(@nodes)
         .links(@links)
         .start()
+        .stop()
 
     lock = {node: null, drag: false}
 
@@ -331,6 +333,9 @@ class force.Layout
           node.px = d3.event.x
           node.py = d3.event.y
           @layout.resume()
+          unless @runSimulation
+            @layout.tick()
+            @layout.stop()
         .on 'dragend', (node) =>
           d3.event.sourceEvent.stopPropagation()
           lock.drag = false
@@ -378,6 +383,14 @@ class force.Layout
                     .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
 
     @updateSVG()
+
+  start: ->
+    @runSimulation = true
+    _.defer => @layout.resume()
+
+  stop: ->
+    @runSimulation = false
+    @layout.stop()
 
 
 arrange = (node, tick) ->
@@ -508,5 +521,5 @@ force.render = (options) ->
       .event(zoomNode)
 
   force.kielerLayout(tree)
-    .done (treeWithLayout) ->
+    .then (treeWithLayout) ->
       force.drawTree(container, defs, treeWithLayout, debug=debug)

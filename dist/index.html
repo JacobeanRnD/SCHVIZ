@@ -1,30 +1,61 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>html, body { height: 100%; margin: 0; }</style>
+<style>
+html, body { height: 100%; margin: 0; }
+#controls { position: fixed; display: none; }
+</style>
 <link rel="stylesheet" href="forceLayout.css">
 <body>
+<div id="controls">
+  <label>Force layout <input type=checkbox name=force></label>
+</div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/q.js/1.1.2/q.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js"></script>
 <script src="forceLayout.js"></script>
 <script>
   (function(){'use strict';
     var m = window.location.search.match(/file=([^&]*)/) || [];
-    var debug = (window.location.search.indexOf('debug=on') > -1)
+    var debug = (window.location.search.indexOf('debug=on') > -1);
     var file = m[1];
+    var $forceCheckbox = $('#controls [name=force]');
+    var controls = _.extend({}, Backbone.Events);
+    var useForceLayout = false;
+    $forceCheckbox.change(function() {
+      useForceLayout = $forceCheckbox.is(':checked');
+      localStorage.setItem('desm-force-layout', useForceLayout || '');
+      controls.trigger('force', useForceLayout);
+    });
+    if(localStorage.getItem('desm-force-layout')) {
+      $forceCheckbox.attr('checked', useForceLayout = true);
+    }
+    $('#controls').show();
 
     if(file) {
       $.get(file, function(resp) {
-        forceLayout.render({parent: $('body')[0], doc: resp});
+        invokeLayout({parent: $('body')[0], doc: resp});
       });
       return;
     }
 
+
+    function invokeLayout(options) {
+      forceLayout.render(options)
+        .done(function(layout) {
+          if(useForceLayout) { layout.start(); }
+          controls.on('force', function(start) {
+            if(start) { layout.start(); } else { layout.stop(); }
+          });
+        });
+    }
+
+
     function demo(tree) {
       var parent = $('<div style="width:400px;height:400px;float:left">')[0];
       $('body').append(parent);
-      forceLayout.render({parent: parent, tree: tree});
+      invokeLayout({parent: parent, tree: tree});
     };
 
 

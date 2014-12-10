@@ -230,6 +230,7 @@ force.Layout = (function() {
   function Layout(options) {
     this.container = options.container;
     this.debug = options.debug;
+    this.runSimulation = false;
     this.loadTree(options.tree);
     this.renderDefs(options.defs);
     this.renderTree();
@@ -407,7 +408,7 @@ force.Layout = (function() {
 
   Layout.prototype.setupD3Layout = function() {
     var drag, lock;
-    this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start();
+    this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start().stop();
     lock = {
       node: null,
       drag: false
@@ -425,7 +426,11 @@ force.Layout = (function() {
         d3.event.sourceEvent.stopPropagation();
         node.px = d3.event.x;
         node.py = d3.event.y;
-        return _this.layout.resume();
+        _this.layout.resume();
+        if (!_this.runSimulation) {
+          _this.layout.tick();
+          return _this.layout.stop();
+        }
       };
     })(this)).on('dragend', (function(_this) {
       return function(node) {
@@ -493,6 +498,20 @@ force.Layout = (function() {
       };
     })(this));
     return this.updateSVG();
+  };
+
+  Layout.prototype.start = function() {
+    this.runSimulation = true;
+    return _.defer((function(_this) {
+      return function() {
+        return _this.layout.resume();
+      };
+    })(this));
+  };
+
+  Layout.prototype.stop = function() {
+    this.runSimulation = false;
+    return this.layout.stop();
   };
 
   return Layout;
@@ -646,7 +665,7 @@ force.render = function(options) {
     return container.attr('transform', "translate(" + e.translate + "),scale(" + e.scale + ")");
   });
   zoom.size([width, height]).translate([width / 2, height / 2]).event(zoomNode);
-  return force.kielerLayout(tree).done(function(treeWithLayout) {
+  return force.kielerLayout(tree).then(function(treeWithLayout) {
     return force.drawTree(container, defs, treeWithLayout, debug = debug);
   });
 };
