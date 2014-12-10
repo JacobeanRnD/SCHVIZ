@@ -199,11 +199,11 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, tree) {
   });
   form = {
     graph: JSON.stringify(graph),
-    config: JSON.stringify({}),
+    config: JSON.stringify({
+      algorithm: kielerAlgorithm
+    }),
     iFormat: 'org.json',
-    oFormat: 'org.json',
-    spacing: 100,
-    algorithm: kielerAlgorithm
+    oFormat: 'org.json'
   };
   return Q($.post(kielerURL, form)).then(function(resp) {
     var graphLayout, treeCopy;
