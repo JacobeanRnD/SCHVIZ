@@ -83,23 +83,19 @@ toKielerFormat = (state) ->
 
 
 applyKielerLayout = (state, kNode, x0 = null, y0 = null) ->
-  i = state._initial = {
-    w: kNode.width
-    h: kNode.height
-  }
+  state.w = kNode.width
+  state.h = kNode.height
 
   unless x0? and y0?
-    x0 = -i.w/2
-    y0 = -i.h/2
+    x0 = -state.w/2
+    y0 = -state.h/2
 
-  i.x = x0 + kNode.x + i.w/2
-  i.y = y0 + kNode.y + i.h/2
+  state.x = x0 + kNode.x + state.w/2
+  state.y = y0 + kNode.y + state.h/2
 
   for tr in state.transitions or []
-    tr._initial = {
-      x: x0 + 0
-      y: y0 + 0
-    }
+    tr.x = x0 + 0
+    tr.y = y0 + 0
 
   childMap = {}
   for child in state.children or []
@@ -107,7 +103,7 @@ applyKielerLayout = (state, kNode, x0 = null, y0 = null) ->
 
   for kChild in kNode.children or []
     unless (child = childMap[kChild.id])? then continue
-    applyKielerLayout(child, kChild, i.x - i.w/2, i.y - i.h/2)
+    applyKielerLayout(child, kChild, state.x - state.w/2, state.y - state.h/2)
 
 
 force.kielerLayout = (kielerURL, kielerAlgorithm, tree) ->
@@ -160,39 +156,30 @@ class force.Layout
     @links = []
     @transitions = []
     @top = {
-      children: []
+      children: tree
       controls: []
     }
 
     for topState in tree
-      walk topState, (state, parent) =>
-        node = {
-          id: state.id
-          type: state.type or 'state'
-          x: state._initial.x
-          y: state._initial.y
-          w: state._initial.w
-          h: state._initial.h
-          children: []
-          controls: []
-        }
+      walk topState, (node, parent) =>
+        node.controls = []
+        node.children = node.children or []
         @nodes.push(node)
         @cells.push(node)
-        @nodeMap[state.id] = node
+        @nodeMap[node.id] = node
         node.parent = if parent? then @nodeMap[parent.id] else @top
-        node.parent.children.push(node)
 
     for topState in tree
       walk topState, (state) =>
         for tr in state.transitions or []
-          [a, c, b] = path(@nodeMap[state.id], @nodeMap[tr.target])
+          [a, c, b] = path(state, @nodeMap[tr.target])
           c = {
             transition: tr
             parent: c or @top
             w: CONTROL_RADIUS
             h: CONTROL_RADIUS
-            x: tr._initial.x
-            y: tr._initial.y
+            x: tr.x
+            y: tr.y
           }
           c.parent.controls.push(c)
           @nodes.push(c)

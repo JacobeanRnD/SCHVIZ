@@ -146,30 +146,26 @@ toKielerFormat = function(state) {
 };
 
 applyKielerLayout = function(state, kNode, x0, y0) {
-  var child, childMap, i, kChild, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+  var child, childMap, kChild, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
   if (x0 == null) {
     x0 = null;
   }
   if (y0 == null) {
     y0 = null;
   }
-  i = state._initial = {
-    w: kNode.width,
-    h: kNode.height
-  };
+  state.w = kNode.width;
+  state.h = kNode.height;
   if (!((x0 != null) && (y0 != null))) {
-    x0 = -i.w / 2;
-    y0 = -i.h / 2;
+    x0 = -state.w / 2;
+    y0 = -state.h / 2;
   }
-  i.x = x0 + kNode.x + i.w / 2;
-  i.y = y0 + kNode.y + i.h / 2;
+  state.x = x0 + kNode.x + state.w / 2;
+  state.y = y0 + kNode.y + state.h / 2;
   _ref = state.transitions || [];
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     tr = _ref[_i];
-    tr._initial = {
-      x: x0 + 0,
-      y: y0 + 0
-    };
+    tr.x = x0 + 0;
+    tr.y = y0 + 0;
   }
   childMap = {};
   _ref1 = state.children || [];
@@ -186,7 +182,7 @@ applyKielerLayout = function(state, kNode, x0, y0) {
     if ((child = childMap[kChild.id]) == null) {
       continue;
     }
-    _results.push(applyKielerLayout(child, kChild, i.x - i.w / 2, i.y - i.h / 2));
+    _results.push(applyKielerLayout(child, kChild, state.x - state.w / 2, state.y - state.h / 2));
   }
   return _results;
 };
@@ -253,29 +249,19 @@ force.Layout = (function() {
     this.links = [];
     this.transitions = [];
     this.top = {
-      children: [],
+      children: tree,
       controls: []
     };
     for (_i = 0, _len = tree.length; _i < _len; _i++) {
       topState = tree[_i];
       walk(topState, (function(_this) {
-        return function(state, parent) {
-          var node;
-          node = {
-            id: state.id,
-            type: state.type || 'state',
-            x: state._initial.x,
-            y: state._initial.y,
-            w: state._initial.w,
-            h: state._initial.h,
-            children: [],
-            controls: []
-          };
+        return function(node, parent) {
+          node.controls = [];
+          node.children = node.children || [];
           _this.nodes.push(node);
           _this.cells.push(node);
-          _this.nodeMap[state.id] = node;
-          node.parent = parent != null ? _this.nodeMap[parent.id] : _this.top;
-          return node.parent.children.push(node);
+          _this.nodeMap[node.id] = node;
+          return node.parent = parent != null ? _this.nodeMap[parent.id] : _this.top;
         };
       })(this));
     }
@@ -289,14 +275,14 @@ force.Layout = (function() {
           _results1 = [];
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
             tr = _ref[_k];
-            _ref1 = path(_this.nodeMap[state.id], _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
+            _ref1 = path(state, _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
             c = {
               transition: tr,
               parent: c || _this.top,
               w: CONTROL_RADIUS,
               h: CONTROL_RADIUS,
-              x: tr._initial.x,
-              y: tr._initial.y
+              x: tr.x,
+              y: tr.y
             };
             c.parent.controls.push(c);
             _this.nodes.push(c);
