@@ -276,6 +276,9 @@ class force.Layout
     transition.append('text')
         .attr('class', 'transition-label')
         .text((tr) -> tr.label)
+        .each (tr) ->
+          tr.c.textWidth = d3.min([$(@).width() + 5, LABEL_SPACE])
+          tr.c.w = d3.max([tr.c.w, tr.c.textWidth])
 
     if @debug
       control = @container.selectAll('.control')

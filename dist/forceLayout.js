@@ -364,6 +364,9 @@ force.Layout = (function() {
     transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
     transition.append('text').attr('class', 'transition-label').text(function(tr) {
       return tr.label;
+    }).each(function(tr) {
+      tr.c.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
+      return tr.c.w = d3.max([tr.c.w, tr.c.textWidth]);
     });
     if (this.debug) {
       return control = this.container.selectAll('.control').data(this.controls).enter().append('circle').attr('class', 'control').attr('r', CONTROL_RADIUS);
