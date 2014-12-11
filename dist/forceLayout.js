@@ -190,7 +190,6 @@ applyKielerLayout = function(node, kNode, x0, y0) {
 force.kielerLayout = function(kielerURL, kielerAlgorithm, tree) {
   var form, graph;
   graph = toKielerFormat({
-    id: 'root',
     children: tree
   });
   form = {
@@ -206,7 +205,6 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, tree) {
     graphLayout = JSON.parse(resp)[0];
     treeCopy = JSON.parse(JSON.stringify(tree));
     applyKielerLayout({
-      id: 'root',
       children: treeCopy
     }, graphLayout);
     return treeCopy;

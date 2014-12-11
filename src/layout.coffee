@@ -107,7 +107,7 @@ applyKielerLayout = (node, kNode, x0 = null, y0 = null) ->
 
 
 force.kielerLayout = (kielerURL, kielerAlgorithm, tree) ->
-  graph = toKielerFormat({id: 'root', children: tree})
+  graph = toKielerFormat({children: tree})
 
   form = {
     graph: JSON.stringify(graph)
@@ -122,7 +122,7 @@ force.kielerLayout = (kielerURL, kielerAlgorithm, tree) ->
     .then (resp) ->
       graphLayout = JSON.parse(resp)[0]
       treeCopy = JSON.parse(JSON.stringify(tree))
-      applyKielerLayout({id: 'root', children: treeCopy}, graphLayout)
+      applyKielerLayout({children: treeCopy}, graphLayout)
       return treeCopy
     .catch (resp) ->
       throw Error(resp.responseText)
