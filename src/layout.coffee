@@ -82,31 +82,30 @@ toKielerFormat = (node) ->
   return rv
 
 
-applyKielerLayout = (node, kNode, x0 = null, y0 = null) ->
-  node.w = kNode.width
-  node.h = kNode.height
-
-  unless x0? and y0?
-    x0 = -node.w/2
-    y0 = -node.h/2
-
-  node.x = x0 + kNode.x + node.w/2
-  node.y = y0 + kNode.y + node.h/2
-
-  for tr in node.transitions or []
-    tr.x = x0 + 0
-    tr.y = y0 + 0
-
-  childMap = {}
-  for child in node.children or []
-    if child.id? then childMap[child.id] = child
-
-  for kChild in kNode.children or []
-    unless (child = childMap[kChild.id])? then continue
-    applyKielerLayout(child, kChild, node.x - node.w/2, node.y - node.h/2)
-
-
 force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
+  applyLayout = (node, kNode, x0 = null, y0 = null) ->
+    node.w = kNode.width
+    node.h = kNode.height
+
+    unless x0? and y0?
+      x0 = -node.w/2
+      y0 = -node.h/2
+
+    node.x = x0 + kNode.x + node.w/2
+    node.y = y0 + kNode.y + node.h/2
+
+    for tr in node.transitions or []
+      tr.x = x0 + 0
+      tr.y = y0 + 0
+
+    childMap = {}
+    for child in node.children or []
+      if child.id? then childMap[child.id] = child
+
+    for kChild in kNode.children or []
+      unless (child = childMap[kChild.id])? then continue
+      applyLayout(child, kChild, node.x - node.w/2, node.y - node.h/2)
+
   graph = toKielerFormat(top)
 
   form = {
@@ -121,7 +120,7 @@ force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
   return Q($.post(kielerURL, form))
     .then (resp) ->
       graphLayout = JSON.parse(resp)[0]
-      applyKielerLayout(top, graphLayout)
+      applyLayout(top, graphLayout)
     .catch (resp) ->
       throw Error(resp.responseText)
 

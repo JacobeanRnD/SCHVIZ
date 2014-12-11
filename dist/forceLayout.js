@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CELL_MIN, CELL_PAD, CONTROL_RADIUS, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, applyKielerLayout, def, exit, force, nextId, parents, path, toKielerFormat, treeFromXml, walk;
+var CELL_MIN, CELL_PAD, CONTROL_RADIUS, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, def, exit, force, nextId, parents, path, toKielerFormat, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
@@ -145,50 +145,49 @@ toKielerFormat = function(node) {
   return rv;
 };
 
-applyKielerLayout = function(node, kNode, x0, y0) {
-  var child, childMap, kChild, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
-  if (x0 == null) {
-    x0 = null;
-  }
-  if (y0 == null) {
-    y0 = null;
-  }
-  node.w = kNode.width;
-  node.h = kNode.height;
-  if (!((x0 != null) && (y0 != null))) {
-    x0 = -node.w / 2;
-    y0 = -node.h / 2;
-  }
-  node.x = x0 + kNode.x + node.w / 2;
-  node.y = y0 + kNode.y + node.h / 2;
-  _ref = node.transitions || [];
-  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    tr = _ref[_i];
-    tr.x = x0 + 0;
-    tr.y = y0 + 0;
-  }
-  childMap = {};
-  _ref1 = node.children || [];
-  for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-    child = _ref1[_j];
-    if (child.id != null) {
-      childMap[child.id] = child;
-    }
-  }
-  _ref2 = kNode.children || [];
-  _results = [];
-  for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-    kChild = _ref2[_k];
-    if ((child = childMap[kChild.id]) == null) {
-      continue;
-    }
-    _results.push(applyKielerLayout(child, kChild, node.x - node.w / 2, node.y - node.h / 2));
-  }
-  return _results;
-};
-
 force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
-  var form, graph;
+  var applyLayout, form, graph;
+  applyLayout = function(node, kNode, x0, y0) {
+    var child, childMap, kChild, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+    if (x0 == null) {
+      x0 = null;
+    }
+    if (y0 == null) {
+      y0 = null;
+    }
+    node.w = kNode.width;
+    node.h = kNode.height;
+    if (!((x0 != null) && (y0 != null))) {
+      x0 = -node.w / 2;
+      y0 = -node.h / 2;
+    }
+    node.x = x0 + kNode.x + node.w / 2;
+    node.y = y0 + kNode.y + node.h / 2;
+    _ref = node.transitions || [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      tr = _ref[_i];
+      tr.x = x0 + 0;
+      tr.y = y0 + 0;
+    }
+    childMap = {};
+    _ref1 = node.children || [];
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      child = _ref1[_j];
+      if (child.id != null) {
+        childMap[child.id] = child;
+      }
+    }
+    _ref2 = kNode.children || [];
+    _results = [];
+    for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+      kChild = _ref2[_k];
+      if ((child = childMap[kChild.id]) == null) {
+        continue;
+      }
+      _results.push(applyLayout(child, kChild, node.x - node.w / 2, node.y - node.h / 2));
+    }
+    return _results;
+  };
   graph = toKielerFormat(top);
   form = {
     graph: JSON.stringify(graph),
@@ -201,7 +200,7 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
   return Q($.post(kielerURL, form)).then(function(resp) {
     var graphLayout;
     graphLayout = JSON.parse(resp)[0];
-    return applyKielerLayout(top, graphLayout);
+    return applyLayout(top, graphLayout);
   })["catch"](function(resp) {
     throw Error(resp.responseText);
   });
