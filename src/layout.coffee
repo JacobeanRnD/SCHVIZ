@@ -8,7 +8,7 @@ ROUND_CORNER = 5
 CELL_MIN = {w: 40, h: 40}
 CELL_PAD = {top: 20, bottom: 5, left: 5, right: 5}
 LABEL_SPACE = 400
-CONTROL_RADIUS = 20
+CONTROL_SIZE = {w: 25, h: 25}
 LINK_STRENGTH = .1
 LINK_DISTANCE = 30
 DEBUG_FORCE_FACTOR = 50
@@ -183,8 +183,8 @@ class force.Layout
         for tr in node.transitions or []
           [a, c, b] = path(node, @nodeMap[tr.target])
           tr.parent = c or @top
-          tr.w = CONTROL_RADIUS
-          tr.h = CONTROL_RADIUS
+          tr.w = CONTROL_SIZE.w
+          tr.h = CONTROL_SIZE.h
           tr.id = tr.id or nextId()
           tr.parent.controls.push(tr)
           @nodes.push(tr)
@@ -273,19 +273,22 @@ class force.Layout
     transition.append('path')
         .attr('style', "marker-end: url(##{@_arrow_id})")
 
-    transition.append('text')
+    transition.append('g')
         .attr('class', 'transition-label')
+      .append('text')
         .text((tr) -> tr.label)
         .each (tr) ->
           tr.c.textWidth = d3.min([$(@).width() + 5, LABEL_SPACE])
           tr.c.w = d3.max([tr.c.w, tr.c.textWidth])
+        .attr('dy', '.3em')
 
     if @debug
-      control = @container.selectAll('.control')
-          .data(@controls)
-        .enter().append('circle')
+      transition.selectAll('.transition-label').append('rect')
           .attr('class', 'control')
-          .attr('r', CONTROL_RADIUS)
+          .attr('x', (tr) -> -tr.c.w / 2)
+          .attr('y', (tr) -> -tr.c.h / 2)
+          .attr('width', (tr) -> tr.c.w)
+          .attr('height', (tr) -> tr.c.h)
 
   svgUpdate: ->
     @container.selectAll('.cell')
@@ -324,14 +327,8 @@ class force.Layout
             t = exit(b, c)
             return "M#{s.x},#{s.y} S#{c.x},#{c.y} #{t.x},#{t.y}"
 
-    @container.selectAll('.transition').selectAll('text')
-        .attr('x', (tr) -> tr.c.x)
-        .attr('y', (tr) -> tr.c.y)
-
-    if @debug
-      control
-          .attr('cx', (d) -> d.x)
-          .attr('cy', (d) -> d.y)
+    @container.selectAll('.transition').selectAll('.transition-label')
+        .attr('transform', (tr) -> "translate(#{tr.c.x},#{tr.c.y})")
 
   setupD3Layout: ->
     @layout = d3.layout.force()

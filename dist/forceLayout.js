@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CELL_MIN, CELL_PAD, CONTROL_RADIUS, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, def, exit, force, nextId, parents, path, toKielerFormat, treeFromXml, walk;
+var CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, def, exit, force, nextId, parents, path, toKielerFormat, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
@@ -23,7 +23,10 @@ CELL_PAD = {
 
 LABEL_SPACE = 400;
 
-CONTROL_RADIUS = 20;
+CONTROL_SIZE = {
+  w: 25,
+  h: 25
+};
 
 LINK_STRENGTH = .1;
 
@@ -292,8 +295,8 @@ force.Layout = (function() {
             tr = _ref[_k];
             _ref1 = path(node, _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
             tr.parent = c || _this.top;
-            tr.w = CONTROL_RADIUS;
-            tr.h = CONTROL_RADIUS;
+            tr.w = CONTROL_SIZE.w;
+            tr.h = CONTROL_SIZE.h;
             tr.id = tr.id || nextId();
             tr.parent.controls.push(tr);
             _this.nodes.push(tr);
@@ -347,7 +350,7 @@ force.Layout = (function() {
   };
 
   Layout.prototype.svgNodes = function() {
-    var cell, control, transition;
+    var cell, transition;
     cell = this.container.selectAll('.cell').data(this.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state');
     }).classed('parallel-child', function(cell) {
@@ -362,14 +365,22 @@ force.Layout = (function() {
     });
     transition = this.container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition');
     transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
-    transition.append('text').attr('class', 'transition-label').text(function(tr) {
+    transition.append('g').attr('class', 'transition-label').append('text').text(function(tr) {
       return tr.label;
     }).each(function(tr) {
       tr.c.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
       return tr.c.w = d3.max([tr.c.w, tr.c.textWidth]);
-    });
+    }).attr('dy', '.3em');
     if (this.debug) {
-      return control = this.container.selectAll('.control').data(this.controls).enter().append('circle').attr('class', 'control').attr('r', CONTROL_RADIUS);
+      return transition.selectAll('.transition-label').append('rect').attr('class', 'control').attr('x', function(tr) {
+        return -tr.c.w / 2;
+      }).attr('y', function(tr) {
+        return -tr.c.h / 2;
+      }).attr('width', function(tr) {
+        return tr.c.w;
+      }).attr('height', function(tr) {
+        return tr.c.h;
+      });
     }
   };
 
@@ -411,18 +422,9 @@ force.Layout = (function() {
         return "M" + s.x + "," + s.y + " S" + c.x + "," + c.y + " " + t.x + "," + t.y;
       }
     });
-    this.container.selectAll('.transition').selectAll('text').attr('x', function(tr) {
-      return tr.c.x;
-    }).attr('y', function(tr) {
-      return tr.c.y;
+    return this.container.selectAll('.transition').selectAll('.transition-label').attr('transform', function(tr) {
+      return "translate(" + tr.c.x + "," + tr.c.y + ")";
     });
-    if (this.debug) {
-      return control.attr('cx', function(d) {
-        return d.x;
-      }).attr('cy', function(d) {
-        return d.y;
-      });
-    }
   };
 
   Layout.prototype.setupD3Layout = function() {

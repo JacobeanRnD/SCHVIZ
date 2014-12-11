@@ -57,7 +57,8 @@ html, body { height: 100%; margin: 0; }
       function createLayout() {
         layout = new forceLayout.Layout(_.extend({
             kielerURL: '/kieler/layout',
-            kielerAlgorithm: algorithm
+            kielerAlgorithm: algorithm,
+            debug: debug
           }, options));
         if(useForceLayout) { layout.start(); }
       }
