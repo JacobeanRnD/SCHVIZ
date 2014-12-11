@@ -139,8 +139,8 @@ toKielerFormat = function(node) {
     ];
   }
   if ((node.children || []).length === 0) {
-    rv.width = CELL_MIN.w;
-    rv.height = CELL_MIN.h;
+    rv.width = node.w;
+    rv.height = node.h;
   }
   return rv;
 };
@@ -209,15 +209,13 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
 
 force.Layout = (function() {
   function Layout(options) {
-    var tree;
     this.debug = options.debug || false;
     this.svgCreate(options.parent);
     this.runSimulation = false;
-    tree = options.tree || treeFromXml(options.doc).sc;
-    this.loadTree(tree);
+    this.loadTree(options.tree || treeFromXml(options.doc).sc);
+    this.svgNodes();
     force.kielerLayout(options.kielerURL, options.kielerAlgorithm, this.top).then((function(_this) {
       return function(treeWithLayout) {
-        _this.svgNodes();
         _this.setupD3Layout();
         _this.layout.on('tick', function() {
           _this.adjustLayout();
@@ -250,6 +248,8 @@ force.Layout = (function() {
         return function(node, parent) {
           node.controls = [];
           node.children = node.children || [];
+          node.w = node.w || CELL_MIN.w;
+          node.h = node.h || CELL_MIN.h;
           _this.nodes.push(node);
           _this.cells.push(node);
           _this.nodeMap[node.id] = node;

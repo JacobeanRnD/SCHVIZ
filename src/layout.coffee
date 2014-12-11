@@ -77,8 +77,8 @@ toKielerFormat = (node) ->
   if node.id?
     rv.labels = [{text: node.id}]
   if (node.children or []).length == 0
-    rv.width = CELL_MIN.w
-    rv.height = CELL_MIN.h
+    rv.width = node.w
+    rv.height = node.h
   return rv
 
 
@@ -133,11 +133,10 @@ class force.Layout
     @svgCreate(options.parent)
     @runSimulation = false
 
-    tree = options.tree or treeFromXml(options.doc).sc
-    @loadTree(tree)
+    @loadTree(options.tree or treeFromXml(options.doc).sc)
+    @svgNodes()
     force.kielerLayout(options.kielerURL, options.kielerAlgorithm, @top)
       .then (treeWithLayout) =>
-        @svgNodes()
         @setupD3Layout()
         @layout.on 'tick', =>
           @adjustLayout()
@@ -162,6 +161,8 @@ class force.Layout
       walk topNode, (node, parent) =>
         node.controls = []
         node.children = node.children or []
+        node.w = node.w or CELL_MIN.w
+        node.h = node.h or CELL_MIN.h
         @nodes.push(node)
         @cells.push(node)
         @nodeMap[node.id] = node
