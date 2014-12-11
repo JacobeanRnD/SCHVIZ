@@ -171,18 +171,13 @@ class force.Layout
       walk topNode, (node) =>
         for tr in node.transitions or []
           [a, c, b] = path(node, @nodeMap[tr.target])
-          c = {
-            transition: tr
-            parent: c or @top
-            w: CONTROL_RADIUS
-            h: CONTROL_RADIUS
-            x: tr.x
-            y: tr.y
-          }
-          c.parent.controls.push(c)
-          @nodes.push(c)
-          @controls.push(c)
-          for [source, target] in d3.pairs([a, c, b])
+          tr.parent = c or @top
+          tr.w = CONTROL_RADIUS
+          tr.h = CONTROL_RADIUS
+          tr.parent.controls.push(tr)
+          @nodes.push(tr)
+          @controls.push(tr)
+          for [source, target] in d3.pairs([a, tr, b])
             @links.push(
               source: source
               target: target
@@ -191,7 +186,7 @@ class force.Layout
           @transitions.push({
             a: a
             b: b
-            c: c
+            c: tr
             selfie: node.id == tr.target
             label: label
           })

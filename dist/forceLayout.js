@@ -268,18 +268,13 @@ force.Layout = (function() {
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
             tr = _ref[_k];
             _ref1 = path(node, _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
-            c = {
-              transition: tr,
-              parent: c || _this.top,
-              w: CONTROL_RADIUS,
-              h: CONTROL_RADIUS,
-              x: tr.x,
-              y: tr.y
-            };
-            c.parent.controls.push(c);
-            _this.nodes.push(c);
-            _this.controls.push(c);
-            _ref2 = d3.pairs([a, c, b]);
+            tr.parent = c || _this.top;
+            tr.w = CONTROL_RADIUS;
+            tr.h = CONTROL_RADIUS;
+            tr.parent.controls.push(tr);
+            _this.nodes.push(tr);
+            _this.controls.push(tr);
+            _ref2 = d3.pairs([a, tr, b]);
             for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
               _ref3 = _ref2[_l], source = _ref3[0], target = _ref3[1];
               _this.links.push({
@@ -291,7 +286,7 @@ force.Layout = (function() {
             _results1.push(_this.transitions.push({
               a: a,
               b: b,
-              c: c,
+              c: tr,
               selfie: node.id === tr.target,
               label: label
             }));
