@@ -106,8 +106,8 @@ applyKielerLayout = (node, kNode, x0 = null, y0 = null) ->
     applyKielerLayout(child, kChild, node.x - node.w/2, node.y - node.h/2)
 
 
-force.kielerLayout = (kielerURL, kielerAlgorithm, tree) ->
-  graph = toKielerFormat({children: tree})
+force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
+  graph = toKielerFormat(top)
 
   form = {
     graph: JSON.stringify(graph)
@@ -121,9 +121,7 @@ force.kielerLayout = (kielerURL, kielerAlgorithm, tree) ->
   return Q($.post(kielerURL, form))
     .then (resp) ->
       graphLayout = JSON.parse(resp)[0]
-      treeCopy = JSON.parse(JSON.stringify(tree))
-      applyKielerLayout({children: treeCopy}, graphLayout)
-      return treeCopy
+      applyKielerLayout(top, graphLayout)
     .catch (resp) ->
       throw Error(resp.responseText)
 
@@ -136,9 +134,9 @@ class force.Layout
     @runSimulation = false
 
     tree = options.tree or treeFromXml(options.doc).sc
-    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, tree)
+    @loadTree(tree)
+    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, @top)
       .then (treeWithLayout) =>
-        @loadTree(treeWithLayout)
         @svgNodes()
         @setupD3Layout()
         @layout.on 'tick', =>

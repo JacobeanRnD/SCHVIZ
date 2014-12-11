@@ -187,11 +187,9 @@ applyKielerLayout = function(node, kNode, x0, y0) {
   return _results;
 };
 
-force.kielerLayout = function(kielerURL, kielerAlgorithm, tree) {
+force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
   var form, graph;
-  graph = toKielerFormat({
-    children: tree
-  });
+  graph = toKielerFormat(top);
   form = {
     graph: JSON.stringify(graph),
     config: JSON.stringify({
@@ -201,13 +199,9 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, tree) {
     oFormat: 'org.json'
   };
   return Q($.post(kielerURL, form)).then(function(resp) {
-    var graphLayout, treeCopy;
+    var graphLayout;
     graphLayout = JSON.parse(resp)[0];
-    treeCopy = JSON.parse(JSON.stringify(tree));
-    applyKielerLayout({
-      children: treeCopy
-    }, graphLayout);
-    return treeCopy;
+    return applyKielerLayout(top, graphLayout);
   })["catch"](function(resp) {
     throw Error(resp.responseText);
   });
@@ -220,9 +214,9 @@ force.Layout = (function() {
     this.svgCreate(options.parent);
     this.runSimulation = false;
     tree = options.tree || treeFromXml(options.doc).sc;
-    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, tree).then((function(_this) {
+    this.loadTree(tree);
+    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, this.top).then((function(_this) {
       return function(treeWithLayout) {
-        _this.loadTree(treeWithLayout);
         _this.svgNodes();
         _this.setupD3Layout();
         _this.layout.on('tick', function() {
