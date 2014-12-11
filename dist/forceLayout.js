@@ -121,6 +121,7 @@ toKielerFormat = function(node) {
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       transition = _ref1[_j];
       edges.push({
+        id: transition.id,
         source: child.id,
         target: transition.target
       });
@@ -146,9 +147,10 @@ toKielerFormat = function(node) {
 };
 
 force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
-  var applyLayout, form, graph;
+  var applyLayout, edgeMap, form, graph;
+  edgeMap = {};
   applyLayout = function(node, kNode, x0, y0) {
-    var child, childMap, kChild, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+    var child, childMap, edge, kChild, points, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
     if (x0 == null) {
       x0 = null;
     }
@@ -166,8 +168,18 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
     _ref = node.transitions || [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       tr = _ref[_i];
-      tr.x = x0 + 0;
-      tr.y = y0 + 0;
+      edge = edgeMap[tr.id];
+      if (edge.bendPoints.length) {
+        points = edge.bendPoints;
+      } else {
+        points = [edge.sourcePoint, edge.targetPoint];
+      }
+      tr.x = x0 + d3.mean(points, function(p) {
+        return p.x;
+      });
+      tr.y = y0 + d3.mean(points, function(p) {
+        return p.y;
+      });
     }
     childMap = {};
     _ref1 = node.children || [];
@@ -200,6 +212,18 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
   return Q($.post(kielerURL, form)).then(function(resp) {
     var graphLayout;
     graphLayout = JSON.parse(resp)[0];
+    walk(graphLayout, (function(_this) {
+      return function(kNode) {
+        var edge, _i, _len, _ref, _results;
+        _ref = kNode.edges || [];
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          edge = _ref[_i];
+          _results.push(edgeMap[edge.id] = edge);
+        }
+        return _results;
+      };
+    })(this));
     return applyLayout(top, graphLayout);
   })["catch"](function(resp) {
     throw Error(resp.responseText);
@@ -270,6 +294,7 @@ force.Layout = (function() {
             tr.parent = c || _this.top;
             tr.w = CONTROL_RADIUS;
             tr.h = CONTROL_RADIUS;
+            tr.id = tr.id || nextId();
             tr.parent.controls.push(tr);
             _this.nodes.push(tr);
             _this.controls.push(tr);

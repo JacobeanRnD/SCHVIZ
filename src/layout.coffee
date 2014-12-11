@@ -66,6 +66,7 @@ toKielerFormat = (node) ->
     children.push(toKielerFormat(child))
     for transition in child.transitions or []
       edges.push(
+        id: transition.id
         source: child.id
         target: transition.target
       )
@@ -83,6 +84,8 @@ toKielerFormat = (node) ->
 
 
 force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
+  edgeMap = {}
+
   applyLayout = (node, kNode, x0 = null, y0 = null) ->
     node.w = kNode.width
     node.h = kNode.height
@@ -95,8 +98,13 @@ force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
     node.y = y0 + kNode.y + node.h/2
 
     for tr in node.transitions or []
-      tr.x = x0 + 0
-      tr.y = y0 + 0
+      edge = edgeMap[tr.id]
+      if edge.bendPoints.length
+        points = edge.bendPoints
+      else
+        points = [edge.sourcePoint, edge.targetPoint]
+      tr.x = x0 + d3.mean(points, (p) -> p.x)
+      tr.y = y0 + d3.mean(points, (p) -> p.y)
 
     childMap = {}
     for child in node.children or []
@@ -120,6 +128,9 @@ force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
   return Q($.post(kielerURL, form))
     .then (resp) ->
       graphLayout = JSON.parse(resp)[0]
+      walk graphLayout, (kNode) =>
+        for edge in kNode.edges or []
+          edgeMap[edge.id] = edge
       applyLayout(top, graphLayout)
     .catch (resp) ->
       throw Error(resp.responseText)
@@ -174,6 +185,7 @@ class force.Layout
           tr.parent = c or @top
           tr.w = CONTROL_RADIUS
           tr.h = CONTROL_RADIUS
+          tr.id = tr.id or nextId()
           tr.parent.controls.push(tr)
           @nodes.push(tr)
           @controls.push(tr)
