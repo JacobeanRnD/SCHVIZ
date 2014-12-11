@@ -664,9 +664,7 @@ force.render = function(options) {
 
 
 },{"./treeFromXml.coffee":2}],2:[function(require,module,exports){
-var DESM, strip;
-
-DESM = 'http://scxml.io/desm';
+var strip;
 
 strip = function(obj) {
   var key, value;
@@ -742,7 +740,7 @@ module.exports = function(doc) {
     };
   };
   parseStates = function(node) {
-    var geometry, state, stateList, _i, _len, _ref;
+    var state, stateList, _i, _len, _ref;
     stateList = [];
     _ref = node.childNodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -782,9 +780,6 @@ module.exports = function(doc) {
         }
       })();
       if (state != null) {
-        geometry = node.getAttributeNS(DESM, 'geometry') || null;
-        state.uuid = node.getAttributeNS(DESM, 'uuid') || null;
-        state.geom = (geometry != null) && trees.unpackGeom(geometry) || null;
         _.extend(state, parseChildNodes(node));
         stateList.push(strip(state));
       }

@@ -1,6 +1,3 @@
-DESM = 'http://scxml.io/desm'
-
-
 strip = (obj) ->
   for key, value of obj
     if value?
@@ -95,9 +92,6 @@ module.exports = (doc) ->
           }
 
       if state?
-        geometry = node.getAttributeNS(DESM, 'geometry') or null
-        state.uuid = node.getAttributeNS(DESM, 'uuid') or null
-        state.geom = geometry? and trees.unpackGeom(geometry) or null
         _.extend(state, parseChildNodes(node))
         stateList.push(strip(state))
 
