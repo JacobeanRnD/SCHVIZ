@@ -51,7 +51,7 @@ def = function(map, key, defaultValue) {
   return map[key];
 };
 
-walk = function(state, callback, parent, postorder) {
+walk = function(node, callback, parent, postorder) {
   var child, _i, _len, _ref;
   if (parent == null) {
     parent = null;
@@ -60,15 +60,15 @@ walk = function(state, callback, parent, postorder) {
     postorder = false;
   }
   if (!postorder) {
-    callback(state, parent);
+    callback(node, parent);
   }
-  _ref = state.children || [];
+  _ref = node.children || [];
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     child = _ref[_i];
-    walk(child, callback, state, postorder);
+    walk(child, callback, node, postorder);
   }
   if (postorder) {
-    return callback(state, parent);
+    return callback(node, parent);
   }
 };
 
@@ -109,11 +109,11 @@ exit = function(cell, point) {
   };
 };
 
-toKielerFormat = function(state) {
+toKielerFormat = function(node) {
   var child, children, edges, rv, transition, _i, _j, _len, _len1, _ref, _ref1;
   children = [];
   edges = [];
-  _ref = state.children || [];
+  _ref = node.children || [];
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     child = _ref[_i];
     children.push(toKielerFormat(child));
@@ -127,25 +127,25 @@ toKielerFormat = function(state) {
     }
   }
   rv = {
-    id: state.id,
+    id: node.id,
     children: children,
     edges: edges
   };
-  if (state.id != null) {
+  if (node.id != null) {
     rv.labels = [
       {
-        text: state.id
+        text: node.id
       }
     ];
   }
-  if ((state.children || []).length === 0) {
+  if ((node.children || []).length === 0) {
     rv.width = CELL_MIN.w;
     rv.height = CELL_MIN.h;
   }
   return rv;
 };
 
-applyKielerLayout = function(state, kNode, x0, y0) {
+applyKielerLayout = function(node, kNode, x0, y0) {
   var child, childMap, kChild, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
   if (x0 == null) {
     x0 = null;
@@ -153,22 +153,22 @@ applyKielerLayout = function(state, kNode, x0, y0) {
   if (y0 == null) {
     y0 = null;
   }
-  state.w = kNode.width;
-  state.h = kNode.height;
+  node.w = kNode.width;
+  node.h = kNode.height;
   if (!((x0 != null) && (y0 != null))) {
-    x0 = -state.w / 2;
-    y0 = -state.h / 2;
+    x0 = -node.w / 2;
+    y0 = -node.h / 2;
   }
-  state.x = x0 + kNode.x + state.w / 2;
-  state.y = y0 + kNode.y + state.h / 2;
-  _ref = state.transitions || [];
+  node.x = x0 + kNode.x + node.w / 2;
+  node.y = y0 + kNode.y + node.h / 2;
+  _ref = node.transitions || [];
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     tr = _ref[_i];
     tr.x = x0 + 0;
     tr.y = y0 + 0;
   }
   childMap = {};
-  _ref1 = state.children || [];
+  _ref1 = node.children || [];
   for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
     child = _ref1[_j];
     if (child.id != null) {
@@ -182,7 +182,7 @@ applyKielerLayout = function(state, kNode, x0, y0) {
     if ((child = childMap[kChild.id]) == null) {
       continue;
     }
-    _results.push(applyKielerLayout(child, kChild, state.x - state.w / 2, state.y - state.h / 2));
+    _results.push(applyKielerLayout(child, kChild, node.x - node.w / 2, node.y - node.h / 2));
   }
   return _results;
 };
@@ -241,7 +241,7 @@ force.Layout = (function() {
   }
 
   Layout.prototype.loadTree = function(tree) {
-    var topState, _i, _j, _len, _len1, _results;
+    var topNode, _i, _j, _len, _len1, _results;
     this.nodes = [];
     this.controls = [];
     this.cells = [];
@@ -253,8 +253,8 @@ force.Layout = (function() {
       controls: []
     };
     for (_i = 0, _len = tree.length; _i < _len; _i++) {
-      topState = tree[_i];
-      walk(topState, (function(_this) {
+      topNode = tree[_i];
+      walk(topNode, (function(_this) {
         return function(node, parent) {
           node.controls = [];
           node.children = node.children || [];
@@ -267,15 +267,15 @@ force.Layout = (function() {
     }
     _results = [];
     for (_j = 0, _len1 = tree.length; _j < _len1; _j++) {
-      topState = tree[_j];
-      _results.push(walk(topState, (function(_this) {
-        return function(state) {
+      topNode = tree[_j];
+      _results.push(walk(topNode, (function(_this) {
+        return function(node) {
           var a, b, c, label, source, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results1;
-          _ref = state.transitions || [];
+          _ref = node.transitions || [];
           _results1 = [];
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
             tr = _ref[_k];
-            _ref1 = path(state, _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
+            _ref1 = path(node, _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
             c = {
               transition: tr,
               parent: c || _this.top,
@@ -300,7 +300,7 @@ force.Layout = (function() {
               a: a,
               b: b,
               c: c,
-              selfie: state.id === tr.target,
+              selfie: node.id === tr.target,
               label: label
             }));
           }

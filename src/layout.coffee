@@ -30,11 +30,11 @@ def = (map, key, defaultValue) ->
   return map[key]
 
 
-walk = (state, callback, parent=null, postorder=false) ->
-  callback(state, parent) unless postorder
-  for child in state.children or []
-    walk(child, callback, state, postorder)
-  callback(state, parent) if postorder
+walk = (node, callback, parent=null, postorder=false) ->
+  callback(node, parent) unless postorder
+  for child in node.children or []
+    walk(child, callback, node, postorder)
+  callback(node, parent) if postorder
 
 
 parents = (node) ->
@@ -59,10 +59,10 @@ exit = (cell, point) ->
   return {x: cell.x + d.x * e, y: cell.y + d.y * e}
 
 
-toKielerFormat = (state) ->
+toKielerFormat = (node) ->
   children = []
   edges = []
-  for child in state.children or []
+  for child in node.children or []
     children.push(toKielerFormat(child))
     for transition in child.transitions or []
       edges.push(
@@ -70,40 +70,40 @@ toKielerFormat = (state) ->
         target: transition.target
       )
   rv = {
-    id: state.id
+    id: node.id
     children: children
     edges: edges
   }
-  if state.id?
-    rv.labels = [{text: state.id}]
-  if (state.children or []).length == 0
+  if node.id?
+    rv.labels = [{text: node.id}]
+  if (node.children or []).length == 0
     rv.width = CELL_MIN.w
     rv.height = CELL_MIN.h
   return rv
 
 
-applyKielerLayout = (state, kNode, x0 = null, y0 = null) ->
-  state.w = kNode.width
-  state.h = kNode.height
+applyKielerLayout = (node, kNode, x0 = null, y0 = null) ->
+  node.w = kNode.width
+  node.h = kNode.height
 
   unless x0? and y0?
-    x0 = -state.w/2
-    y0 = -state.h/2
+    x0 = -node.w/2
+    y0 = -node.h/2
 
-  state.x = x0 + kNode.x + state.w/2
-  state.y = y0 + kNode.y + state.h/2
+  node.x = x0 + kNode.x + node.w/2
+  node.y = y0 + kNode.y + node.h/2
 
-  for tr in state.transitions or []
+  for tr in node.transitions or []
     tr.x = x0 + 0
     tr.y = y0 + 0
 
   childMap = {}
-  for child in state.children or []
+  for child in node.children or []
     if child.id? then childMap[child.id] = child
 
   for kChild in kNode.children or []
     unless (child = childMap[kChild.id])? then continue
-    applyKielerLayout(child, kChild, state.x - state.w/2, state.y - state.h/2)
+    applyKielerLayout(child, kChild, node.x - node.w/2, node.y - node.h/2)
 
 
 force.kielerLayout = (kielerURL, kielerAlgorithm, tree) ->
@@ -160,8 +160,8 @@ class force.Layout
       controls: []
     }
 
-    for topState in tree
-      walk topState, (node, parent) =>
+    for topNode in tree
+      walk topNode, (node, parent) =>
         node.controls = []
         node.children = node.children or []
         @nodes.push(node)
@@ -169,10 +169,10 @@ class force.Layout
         @nodeMap[node.id] = node
         node.parent = if parent? then @nodeMap[parent.id] else @top
 
-    for topState in tree
-      walk topState, (state) =>
-        for tr in state.transitions or []
-          [a, c, b] = path(state, @nodeMap[tr.target])
+    for topNode in tree
+      walk topNode, (node) =>
+        for tr in node.transitions or []
+          [a, c, b] = path(node, @nodeMap[tr.target])
           c = {
             transition: tr
             parent: c or @top
@@ -194,7 +194,7 @@ class force.Layout
             a: a
             b: b
             c: c
-            selfie: state.id == tr.target
+            selfie: node.id == tr.target
             label: label
           })
 
