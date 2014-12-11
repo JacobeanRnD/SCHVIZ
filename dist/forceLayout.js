@@ -584,19 +584,20 @@ force.Layout = (function() {
     })(this);
     adjustNode = (function(_this) {
       return function(node) {
-        var dx, dy, grow, xMax, xMin, yMax, yMin;
+        var contents, dx, dy, grow, xMax, xMin, yMax, yMin;
         if (node.children.length > 0) {
           handleCollisions(node, node, tick);
-          xMin = d3.min(node.children, function(d) {
+          contents = [].concat(node.children, node.controls);
+          xMin = d3.min(contents, function(d) {
             return d.x - d.w / 2;
           }) - CELL_PAD.left;
-          xMax = d3.max(node.children, function(d) {
+          xMax = d3.max(contents, function(d) {
             return d.x + d.w / 2;
           }) + CELL_PAD.right;
-          yMin = d3.min(node.children, function(d) {
+          yMin = d3.min(contents, function(d) {
             return d.y - d.h / 2;
           }) - CELL_PAD.top;
-          yMax = d3.max(node.children, function(d) {
+          yMax = d3.max(contents, function(d) {
             return d.y + d.h / 2;
           }) + CELL_PAD.bottom;
           grow = node.textWidth - (xMax - xMin);
