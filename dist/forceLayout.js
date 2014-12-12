@@ -235,12 +235,31 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
 
 force.Layout = (function() {
   function Layout(options) {
+    this.options = options;
     this.debug = options.debug || false;
     this.svgCreate(options.parent);
     this.runSimulation = false;
     this.loadTree(options.tree || treeFromXml(options.doc).sc);
+  }
+
+  Layout.prototype._emptyState = function() {
+    return {
+      nodes: [],
+      cells: [],
+      nodeMap: {},
+      links: [],
+      transitions: [],
+      top: {
+        children: [],
+        controls: []
+      }
+    };
+  };
+
+  Layout.prototype.loadTree = function(tree) {
+    this.mergeTree(tree);
     this.svgNodes();
-    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, this.s.top).then((function(_this) {
+    return force.kielerLayout(this.options.kielerURL, this.options.kielerAlgorithm, this.s.top).then((function(_this) {
       return function(treeWithLayout) {
         _this.setupD3Layout();
         _this.layout.on('tick', function() {
@@ -254,21 +273,12 @@ force.Layout = (function() {
         return _this.el = $('<div>').text(e.message).replaceAll(_this.el)[0];
       };
     })(this));
-  }
+  };
 
-  Layout.prototype.loadTree = function(tree) {
+  Layout.prototype.mergeTree = function(tree) {
     var topNode, _i, _j, _len, _len1, _results;
-    this.s = {
-      nodes: [],
-      cells: [],
-      nodeMap: {},
-      links: [],
-      transitions: [],
-      top: {
-        children: tree,
-        controls: []
-      }
-    };
+    this.s = this._emptyState();
+    this.s.top.children = tree;
     for (_i = 0, _len = tree.length; _i < _len; _i++) {
       topNode = tree[_i];
       walk(topNode, (function(_this) {

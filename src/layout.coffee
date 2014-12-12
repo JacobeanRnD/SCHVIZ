@@ -139,13 +139,28 @@ force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
 class force.Layout
 
   constructor: (options) ->
+    @options = options
     @debug = options.debug or false
     @svgCreate(options.parent)
     @runSimulation = false
-
     @loadTree(options.tree or treeFromXml(options.doc).sc)
+
+  _emptyState: -> {
+      nodes: []
+      cells: []
+      nodeMap: {}
+      links: []
+      transitions: []
+      top: {
+        children: []
+        controls: []
+      }
+    }
+
+  loadTree: (tree) ->
+    @mergeTree(tree)
     @svgNodes()
-    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, @s.top)
+    force.kielerLayout(@options.kielerURL, @options.kielerAlgorithm, @s.top)
       .then (treeWithLayout) =>
         @setupD3Layout()
         @layout.on 'tick', =>
@@ -155,18 +170,9 @@ class force.Layout
       .catch (e) =>
         @el = $('<div>').text(e.message).replaceAll(@el)[0]
 
-  loadTree: (tree) ->
-    @s = {
-      nodes: []
-      cells: []
-      nodeMap: {}
-      links: []
-      transitions: []
-      top: {
-        children: tree
-        controls: []
-      }
-    }
+  mergeTree: (tree) ->
+    @s = @_emptyState()
+    @s.top.children = tree
 
     for topNode in tree
       walk topNode, (node, parent) =>
