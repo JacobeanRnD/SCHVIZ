@@ -1,18 +1,20 @@
 .force-layout {
 
-    .border {
-        fill: white;
-        fill-opacity: 0.5;
-        stroke: steelblue;
-        stroke-width: 2px;
-        cursor: pointer;
+    .cell {
+        .border {
+            fill: white;
+            fill-opacity: 0.5;
+            stroke: steelblue;
+            stroke-width: 2px;
+            cursor: pointer;
 
-        .fixed & {
-            stroke-width: 4px;
+            .parallel-child & {
+                stroke-dasharray: 10,5;
+            }
         }
 
-        .parallel-child & {
-            stroke-dasharray: 10,5;
+        &.highlight .border {
+            stroke: red;
         }
     }
 
@@ -23,10 +25,11 @@
             stroke-opacity: .6;
             fill: none;
 
-            .highlight& {
-                stroke: black;
-                stroke-opacity: 1;
-            }
+        }
+
+        &.highlight path {
+            stroke: red;
+            stroke-opacity: 1;
         }
     }
 

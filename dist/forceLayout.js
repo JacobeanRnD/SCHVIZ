@@ -353,6 +353,8 @@ force.Layout = (function() {
     var cell, transition;
     cell = this.container.selectAll('.cell').data(this.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state');
+    }).attr('id', function(cell) {
+      return "force-layout-cell-" + cell.id;
     }).classed('parallel-child', function(cell) {
       return cell.parent.type === 'parallel';
     });
@@ -363,7 +365,9 @@ force.Layout = (function() {
       node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
       return node.w = d3.max([node.w, node.textWidth]);
     });
-    transition = this.container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition');
+    transition = this.container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition').attr('id', function(tr) {
+      return "force-layout-transition-" + tr.c.id;
+    });
     transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
     transition.append('g').attr('class', 'transition-label').append('text').text(function(tr) {
       return tr.label;
@@ -397,9 +401,7 @@ force.Layout = (function() {
       });
     });
     this.container.selectAll('.selfie').remove();
-    this.container.selectAll('.transition').classed('highlight', function(tr) {
-      return tr.a.fixed || tr.b.fixed;
-    }).selectAll('path').attr('d', function(tr) {
+    this.container.selectAll('.transition').selectAll('path').attr('d', function(tr) {
       var a, b, c, c1, c2, h, s, t, w, _ref;
       _ref = [tr.a, tr.b, tr.c], a = _ref[0], b = _ref[1], c = _ref[2];
       if (tr.selfie) {
@@ -654,6 +656,31 @@ force.Layout = (function() {
     if (this.layout != null) {
       return this.layout.stop();
     }
+  };
+
+  Layout.prototype.highlightState = function(id, highlight) {
+    if (highlight == null) {
+      highlight = true;
+    }
+    return this.container.selectAll("#force-layout-cell-" + id).classed('highlight', highlight);
+  };
+
+  Layout.prototype.highlightTransition = function(source, target, highlight) {
+    var tr, _i, _len, _ref, _results;
+    if (highlight == null) {
+      highlight = true;
+    }
+    _ref = this.transitions;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      tr = _ref[_i];
+      if (tr.a.id === source && tr.b.id === target) {
+        _results.push(this.container.selectAll("#force-layout-transition-" + tr.c.id).classed('highlight', highlight));
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
   };
 
   return Layout;

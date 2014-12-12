@@ -1,23 +1,23 @@
-.force-layout .border {
+.force-layout .cell .border {
   fill: white;
   fill-opacity: 0.5;
   stroke: steelblue;
   stroke-width: 2px;
   cursor: pointer;
 }
-.fixed .force-layout .border {
-  stroke-width: 4px;
-}
-.parallel-child .force-layout .border {
+.parallel-child .force-layout .cell .border {
   stroke-dasharray: 10,5;
+}
+.force-layout .cell.highlight .border {
+  stroke: red;
 }
 .force-layout .transition path {
   stroke: #555;
   stroke-opacity: .6;
   fill: none;
 }
-.highlight.force-layout .transition path {
-  stroke: black;
+.force-layout .transition.highlight path {
+  stroke: red;
   stroke-opacity: 1;
 }
 .force-layout .arrow {

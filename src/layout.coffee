@@ -252,6 +252,7 @@ class force.Layout
         .data(@cells)
       .enter().append('g')
         .attr('class', (cell) -> "cell cell-#{cell.type or 'state'}")
+        .attr('id', (cell) -> "force-layout-cell-#{cell.id}")
         .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
 
     cell.append('rect')
@@ -269,6 +270,7 @@ class force.Layout
         .data(@transitions)
       .enter().append('g')
         .attr('class', 'transition')
+        .attr('id', (tr) -> "force-layout-transition-#{tr.c.id}")
 
     transition.append('path')
         .attr('style', "marker-end: url(##{@_arrow_id})")
@@ -307,9 +309,7 @@ class force.Layout
 
     @container.selectAll('.selfie').remove()
 
-    @container.selectAll('.transition')
-        .classed('highlight', (tr) -> tr.a.fixed or tr.b.fixed)
-      .selectAll('path')
+    @container.selectAll('.transition').selectAll('path')
         .attr 'd', (tr) ->
           [a, b, c] = [tr.a, tr.b, tr.c]
 
@@ -499,6 +499,16 @@ class force.Layout
   stop: ->
     @runSimulation = false
     @layout.stop() if @layout?
+
+  highlightState: (id, highlight=true) ->
+    @container.selectAll("#force-layout-cell-#{id}")
+        .classed('highlight', highlight)
+
+  highlightTransition: (source, target, highlight=true) ->
+    for tr in @transitions
+      if tr.a.id == source and tr.b.id == target
+        @container.selectAll("#force-layout-transition-#{tr.c.id}")
+            .classed('highlight', highlight)
 
 
 force.render = (options) ->
