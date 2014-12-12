@@ -240,7 +240,7 @@ force.Layout = (function() {
     this.runSimulation = false;
     this.loadTree(options.tree || treeFromXml(options.doc).sc);
     this.svgNodes();
-    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, this.top).then((function(_this) {
+    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, this.s.top).then((function(_this) {
       return function(treeWithLayout) {
         _this.setupD3Layout();
         _this.layout.on('tick', function() {
@@ -258,15 +258,16 @@ force.Layout = (function() {
 
   Layout.prototype.loadTree = function(tree) {
     var topNode, _i, _j, _len, _len1, _results;
-    this.nodes = [];
-    this.controls = [];
-    this.cells = [];
-    this.nodeMap = {};
-    this.links = [];
-    this.transitions = [];
-    this.top = {
-      children: tree,
-      controls: []
+    this.s = {
+      nodes: [],
+      cells: [],
+      nodeMap: {},
+      links: [],
+      transitions: [],
+      top: {
+        children: tree,
+        controls: []
+      }
     };
     for (_i = 0, _len = tree.length; _i < _len; _i++) {
       topNode = tree[_i];
@@ -276,10 +277,10 @@ force.Layout = (function() {
           node.children = node.children || [];
           node.w = node.w || CELL_MIN.w;
           node.h = node.h || CELL_MIN.h;
-          _this.nodes.push(node);
-          _this.cells.push(node);
-          _this.nodeMap[node.id] = node;
-          return node.parent = parent != null ? _this.nodeMap[parent.id] : _this.top;
+          _this.s.nodes.push(node);
+          _this.s.cells.push(node);
+          _this.s.nodeMap[node.id] = node;
+          return node.parent = parent != null ? _this.s.nodeMap[parent.id] : _this.s.top;
         };
       })(this));
     }
@@ -293,24 +294,23 @@ force.Layout = (function() {
           _results1 = [];
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
             tr = _ref[_k];
-            _ref1 = path(node, _this.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
-            tr.parent = c || _this.top;
+            _ref1 = path(node, _this.s.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
+            tr.parent = c || _this.s.top;
             tr.w = CONTROL_SIZE.w;
             tr.h = CONTROL_SIZE.h;
             tr.id = tr.id || nextId();
             tr.parent.controls.push(tr);
-            _this.nodes.push(tr);
-            _this.controls.push(tr);
+            _this.s.nodes.push(tr);
             _ref2 = d3.pairs([a, tr, b]);
             for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
               _ref3 = _ref2[_l], source = _ref3[0], target = _ref3[1];
-              _this.links.push({
+              _this.s.links.push({
                 source: source,
                 target: target
               });
             }
             label = tr.event || '';
-            _results1.push(_this.transitions.push({
+            _results1.push(_this.s.transitions.push({
               a: a,
               b: b,
               c: tr,
@@ -351,7 +351,7 @@ force.Layout = (function() {
 
   Layout.prototype.svgNodes = function() {
     var cell, transition;
-    cell = this.container.selectAll('.cell').data(this.cells).enter().append('g').attr('class', function(cell) {
+    cell = this.container.selectAll('.cell').data(this.s.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state');
     }).attr('id', function(cell) {
       return "force-layout-cell-" + cell.id;
@@ -365,7 +365,7 @@ force.Layout = (function() {
       node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
       return node.w = d3.max([node.w, node.textWidth]);
     });
-    transition = this.container.selectAll('.transition').data(this.transitions).enter().append('g').attr('class', 'transition').attr('id', function(tr) {
+    transition = this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').attr('id', function(tr) {
       return "force-layout-transition-" + tr.c.id;
     });
     transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
@@ -431,7 +431,7 @@ force.Layout = (function() {
 
   Layout.prototype.setupD3Layout = function() {
     var drag, lock;
-    this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.nodes).links(this.links).start();
+    this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.s.nodes).links(this.s.links).start();
     if (!this.runSimulation) {
       this.layout.stop();
     }
@@ -620,12 +620,12 @@ force.Layout = (function() {
         return node.weight = node.w * node.h;
       };
     })(this);
-    _ref = this.top.children;
+    _ref = this.s.top.children;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
       walk(node, adjustNode, null, true);
     }
-    handleCollisions(this.top, {
+    handleCollisions(this.s.top, {
       x: 0,
       y: 0
     }, tick);
@@ -670,7 +670,7 @@ force.Layout = (function() {
     if (highlight == null) {
       highlight = true;
     }
-    _ref = this.transitions;
+    _ref = this.s.transitions;
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       tr = _ref[_i];

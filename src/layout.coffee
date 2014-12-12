@@ -145,7 +145,7 @@ class force.Layout
 
     @loadTree(options.tree or treeFromXml(options.doc).sc)
     @svgNodes()
-    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, @top)
+    force.kielerLayout(options.kielerURL, options.kielerAlgorithm, @s.top)
       .then (treeWithLayout) =>
         @setupD3Layout()
         @layout.on 'tick', =>
@@ -156,15 +156,16 @@ class force.Layout
         @el = $('<div>').text(e.message).replaceAll(@el)[0]
 
   loadTree: (tree) ->
-    @nodes = []
-    @controls = []
-    @cells = []
-    @nodeMap = {}
-    @links = []
-    @transitions = []
-    @top = {
-      children: tree
-      controls: []
+    @s = {
+      nodes: []
+      cells: []
+      nodeMap: {}
+      links: []
+      transitions: []
+      top: {
+        children: tree
+        controls: []
+      }
     }
 
     for topNode in tree
@@ -173,29 +174,28 @@ class force.Layout
         node.children = node.children or []
         node.w = node.w or CELL_MIN.w
         node.h = node.h or CELL_MIN.h
-        @nodes.push(node)
-        @cells.push(node)
-        @nodeMap[node.id] = node
-        node.parent = if parent? then @nodeMap[parent.id] else @top
+        @s.nodes.push(node)
+        @s.cells.push(node)
+        @s.nodeMap[node.id] = node
+        node.parent = if parent? then @s.nodeMap[parent.id] else @s.top
 
     for topNode in tree
       walk topNode, (node) =>
         for tr in node.transitions or []
-          [a, c, b] = path(node, @nodeMap[tr.target])
-          tr.parent = c or @top
+          [a, c, b] = path(node, @s.nodeMap[tr.target])
+          tr.parent = c or @s.top
           tr.w = CONTROL_SIZE.w
           tr.h = CONTROL_SIZE.h
           tr.id = tr.id or nextId()
           tr.parent.controls.push(tr)
-          @nodes.push(tr)
-          @controls.push(tr)
+          @s.nodes.push(tr)
           for [source, target] in d3.pairs([a, tr, b])
-            @links.push(
+            @s.links.push(
               source: source
               target: target
             )
           label = tr.event or ''
-          @transitions.push({
+          @s.transitions.push({
             a: a
             b: b
             c: tr
@@ -249,7 +249,7 @@ class force.Layout
 
   svgNodes: ->
     cell = @container.selectAll('.cell')
-        .data(@cells)
+        .data(@s.cells)
       .enter().append('g')
         .attr('class', (cell) -> "cell cell-#{cell.type or 'state'}")
         .attr('id', (cell) -> "force-layout-cell-#{cell.id}")
@@ -267,7 +267,7 @@ class force.Layout
           node.w = d3.max([node.w, node.textWidth])
 
     transition = @container.selectAll('.transition')
-        .data(@transitions)
+        .data(@s.transitions)
       .enter().append('g')
         .attr('class', 'transition')
         .attr('id', (tr) -> "force-layout-transition-#{tr.c.id}")
@@ -336,8 +336,8 @@ class force.Layout
         .gravity(0)
         .linkStrength(LINK_STRENGTH)
         .linkDistance(LINK_DISTANCE)
-        .nodes(@nodes)
-        .links(@links)
+        .nodes(@s.nodes)
+        .links(@s.links)
         .start()
 
     @layout.stop() unless @runSimulation
@@ -474,10 +474,10 @@ class force.Layout
 
       node.weight = node.w * node.h
 
-    for node in @top.children
+    for node in @s.top.children
       walk(node, adjustNode, null, true)
 
-    handleCollisions(@top, {x: 0, y: 0}, tick)
+    handleCollisions(@s.top, {x: 0, y: 0}, tick)
 
     if @debug
       @container.selectAll('.cell .force').remove()
@@ -505,7 +505,7 @@ class force.Layout
         .classed('highlight', highlight)
 
   highlightTransition: (source, target, highlight=true) ->
-    for tr in @transitions
+    for tr in @s.transitions
       if tr.a.id == source and tr.b.id == target
         @container.selectAll("#force-layout-transition-#{tr.c.id}")
             .classed('highlight', highlight)
