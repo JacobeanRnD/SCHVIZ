@@ -2,7 +2,7 @@
   "name": "desm-force-layout",
   "version": "0.0.1",
   "private": true,
-  "main": "dist/forceLayout.js",
+  "main": ["dist/forceLayout.css", "dist/forceLayout.js"],
   "moduleType": [
     "globals"
   ],
