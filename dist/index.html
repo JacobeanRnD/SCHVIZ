@@ -18,9 +18,7 @@ html, body { height: 100%; margin: 0; }
 <script src="forceLayout.js"></script>
 <script>
   (function(){'use strict';
-    var m = window.location.search.match(/file=([^&]*)/) || [];
     var debug = (window.location.search.indexOf('debug=on') > -1);
-    var file = m[1];
     var $forceCheckbox = $('#controls [name=force]');
     var $algoSelect = $('#controls [name=algorithm]')
     var controls = _.extend({}, Backbone.Events);
@@ -72,6 +70,7 @@ html, body { height: 100%; margin: 0; }
         $(layout.el).remove();
         createLayout();
       });
+      return layout;
     }
 
 
@@ -83,16 +82,26 @@ html, body { height: 100%; margin: 0; }
 
 
     function ready() {
+      var filem = window.location.search.match(/file=([^&]*)/) || [];
+      var file = filem[1];
+
       $('#controls').show();
 
       if(file) {
-        $.get(file, function(resp) {
-          invokeLayout({parent: $('body')[0], doc: resp});
-        });
-        return;
+        fileDemo(file);
       }
+      else {
+        staticDemo();
+      }
+    }
 
+    function fileDemo(file) {
+      $.get(file, function(resp) {
+        invokeLayout({parent: $('body')[0], doc: resp});
+      });
+    }
 
+    function staticDemo() {
       demo([
         {id: "A"},
         {id: "B"},
