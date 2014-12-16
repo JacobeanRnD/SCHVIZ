@@ -4,34 +4,14 @@ var gulp = require('gulp'),
     less = require('gulp-less'),
     Q = require('q'),
     http = require('http'),
-    express = require('express'),
-    proxy = require('simple-http-proxy'),
-    async = require('async');
-
-var KIELER_URL = 'http://kieler.herokuapp.com';
-
-
-function develApp() {
-  var app = express(),
-      handler = proxy(KIELER_URL + '/live'),
-      queue = async.queue(function(task, cb) { task(cb); }, 1);
-
-  app.use('/kieler/menu', proxy(KIELER_URL + '/layout/serviceData'));
-  app.use('/kieler/layout', function(req, res, next) {
-    queue.push(function(cb) {
-      res.on('finish', function() { cb(); });
-      handler(req, res, next);
-    });
-  });
-  app.use(express.static(__dirname + '/dist'));
-  return app;
-}
+    express = require('express');
 
 
 gulp.task('serve', function() {
   var host = '0.0.0.0',
       port = +(process.env.PORT || 5000);
-  http.createServer(develApp()).listen(port, host, function() {
+  var app = express().use(express.static(__dirname + '/dist'));
+  http.createServer(app).listen(port, host, function() {
     console.log('devel server listening on ' + host + ':' + port);
   })
 
