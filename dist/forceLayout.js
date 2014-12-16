@@ -1,9 +1,11 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, def, exit, force, nextId, parents, path, toKielerFormat, treeFromXml, walk;
+var CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, def, exit, force, nextId, parents, path, toKielerFormat, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
 force = window.forceLayout = module.exports = {};
+
+KIELER_URL = 'http://kieler.herokuapp.com/live';
 
 MARGIN = 5;
 
@@ -149,7 +151,7 @@ toKielerFormat = function(node) {
   return rv;
 };
 
-force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
+force.kielerLayout = function(kielerAlgorithm, top) {
   var applyLayout, edgeMap, form, graph;
   edgeMap = {};
   applyLayout = function(node, kNode, x0, y0) {
@@ -212,7 +214,7 @@ force.kielerLayout = function(kielerURL, kielerAlgorithm, top) {
     iFormat: 'org.json',
     oFormat: 'org.json'
   };
-  return Q($.post(kielerURL, form)).then(function(resp) {
+  return Q($.post(KIELER_URL, form)).then(function(resp) {
     var graphLayout;
     graphLayout = JSON.parse(resp)[0];
     walk(graphLayout, (function(_this) {
@@ -259,7 +261,7 @@ force.Layout = (function() {
   Layout.prototype.loadTree = function(tree) {
     this.mergeTree(tree);
     this.svgNodes();
-    return force.kielerLayout(this.options.kielerURL, this.options.kielerAlgorithm, this.s.top).then((function(_this) {
+    return force.kielerLayout(this.options.kielerAlgorithm, this.s.top).then((function(_this) {
       return function(treeWithLayout) {
         _this.setupD3Layout();
         _this.layout.on('tick', function() {

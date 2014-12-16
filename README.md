@@ -4,7 +4,6 @@
 var layout = new forceLayout.Layout({
     parent: document.getElementById('visualization'),
     doc: xmlDocument,
-    kielerURL: '/kieler/layout',
     kielerAlgorithm: 'de.cau.cs.kieler.klay.layered',
     debug: false
 });

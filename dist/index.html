@@ -33,7 +33,7 @@ html, body { height: 100%; margin: 0; }
     if(localStorage.getItem('desm-force-layout')) {
       $forceCheckbox.attr('checked', useForceLayout = true);
     }
-    $.get('/kieler/menu', function(resp) {
+    $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
       $algoSelect.append(
         resp.layoutAlgorithms.map(function(alg) {
           return $('<option>')
@@ -54,7 +54,6 @@ html, body { height: 100%; margin: 0; }
       var layout;
       function createLayout() {
         layout = new forceLayout.Layout(_.extend({
-            kielerURL: '/kieler/layout',
             kielerAlgorithm: algorithm,
             debug: debug
           }, options));

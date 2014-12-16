@@ -3,6 +3,7 @@ treeFromXml = require('./treeFromXml.coffee')
 
 force = window.forceLayout = module.exports = {}
 
+KIELER_URL = 'http://kieler.herokuapp.com/live'
 MARGIN = 5
 ROUND_CORNER = 5
 CELL_MIN = {w: 40, h: 40}
@@ -83,7 +84,7 @@ toKielerFormat = (node) ->
   return rv
 
 
-force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
+force.kielerLayout = (kielerAlgorithm, top) ->
   edgeMap = {}
 
   applyLayout = (node, kNode, x0 = null, y0 = null) ->
@@ -125,7 +126,7 @@ force.kielerLayout = (kielerURL, kielerAlgorithm, top) ->
     oFormat: 'org.json'
   }
 
-  return Q($.post(kielerURL, form))
+  return Q($.post(KIELER_URL, form))
     .then (resp) ->
       graphLayout = JSON.parse(resp)[0]
       walk graphLayout, (kNode) =>
@@ -160,7 +161,7 @@ class force.Layout
   loadTree: (tree) ->
     @mergeTree(tree)
     @svgNodes()
-    force.kielerLayout(@options.kielerURL, @options.kielerAlgorithm, @s.top)
+    force.kielerLayout(@options.kielerAlgorithm, @s.top)
       .then (treeWithLayout) =>
         @setupD3Layout()
         @layout.on 'tick', =>
