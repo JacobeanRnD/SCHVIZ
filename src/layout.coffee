@@ -60,6 +60,40 @@ exit = (cell, point) ->
   return {x: cell.x + d.x * e, y: cell.y + d.y * e}
 
 
+midpoint = (a, b) -> {x: (a.x+b.x)/2, y: (a.y+b.y)/2}
+
+
+transitionPath = (tr) ->
+  [a, b, c] = [tr.a, tr.b, tr.c]
+
+  if tr.selfie
+    w = c.x - a.x
+    h = c.y - a.y
+    c1 = {x: c.x - h/2, y: c.y + w/2}
+    c2 = {x: c.x + h/2, y: c.y - w/2}
+    s = exit(a, c1)
+    t = exit(b, c2)
+    return "M#{s.x},#{s.y}
+            C#{c1.x},#{c1.y}
+             #{c2.x},#{c2.y}
+             #{t.x},#{t.y}"
+
+  else
+    s = exit(a, c)
+    t = exit(b, c)
+    m = midpoint(c, midpoint(s, t))
+    d = {x: c.x - m.x, y: c.y - m.y}
+    sm = midpoint(s, m)
+    tm = midpoint(t, m)
+    i = sc = {x: sm.x + d.x, y: sm.y + d.y}
+    j = tc = {x: tm.x + d.x, y: tm.y + d.y}
+    return "M#{s.x},#{s.y}
+            S#{i.x},#{i.y}
+             #{c.x},#{c.y}
+            S#{j.x},#{j.y}
+             #{t.x},#{t.y}"
+
+
 toKielerFormat = (node) ->
   children = []
   edges = []
@@ -317,22 +351,7 @@ class force.Layout
     @container.selectAll('.selfie').remove()
 
     @container.selectAll('.transition').selectAll('path')
-        .attr 'd', (tr) ->
-          [a, b, c] = [tr.a, tr.b, tr.c]
-
-          if tr.selfie
-            w = c.x - a.x
-            h = c.y - a.y
-            c1 = {x: c.x - h/2, y: c.y + w/2}
-            c2 = {x: c.x + h/2, y: c.y - w/2}
-            s = exit(a, c1)
-            t = exit(b, c2)
-            return "M#{s.x},#{s.y} C#{c1.x},#{c1.y} #{c2.x},#{c2.y} #{t.x},#{t.y}"
-
-          else
-            s = exit(a, c)
-            t = exit(b, c)
-            return "M#{s.x},#{s.y} S#{c.x},#{c.y} #{t.x},#{t.y}"
+        .attr 'd', transitionPath
 
     @container.selectAll('.transition').selectAll('.transition-label')
         .attr('transform', (tr) -> "translate(#{tr.c.x},#{tr.c.y})")
