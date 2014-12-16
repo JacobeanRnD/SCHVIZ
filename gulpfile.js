@@ -8,7 +8,7 @@ var gulp = require('gulp'),
     proxy = require('simple-http-proxy'),
     async = require('async');
 
-var KIELER_URL = 'http://layout.rtsys.informatik.uni-kiel.de:9444';
+var KIELER_URL = 'http://kieler.herokuapp.com';
 
 
 function develApp() {
