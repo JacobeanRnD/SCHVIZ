@@ -34,12 +34,11 @@
 .force-layout .collision {
   stroke: red;
 }
-.force-layout .control {
-  stroke: #ccc;
-  stroke-width: 1px;
+.force-layout .transition-label rect {
+  stroke: none;
   fill: none;
 }
-.force-layout .transition,
+.force-layout .transition-label text,
 .force-layout .force {
   pointer-events: none;
 }

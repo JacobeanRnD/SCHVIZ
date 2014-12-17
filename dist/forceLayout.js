@@ -433,17 +433,15 @@ force.Layout = (function() {
       tr.c.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
       return tr.c.w = d3.max([tr.c.w, tr.c.textWidth]);
     }).attr('dy', '.3em');
-    if (this.debug) {
-      return transition.selectAll('.transition-label').append('rect').attr('class', 'control').attr('x', function(tr) {
-        return -tr.c.w / 2;
-      }).attr('y', function(tr) {
-        return -tr.c.h / 2;
-      }).attr('width', function(tr) {
-        return tr.c.w;
-      }).attr('height', function(tr) {
-        return tr.c.h;
-      });
-    }
+    return transition.selectAll('.transition-label').append('rect').attr('x', function(tr) {
+      return -tr.c.w / 2;
+    }).attr('y', function(tr) {
+      return -tr.c.h / 2;
+    }).attr('width', function(tr) {
+      return tr.c.w;
+    }).attr('height', function(tr) {
+      return tr.c.h;
+    });
   };
 
   Layout.prototype.svgUpdate = function() {
