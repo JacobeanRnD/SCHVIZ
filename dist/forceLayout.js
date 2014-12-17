@@ -123,7 +123,7 @@ midpoint = function(a, b) {
 
 transitionPath = function(tr) {
   var a, b, c, c1, c2, d, h, i, j, m, s, sc, sm, t, tc, tm, w, _ref;
-  _ref = [tr.a, tr.b, tr.c], a = _ref[0], b = _ref[1], c = _ref[2];
+  _ref = [tr.a, tr.b, tr], a = _ref[0], b = _ref[1], c = _ref[2];
   if (tr.selfie) {
     w = c.x - a.x;
     h = c.y - a.y;
@@ -368,13 +368,11 @@ force.Layout = (function() {
               });
             }
             label = tr.event || '';
-            _results1.push(_this.s.transitions.push({
-              a: a,
-              b: b,
-              c: tr,
-              selfie: node.id === tr.target,
-              label: label
-            }));
+            tr.a = a;
+            tr.b = b;
+            tr.selfie = node.id === tr.target;
+            tr.label = label;
+            _results1.push(_this.s.transitions.push(tr));
           }
           return _results1;
         };
@@ -424,23 +422,23 @@ force.Layout = (function() {
       return node.w = d3.max([node.w, node.textWidth]);
     });
     transition = this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').attr('id', function(tr) {
-      return "force-layout-transition-" + tr.c.id;
+      return "force-layout-transition-" + tr.id;
     });
     transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
     transition.append('g').attr('class', 'transition-label').append('text').text(function(tr) {
       return tr.label;
     }).each(function(tr) {
-      tr.c.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
-      return tr.c.w = d3.max([tr.c.w, tr.c.textWidth]);
+      tr.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
+      return tr.w = d3.max([tr.w, tr.textWidth]);
     }).attr('dy', '.3em');
     return transition.selectAll('.transition-label').append('rect').attr('x', function(tr) {
-      return -tr.c.w / 2;
+      return -tr.w / 2;
     }).attr('y', function(tr) {
-      return -tr.c.h / 2;
+      return -tr.h / 2;
     }).attr('width', function(tr) {
-      return tr.c.w;
+      return tr.w;
     }).attr('height', function(tr) {
-      return tr.c.h;
+      return tr.h;
     });
   };
 
@@ -459,7 +457,7 @@ force.Layout = (function() {
     this.container.selectAll('.selfie').remove();
     this.container.selectAll('.transition').selectAll('path').attr('d', transitionPath);
     return this.container.selectAll('.transition').selectAll('.transition-label').attr('transform', function(tr) {
-      return "translate(" + tr.c.x + "," + tr.c.y + ")";
+      return "translate(" + tr.x + "," + tr.y + ")";
     });
   };
 
@@ -709,7 +707,7 @@ force.Layout = (function() {
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       tr = _ref[_i];
       if (tr.a.id === source && tr.b.id === target) {
-        _results.push(this.container.selectAll("#force-layout-transition-" + tr.c.id).classed('highlight', highlight));
+        _results.push(this.container.selectAll("#force-layout-transition-" + tr.id).classed('highlight', highlight));
       } else {
         _results.push(void 0);
       }

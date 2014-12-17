@@ -64,7 +64,7 @@ midpoint = (a, b) -> {x: (a.x+b.x)/2, y: (a.y+b.y)/2}
 
 
 transitionPath = (tr) ->
-  [a, b, c] = [tr.a, tr.b, tr.c]
+  [a, b, c] = [tr.a, tr.b, tr]
 
   if tr.selfie
     w = c.x - a.x
@@ -236,13 +236,11 @@ class force.Layout
               target: target
             )
           label = tr.event or ''
-          @s.transitions.push({
-            a: a
-            b: b
-            c: tr
-            selfie: node.id == tr.target
-            label: label
-          })
+          tr.a = a
+          tr.b = b
+          tr.selfie = node.id == tr.target
+          tr.label = label
+          @s.transitions.push(tr)
 
   svgCreate: (parent) ->
     width = $(parent).width() - 5
@@ -311,7 +309,7 @@ class force.Layout
         .data(@s.transitions)
       .enter().append('g')
         .attr('class', 'transition')
-        .attr('id', (tr) -> "force-layout-transition-#{tr.c.id}")
+        .attr('id', (tr) -> "force-layout-transition-#{tr.id}")
 
     transition.append('path')
         .attr('style', "marker-end: url(##{@_arrow_id})")
@@ -321,15 +319,15 @@ class force.Layout
       .append('text')
         .text((tr) -> tr.label)
         .each (tr) ->
-          tr.c.textWidth = d3.min([$(@).width() + 5, LABEL_SPACE])
-          tr.c.w = d3.max([tr.c.w, tr.c.textWidth])
+          tr.textWidth = d3.min([$(@).width() + 5, LABEL_SPACE])
+          tr.w = d3.max([tr.w, tr.textWidth])
         .attr('dy', '.3em')
 
     transition.selectAll('.transition-label').append('rect')
-        .attr('x', (tr) -> -tr.c.w / 2)
-        .attr('y', (tr) -> -tr.c.h / 2)
-        .attr('width', (tr) -> tr.c.w)
-        .attr('height', (tr) -> tr.c.h)
+        .attr('x', (tr) -> -tr.w / 2)
+        .attr('y', (tr) -> -tr.h / 2)
+        .attr('width', (tr) -> tr.w)
+        .attr('height', (tr) -> tr.h)
 
   svgUpdate: ->
     @container.selectAll('.cell')
@@ -352,7 +350,7 @@ class force.Layout
         .attr 'd', transitionPath
 
     @container.selectAll('.transition').selectAll('.transition-label')
-        .attr('transform', (tr) -> "translate(#{tr.c.x},#{tr.c.y})")
+        .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
   setupD3Layout: ->
     @layout = d3.layout.force()
@@ -531,7 +529,7 @@ class force.Layout
   highlightTransition: (source, target, highlight=true) ->
     for tr in @s.transitions
       if tr.a.id == source and tr.b.id == target
-        @container.selectAll("#force-layout-transition-#{tr.c.id}")
+        @container.selectAll("#force-layout-transition-#{tr.id}")
             .classed('highlight', highlight)
 
 
