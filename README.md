@@ -18,4 +18,7 @@ layout.highlightState('state-id', false);
 // add/remove transition highlight
 layout.highlightTransition('src', 'dst', true);
 layout.highlightTransition('src', 'dst', false);
+
+// update the visualization with a new scxml
+layout.update(newXmlDocument);
 ```
