@@ -232,8 +232,15 @@ class force.Layout
       walk topNode, (node, parent) =>
         node.controls = []
         node.children = node.children or []
-        node.w = node.w or CELL_MIN.w
-        node.h = node.h or CELL_MIN.h
+        oldNode = oldS.nodeMap[node.id]
+        if oldNode?
+          node.x = oldNode.x
+          node.y = oldNode.y
+          node.w = oldNode.w
+          node.h = oldNode.h
+        else
+          node.w = CELL_MIN.w
+          node.h = CELL_MIN.h
         @s.nodes.push(node)
         @s.cells.push(node)
         @s.nodeMap[node.id] = node

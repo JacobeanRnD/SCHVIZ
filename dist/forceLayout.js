@@ -359,10 +359,19 @@ force.Layout = (function() {
       topNode = tree[_i];
       walk(topNode, (function(_this) {
         return function(node, parent) {
+          var oldNode;
           node.controls = [];
           node.children = node.children || [];
-          node.w = node.w || CELL_MIN.w;
-          node.h = node.h || CELL_MIN.h;
+          oldNode = oldS.nodeMap[node.id];
+          if (oldNode != null) {
+            node.x = oldNode.x;
+            node.y = oldNode.y;
+            node.w = oldNode.w;
+            node.h = oldNode.h;
+          } else {
+            node.w = CELL_MIN.w;
+            node.h = CELL_MIN.h;
+          }
           _this.s.nodes.push(node);
           _this.s.cells.push(node);
           _this.s.nodeMap[node.id] = node;
