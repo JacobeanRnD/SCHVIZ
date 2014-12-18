@@ -406,9 +406,9 @@ force.Layout = (function() {
   };
 
   Layout.prototype.svgNodes = function() {
-    var cell, transition;
+    var cell;
     cell = this.container.selectAll('.cell').data(this.s.cells).enter().append('g').attr('class', function(cell) {
-      return "cell cell-" + (cell.type || 'state');
+      return "cell cell-" + (cell.type || 'state') + " draggable";
     }).attr('id', function(cell) {
       return "force-layout-cell-" + cell.id;
     }).classed('parallel-child', function(cell) {
@@ -421,17 +421,16 @@ force.Layout = (function() {
       node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
       return node.w = d3.max([node.w, node.textWidth]);
     });
-    transition = this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').attr('id', function(tr) {
+    this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').attr('id', function(tr) {
       return "force-layout-transition-" + tr.id;
-    });
-    transition.append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
-    transition.append('g').attr('class', 'transition-label').append('text').text(function(tr) {
+    }).append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
+    this.container.selectAll('.transition-label').data(this.s.transitions).enter().append('g').attr('class', 'transition-label draggable').append('text').text(function(tr) {
       return tr.label;
     }).each(function(tr) {
       tr.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
       return tr.w = d3.max([tr.w, tr.textWidth]);
     }).attr('dy', '.3em');
-    return transition.selectAll('.transition-label').append('rect').attr('x', function(tr) {
+    return this.container.selectAll('.transition-label').append('rect').attr('x', function(tr) {
       return -tr.w / 2;
     }).attr('y', function(tr) {
       return -tr.h / 2;
@@ -456,7 +455,7 @@ force.Layout = (function() {
     });
     this.container.selectAll('.selfie').remove();
     this.container.selectAll('.transition').selectAll('path').attr('d', transitionPath);
-    return this.container.selectAll('.transition').selectAll('.transition-label').attr('transform', function(tr) {
+    return this.container.selectAll('.transition-label').attr('transform', function(tr) {
       return "translate(" + tr.x + "," + tr.y + ")";
     });
   };
@@ -501,7 +500,7 @@ force.Layout = (function() {
         return node.fixed = false;
       };
     })(this));
-    return this.container.selectAll('.cell').on('mouseover', (function(_this) {
+    return this.container.selectAll('.draggable').on('mouseover', (function(_this) {
       return function(node) {
         if (lock.drag) {
           return;

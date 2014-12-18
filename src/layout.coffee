@@ -290,7 +290,7 @@ class force.Layout
     cell = @container.selectAll('.cell')
         .data(@s.cells)
       .enter().append('g')
-        .attr('class', (cell) -> "cell cell-#{cell.type or 'state'}")
+        .attr('class', (cell) -> "cell cell-#{cell.type or 'state'} draggable")
         .attr('id', (cell) -> "force-layout-cell-#{cell.id}")
         .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
 
@@ -305,17 +305,18 @@ class force.Layout
           node.textWidth = d3.min([$(@).width() + 2 * ROUND_CORNER, LABEL_SPACE])
           node.w = d3.max([node.w, node.textWidth])
 
-    transition = @container.selectAll('.transition')
+    @container.selectAll('.transition')
         .data(@s.transitions)
       .enter().append('g')
         .attr('class', 'transition')
         .attr('id', (tr) -> "force-layout-transition-#{tr.id}")
-
-    transition.append('path')
+      .append('path')
         .attr('style', "marker-end: url(##{@_arrow_id})")
 
-    transition.append('g')
-        .attr('class', 'transition-label')
+    @container.selectAll('.transition-label')
+        .data(@s.transitions)
+      .enter().append('g')
+        .attr('class', 'transition-label draggable')
       .append('text')
         .text((tr) -> tr.label)
         .each (tr) ->
@@ -323,7 +324,7 @@ class force.Layout
           tr.w = d3.max([tr.w, tr.textWidth])
         .attr('dy', '.3em')
 
-    transition.selectAll('.transition-label').append('rect')
+    @container.selectAll('.transition-label').append('rect')
         .attr('x', (tr) -> -tr.w / 2)
         .attr('y', (tr) -> -tr.h / 2)
         .attr('width', (tr) -> tr.w)
@@ -349,7 +350,7 @@ class force.Layout
     @container.selectAll('.transition').selectAll('path')
         .attr 'd', transitionPath
 
-    @container.selectAll('.transition').selectAll('.transition-label')
+    @container.selectAll('.transition-label')
         .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
   setupD3Layout: ->
@@ -389,7 +390,7 @@ class force.Layout
           lock.node = null
           node.fixed = false
 
-    @container.selectAll('.cell')
+    @container.selectAll('.draggable')
         .on 'mouseover', (node) =>
           if lock.drag then return
           if lock.node then lock.node.fixed = false
