@@ -15,6 +15,7 @@ html, body { height: 100%; margin: 0; }
 <script src="bower_components/q/q.js"></script>
 <script src="bower_components/lodash/dist/lodash.js"></script>
 <script src="bower_components/backbone/backbone.js"></script>
+<script src="bower_components/async/lib/async.js"></script>
 <script src="forceLayout.js"></script>
 <script>
   (function(){'use strict';
@@ -83,10 +84,14 @@ html, body { height: 100%; margin: 0; }
     function ready() {
       var filem = window.location.search.match(/file=([^&]*)/) || [];
       var file = filem[1];
+      var edit = window.location.search.indexOf('edit=on') > -1;
 
       $('#controls').show();
 
-      if(file) {
+      if(edit) {
+        editDemo(file);
+      }
+      else if(file) {
         fileDemo(file);
       }
       else {
@@ -98,6 +103,41 @@ html, body { height: 100%; margin: 0; }
       $.get(file, function(resp) {
         invokeLayout({parent: $('body')[0], doc: resp});
       });
+    }
+
+    function editDemo(file) {
+      var parent = $('<div style="width:45%;height:95%;float:right">')[0];
+      var $src = $('<textarea>').css({width: '45%', height: '80%', 'margin-top': '20px'});
+      var $update = $('<button>').text('update').click(update);
+      var $reset = $('<button>').text('reset').click(reset);
+      var layout;
+      $('body').append(parent, $src, '<br>', $update, $reset);
+      if(file) {
+        $.get(file, function(_r, _s, req) {
+          $src.val(req.responseText);
+          layout = invokeLayout({
+            parent: parent,
+            doc: parse(req.responseText)
+          });
+        });
+      }
+
+      function parse(src) {
+        var parser = new window.DOMParser();
+        return parser.parseFromString($src.val(), 'text/xml');
+      }
+
+      function update() {
+        layout.update(parse($src.val()));
+      }
+
+      function reset() {
+        var parser = new window.DOMParser();
+        var doc = parser.parseFromString($src.val(), 'text/xml');
+        layout.stop();
+        $(layout.el).remove();
+        layout = invokeLayout({parent: parent, doc: doc});
+      }
     }
 
     function staticDemo() {

@@ -174,11 +174,30 @@ force.kielerLayout = (kielerAlgorithm, top) ->
 class force.Layout
 
   constructor: (options) ->
+    @queue = async.queue(((task, cb) -> task(cb)), 1)
     @options = options
     @debug = options.debug or false
     @svgCreate(options.parent)
     @runSimulation = false
-    @loadTree(options.tree or treeFromXml(options.doc).sc)
+    @s = @_emptyState()
+    @_initialTree(options.tree or treeFromXml(options.doc).sc)
+
+  _initialTree: (tree) ->
+    @queue.push (cb) =>
+      @loadTree(tree)
+
+      force.kielerLayout(@options.kielerAlgorithm, @s.top)
+        .then (treeWithLayout) =>
+          @beginSimulation()
+        .catch (e) =>
+          @el = $('<div>').text(e.message).replaceAll(@el)[0]
+        .done(cb)
+
+  update: (doc) ->
+    @queue.push (cb) =>
+      @loadTree(treeFromXml(doc).sc)
+      @beginSimulation()
+      cb()
 
   _emptyState: -> {
       nodes: []
@@ -195,17 +214,17 @@ class force.Layout
   loadTree: (tree) ->
     @mergeTree(tree)
     @svgNodes()
-    force.kielerLayout(@options.kielerAlgorithm, @s.top)
-      .then (treeWithLayout) =>
-        @setupD3Layout()
-        @layout.on 'tick', =>
-          @adjustLayout()
-          @svgUpdate()
-        @svgUpdate()
-      .catch (e) =>
-        @el = $('<div>').text(e.message).replaceAll(@el)[0]
+
+  beginSimulation: ->
+    @setupD3Layout()
+    @layout.on 'tick', =>
+      @adjustLayout()
+      @svgUpdate()
+    @svgUpdate()
 
   mergeTree: (tree) ->
+    @layout.stop() if @layout
+    oldS = @s
     @s = @_emptyState()
     @s.top.children = tree
 
@@ -287,6 +306,9 @@ class force.Layout
         .attr('class', 'arrow')
 
   svgNodes: ->
+    @container.selectAll('.cell').remove()
+    @container.selectAll('.transition').remove()
+
     cell = @container.selectAll('.cell')
         .data(@s.cells)
       .enter().append('g')

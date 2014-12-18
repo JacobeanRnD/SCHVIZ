@@ -283,12 +283,39 @@ force.kielerLayout = function(kielerAlgorithm, top) {
 
 force.Layout = (function() {
   function Layout(options) {
+    this.queue = async.queue((function(task, cb) {
+      return task(cb);
+    }), 1);
     this.options = options;
     this.debug = options.debug || false;
     this.svgCreate(options.parent);
     this.runSimulation = false;
-    this.loadTree(options.tree || treeFromXml(options.doc).sc);
+    this.s = this._emptyState();
+    this._initialTree(options.tree || treeFromXml(options.doc).sc);
   }
+
+  Layout.prototype._initialTree = function(tree) {
+    return this.queue.push((function(_this) {
+      return function(cb) {
+        _this.loadTree(tree);
+        return force.kielerLayout(_this.options.kielerAlgorithm, _this.s.top).then(function(treeWithLayout) {
+          return _this.beginSimulation();
+        })["catch"](function(e) {
+          return _this.el = $('<div>').text(e.message).replaceAll(_this.el)[0];
+        }).done(cb);
+      };
+    })(this));
+  };
+
+  Layout.prototype.update = function(doc) {
+    return this.queue.push((function(_this) {
+      return function(cb) {
+        _this.loadTree(treeFromXml(doc).sc);
+        _this.beginSimulation();
+        return cb();
+      };
+    })(this));
+  };
 
   Layout.prototype._emptyState = function() {
     return {
@@ -306,25 +333,26 @@ force.Layout = (function() {
 
   Layout.prototype.loadTree = function(tree) {
     this.mergeTree(tree);
-    this.svgNodes();
-    return force.kielerLayout(this.options.kielerAlgorithm, this.s.top).then((function(_this) {
-      return function(treeWithLayout) {
-        _this.setupD3Layout();
-        _this.layout.on('tick', function() {
-          _this.adjustLayout();
-          return _this.svgUpdate();
-        });
+    return this.svgNodes();
+  };
+
+  Layout.prototype.beginSimulation = function() {
+    this.setupD3Layout();
+    this.layout.on('tick', (function(_this) {
+      return function() {
+        _this.adjustLayout();
         return _this.svgUpdate();
       };
-    })(this))["catch"]((function(_this) {
-      return function(e) {
-        return _this.el = $('<div>').text(e.message).replaceAll(_this.el)[0];
-      };
     })(this));
+    return this.svgUpdate();
   };
 
   Layout.prototype.mergeTree = function(tree) {
-    var topNode, _i, _j, _len, _len1, _results;
+    var oldS, topNode, _i, _j, _len, _len1, _results;
+    if (this.layout) {
+      this.layout.stop();
+    }
+    oldS = this.s;
     this.s = this._emptyState();
     this.s.top.children = tree;
     for (_i = 0, _len = tree.length; _i < _len; _i++) {
@@ -407,6 +435,8 @@ force.Layout = (function() {
 
   Layout.prototype.svgNodes = function() {
     var cell;
+    this.container.selectAll('.cell').remove();
+    this.container.selectAll('.transition').remove();
     cell = this.container.selectAll('.cell').data(this.s.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state') + " draggable";
     }).attr('id', function(cell) {
