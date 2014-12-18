@@ -13,6 +13,6 @@
   },
   "scripts": {
     "install": "bower install",
-    "start": "node_modules/.bin/gulp serve"
+    "start": "gulp serve"
   }
 }
