@@ -52,10 +52,10 @@ nextId = (function() {
 })();
 
 def = function(map, key, defaultValue) {
-  if (map[key] == null) {
-    map[key] = defaultValue;
+  if (!map.has(key)) {
+    map.set(key, defaultValue);
   }
-  return map[key];
+  return map.get(key);
 };
 
 walk = function(node, callback, parent, postorder) {
@@ -211,7 +211,7 @@ toKielerFormat = function(node) {
 
 force.kielerLayout = function(kielerAlgorithm, top) {
   var applyLayout, edgeMap, form, graph;
-  edgeMap = {};
+  edgeMap = d3.map();
   applyLayout = function(node, kNode, x0, y0) {
     var child, childMap, edge, kChild, points, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
     if (x0 == null) {
@@ -231,7 +231,7 @@ force.kielerLayout = function(kielerAlgorithm, top) {
     _ref = node.transitions || [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       tr = _ref[_i];
-      edge = edgeMap[tr.id];
+      edge = edgeMap.get(tr.id);
       if (edge.bendPoints.length) {
         points = edge.bendPoints;
       } else {
@@ -244,19 +244,19 @@ force.kielerLayout = function(kielerAlgorithm, top) {
         return p.y;
       });
     }
-    childMap = {};
+    childMap = d3.map();
     _ref1 = node.children || [];
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       child = _ref1[_j];
       if (child.id != null) {
-        childMap[child.id] = child;
+        childMap.set(child.id, child);
       }
     }
     _ref2 = kNode.children || [];
     _results = [];
     for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
       kChild = _ref2[_k];
-      if ((child = childMap[kChild.id]) == null) {
+      if ((child = childMap.get(kChild.id)) == null) {
         continue;
       }
       _results.push(applyLayout(child, kChild, node.x - node.w / 2, node.y - node.h / 2));
@@ -282,7 +282,7 @@ force.kielerLayout = function(kielerAlgorithm, top) {
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           edge = _ref[_i];
-          _results.push(edgeMap[edge.id] = edge);
+          _results.push(edgeMap.set(edge.id, edge));
         }
         return _results;
       };
@@ -300,17 +300,17 @@ NewNodesAnimation = (function() {
     this.deferred = Q.defer();
     this.promise = this.deferred.promise;
     this.done = false;
-    this.targetMap = {};
+    this.targetMap = d3.map();
     if (!(this.newNodes.length > 0)) {
       this.abort();
     }
     _ref = this.newNodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
-      this.targetMap[node.id] = {
+      this.targetMap.set(node.id, {
         w: node.w,
         h: node.h
-      };
+      });
       node.w = node.h = 5;
     }
   }
@@ -324,7 +324,7 @@ NewNodesAnimation = (function() {
     _ref = this.newNodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
-      target = this.targetMap[node.id];
+      target = this.targetMap.get(node.id);
       if (node.w < target.w) {
         node.w += ANIMATION_SPEED;
         changed = true;
@@ -393,7 +393,7 @@ force.Layout = (function() {
     return {
       nodes: [],
       cells: [],
-      nodeMap: {},
+      nodeMap: d3.map(),
       links: [],
       transitions: [],
       top: {
@@ -436,7 +436,7 @@ force.Layout = (function() {
           var oldNode;
           node.controls = [];
           node.children = node.children || [];
-          if ((oldNode = oldS.nodeMap[node.id]) != null) {
+          if ((oldNode = oldS.nodeMap.get(node.id)) != null) {
             node.x = oldNode.x;
             node.y = oldNode.y;
             node.w = oldNode.w;
@@ -452,8 +452,8 @@ force.Layout = (function() {
           }
           _this.s.nodes.push(node);
           _this.s.cells.push(node);
-          _this.s.nodeMap[node.id] = node;
-          return node.parent = parent != null ? _this.s.nodeMap[parent.id] : _this.s.top;
+          _this.s.nodeMap.set(node.id, node);
+          return node.parent = parent != null ? _this.s.nodeMap.get(parent.id) : _this.s.top;
         };
       })(this));
     }
@@ -467,7 +467,7 @@ force.Layout = (function() {
           _results1 = [];
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
             tr = _ref[_k];
-            _ref1 = path(node, _this.s.nodeMap[tr.target]), a = _ref1[0], c = _ref1[1], b = _ref1[2];
+            _ref1 = path(node, _this.s.nodeMap.get(tr.target)), a = _ref1[0], c = _ref1[1], b = _ref1[2];
             tr.parent = c || _this.s.top;
             tr.w = CONTROL_SIZE.w;
             tr.h = CONTROL_SIZE.h;
@@ -655,7 +655,7 @@ force.Layout = (function() {
     var adjustNode, handleCollisions, move, node, tick, _i, _len, _ref;
     tick = {
       gravity: this.layout.alpha() * 0.1,
-      forces: {}
+      forces: d3.map()
     };
     move = function(node, dx, dy) {
       var child, control, _i, _j, _len, _len1, _ref, _ref1, _results;
@@ -790,7 +790,7 @@ force.Layout = (function() {
       this.container.selectAll('.cell .force').remove();
       return this.container.selectAll('.cell').each(function(node) {
         var _j, _len1, _ref1, _results;
-        _ref1 = tick.forces[node.id] || [];
+        _ref1 = tick.forces.get(node.id) || [];
         _results = [];
         for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
           force = _ref1[_j];

@@ -27,9 +27,9 @@ nextId = (->
 
 
 def = (map, key, defaultValue) ->
-  unless map[key]?
-    map[key] = defaultValue
-  return map[key]
+  unless map.has(key)
+    map.set(key, defaultValue)
+  return map.get(key)
 
 
 walk = (node, callback, parent=null, postorder=false) ->
@@ -129,7 +129,7 @@ toKielerFormat = (node) ->
 
 
 force.kielerLayout = (kielerAlgorithm, top) ->
-  edgeMap = {}
+  edgeMap = d3.map()
 
   applyLayout = (node, kNode, x0 = null, y0 = null) ->
     node.w = kNode.width
@@ -143,7 +143,7 @@ force.kielerLayout = (kielerAlgorithm, top) ->
     node.y = y0 + kNode.y + node.h/2
 
     for tr in node.transitions or []
-      edge = edgeMap[tr.id]
+      edge = edgeMap.get(tr.id)
       if edge.bendPoints.length
         points = edge.bendPoints
       else
@@ -151,12 +151,12 @@ force.kielerLayout = (kielerAlgorithm, top) ->
       tr.x = x0 + d3.mean(points, (p) -> p.x)
       tr.y = y0 + d3.mean(points, (p) -> p.y)
 
-    childMap = {}
+    childMap = d3.map()
     for child in node.children or []
-      if child.id? then childMap[child.id] = child
+      if child.id? then childMap.set(child.id, child)
 
     for kChild in kNode.children or []
-      unless (child = childMap[kChild.id])? then continue
+      unless (child = childMap.get(kChild.id))? then continue
       applyLayout(child, kChild, node.x - node.w/2, node.y - node.h/2)
 
   graph = toKielerFormat(top)
@@ -175,7 +175,7 @@ force.kielerLayout = (kielerAlgorithm, top) ->
       graphLayout = JSON.parse(resp)[0]
       walk graphLayout, (kNode) =>
         for edge in kNode.edges or []
-          edgeMap[edge.id] = edge
+          edgeMap.set(edge.id, edge)
       applyLayout(top, graphLayout)
     .catch (resp) ->
       throw Error(resp.responseText)
@@ -187,18 +187,18 @@ class NewNodesAnimation
     @deferred = Q.defer()
     @promise = @deferred.promise
     @done = no
-    @targetMap = {}
+    @targetMap = d3.map()
     @abort() unless @newNodes.length > 0
 
     for node in @newNodes
-      @targetMap[node.id] = {w: node.w, h: node.h}
+      @targetMap.set(node.id, {w: node.w, h: node.h})
       node.w = node.h = 5
 
   tick: ->
     return if @done
     changed = no
     for node in @newNodes
-      target = @targetMap[node.id]
+      target = @targetMap.get(node.id)
       (node.w += ANIMATION_SPEED; changed = yes) if node.w < target.w
       (node.h += ANIMATION_SPEED; changed = yes) if node.h < target.h
 
@@ -243,7 +243,7 @@ class force.Layout
   _emptyState: -> {
       nodes: []
       cells: []
-      nodeMap: {}
+      nodeMap: d3.map()
       links: []
       transitions: []
       top: {
@@ -275,7 +275,7 @@ class force.Layout
       walk topNode, (node, parent) =>
         node.controls = []
         node.children = node.children or []
-        if (oldNode = oldS.nodeMap[node.id])?
+        if (oldNode = oldS.nodeMap.get(node.id))?
           node.x = oldNode.x
           node.y = oldNode.y
           node.w = oldNode.w
@@ -289,13 +289,13 @@ class force.Layout
           @s.newNodes.push(node)
         @s.nodes.push(node)
         @s.cells.push(node)
-        @s.nodeMap[node.id] = node
-        node.parent = if parent? then @s.nodeMap[parent.id] else @s.top
+        @s.nodeMap.set(node.id, node)
+        node.parent = if parent? then @s.nodeMap.get(parent.id) else @s.top
 
     for topNode in tree
       walk topNode, (node) =>
         for tr in node.transitions or []
-          [a, c, b] = path(node, @s.nodeMap[tr.target])
+          [a, c, b] = path(node, @s.nodeMap.get(tr.target))
           tr.parent = c or @s.top
           tr.w = CONTROL_SIZE.w
           tr.h = CONTROL_SIZE.h
@@ -488,7 +488,7 @@ class force.Layout
   adjustLayout: ->
     tick = {
       gravity: @layout.alpha() * 0.1
-      forces: {}
+      forces: d3.map()
     }
 
     move = (node, dx, dy) ->
@@ -587,7 +587,7 @@ class force.Layout
 
       @container.selectAll('.cell')
           .each (node) ->
-            for force in tick.forces[node.id] or []
+            for force in tick.forces.get(node.id) or []
               d3.select(@).append('line')
                   .attr('class', "force #{force.cls}")
                   .attr('x1', 0)
