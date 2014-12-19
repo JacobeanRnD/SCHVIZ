@@ -15,6 +15,7 @@ LINK_DISTANCE = 30
 DEBUG_FORCE_FACTOR = 50
 MIN_ZOOM = 1/6
 MAX_ZOOM = 6
+ANIMATION_SPEED = 2
 
 
 nextId = (->
@@ -185,28 +186,26 @@ class NewNodesAnimation
   constructor: (@newNodes) ->
     @deferred = Q.defer()
     @promise = @deferred.promise
-    @ticks = 50
-    @abort() unless @newNodes.length > 0
-
+    @done = no
     @targetMap = {}
+    @abort() unless @newNodes.length > 0
 
     for node in @newNodes
       @targetMap[node.id] = {w: node.w, h: node.h}
       node.w = node.h = 5
 
   tick: ->
-    return unless @ticks
-    if (@ticks -= 1) < 1
-      @abort()
-      return
-
+    return if @done
+    changed = no
     for node in @newNodes
       target = @targetMap[node.id]
-      node.w += 1 if node.w < target.w
-      node.h += 1 if node.h < target.h
+      (node.w += ANIMATION_SPEED; changed = yes) if node.w < target.w
+      (node.h += ANIMATION_SPEED; changed = yes) if node.h < target.h
+
+    @abort() unless changed
 
   abort: ->
-    @ticks = 0
+    @done = yes
     @deferred.resolve()
 
 

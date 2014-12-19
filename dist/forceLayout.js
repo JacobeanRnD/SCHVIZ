@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
+var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
@@ -39,6 +39,8 @@ DEBUG_FORCE_FACTOR = 50;
 MIN_ZOOM = 1 / 6;
 
 MAX_ZOOM = 6;
+
+ANIMATION_SPEED = 2;
 
 nextId = (function() {
   var last;
@@ -297,11 +299,11 @@ NewNodesAnimation = (function() {
     this.newNodes = newNodes;
     this.deferred = Q.defer();
     this.promise = this.deferred.promise;
-    this.ticks = 50;
+    this.done = false;
+    this.targetMap = {};
     if (!(this.newNodes.length > 0)) {
       this.abort();
     }
-    this.targetMap = {};
     _ref = this.newNodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
@@ -314,33 +316,31 @@ NewNodesAnimation = (function() {
   }
 
   NewNodesAnimation.prototype.tick = function() {
-    var node, target, _i, _len, _ref, _results;
-    if (!this.ticks) {
+    var changed, node, target, _i, _len, _ref;
+    if (this.done) {
       return;
     }
-    if ((this.ticks -= 1) < 1) {
-      this.abort();
-      return;
-    }
+    changed = false;
     _ref = this.newNodes;
-    _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
       target = this.targetMap[node.id];
       if (node.w < target.w) {
-        node.w += 1;
+        node.w += ANIMATION_SPEED;
+        changed = true;
       }
       if (node.h < target.h) {
-        _results.push(node.h += 1);
-      } else {
-        _results.push(void 0);
+        node.h += ANIMATION_SPEED;
+        changed = true;
       }
     }
-    return _results;
+    if (!changed) {
+      return this.abort();
+    }
   };
 
   NewNodesAnimation.prototype.abort = function() {
-    this.ticks = 0;
+    this.done = true;
     return this.deferred.resolve();
   };
 
