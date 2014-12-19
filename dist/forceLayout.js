@@ -444,6 +444,10 @@ force.Layout = (function() {
           } else {
             node.w = CELL_MIN.w;
             node.h = CELL_MIN.h;
+            if (parent != null) {
+              node.x = parent.x;
+              node.y = parent.y;
+            }
             _this.s.newNodes.push(node);
           }
           _this.s.nodes.push(node);

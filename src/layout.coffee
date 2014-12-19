@@ -284,6 +284,9 @@ class force.Layout
         else
           node.w = CELL_MIN.w
           node.h = CELL_MIN.h
+          if parent?
+            node.x = parent.x
+            node.y = parent.y
           @s.newNodes.push(node)
         @s.nodes.push(node)
         @s.cells.push(node)
