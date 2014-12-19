@@ -251,6 +251,7 @@ class force.Layout
         controls: []
       }
       newNodes: []
+      dom: d3.map()
     }
 
   loadTree: (tree) ->
@@ -371,7 +372,6 @@ class force.Layout
         .data(@s.cells)
       .enter().append('g')
         .attr('class', (cell) -> "cell cell-#{cell.type or 'state'} draggable")
-        .attr('id', (cell) -> "force-layout-cell-#{cell.id}")
         .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
 
     cell.append('rect')
@@ -389,7 +389,6 @@ class force.Layout
         .data(@s.transitions)
       .enter().append('g')
         .attr('class', 'transition')
-        .attr('id', (tr) -> "force-layout-transition-#{tr.id}")
       .append('path')
         .attr('style', "marker-end: url(##{@_arrow_id})")
 
@@ -409,6 +408,16 @@ class force.Layout
         .attr('y', (tr) -> -tr.h / 2)
         .attr('width', (tr) -> tr.w)
         .attr('height', (tr) -> tr.h)
+
+    dom = @s.dom
+
+    @container.selectAll('.cell')
+        .each (node) ->
+          dom.set("cell-#{node.id}", @)
+
+    @container.selectAll('.transition')
+        .each (node) ->
+          dom.set("transition-#{node.id}", @)
 
   svgUpdate: ->
     @container.selectAll('.cell')
@@ -604,12 +613,12 @@ class force.Layout
     @layout.stop() if @layout?
 
   highlightState: (id, highlight=true) ->
-    @container.selectAll("#force-layout-cell-#{id}")
+    d3.select(@s.dom.get("cell-#{id}"))
         .classed('highlight', highlight)
 
   highlightTransition: (source, target, highlight=true) ->
     if (tr = findTransition(@s.transitions, source, target))?
-      @container.selectAll("#force-layout-transition-#{tr.id}")
+      d3.select(@s.dom.get("transition-#{tr.id}"))
           .classed('highlight', highlight)
 
 

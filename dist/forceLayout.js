@@ -400,7 +400,8 @@ force.Layout = (function() {
         children: [],
         controls: []
       },
-      newNodes: []
+      newNodes: [],
+      dom: d3.map()
     };
   };
 
@@ -529,14 +530,12 @@ force.Layout = (function() {
   };
 
   Layout.prototype.svgNodes = function() {
-    var cell;
+    var cell, dom;
     this.container.selectAll('.cell').remove();
     this.container.selectAll('.transition').remove();
     this.container.selectAll('.transition-label').remove();
     cell = this.container.selectAll('.cell').data(this.s.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state') + " draggable";
-    }).attr('id', function(cell) {
-      return "force-layout-cell-" + cell.id;
     }).classed('parallel-child', function(cell) {
       return cell.parent.type === 'parallel';
     });
@@ -547,16 +546,14 @@ force.Layout = (function() {
       node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
       return node.w = d3.max([node.w, node.textWidth]);
     });
-    this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').attr('id', function(tr) {
-      return "force-layout-transition-" + tr.id;
-    }).append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
+    this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
     this.container.selectAll('.transition-label').data(this.s.transitions).enter().append('g').attr('class', 'transition-label draggable').append('text').text(function(tr) {
       return tr.label;
     }).each(function(tr) {
       tr.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
       return tr.w = d3.max([tr.w, tr.textWidth]);
     }).attr('dy', '.3em');
-    return this.container.selectAll('.transition-label').append('rect').attr('x', function(tr) {
+    this.container.selectAll('.transition-label').append('rect').attr('x', function(tr) {
       return -tr.w / 2;
     }).attr('y', function(tr) {
       return -tr.h / 2;
@@ -564,6 +561,13 @@ force.Layout = (function() {
       return tr.w;
     }).attr('height', function(tr) {
       return tr.h;
+    });
+    dom = this.s.dom;
+    this.container.selectAll('.cell').each(function(node) {
+      return dom.set("cell-" + node.id, this);
+    });
+    return this.container.selectAll('.transition').each(function(node) {
+      return dom.set("transition-" + node.id, this);
     });
   };
 
@@ -819,7 +823,7 @@ force.Layout = (function() {
     if (highlight == null) {
       highlight = true;
     }
-    return this.container.selectAll("#force-layout-cell-" + id).classed('highlight', highlight);
+    return d3.select(this.s.dom.get("cell-" + id)).classed('highlight', highlight);
   };
 
   Layout.prototype.highlightTransition = function(source, target, highlight) {
@@ -828,7 +832,7 @@ force.Layout = (function() {
       highlight = true;
     }
     if ((tr = findTransition(this.s.transitions, source, target)) != null) {
-      return this.container.selectAll("#force-layout-transition-" + tr.id).classed('highlight', highlight);
+      return d3.select(this.s.dom.get("transition-" + tr.id)).classed('highlight', highlight);
     }
   };
 
