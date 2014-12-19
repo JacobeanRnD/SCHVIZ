@@ -116,8 +116,8 @@ exit = function(cell, point) {
 
 midpoint = function(a, b) {
   return {
-    x: (a.x + b.x) / 2,
-    y: (a.y + b.y) / 2
+    x: ((a.x || 0) + (b.x || 0)) / 2,
+    y: ((a.y || 0) + (b.y || 0)) / 2
   };
 };
 
@@ -421,10 +421,12 @@ force.Layout = (function() {
             tr.label = label;
             _this.s.transitions.push(tr);
             if ((oldTr = findTransition(oldS.transitions, tr.a.id, tr.b.id)) != null) {
-              tr.x = oldTr.x;
-              _results1.push(tr.y = oldTr.y);
+              _results1.push(_.extend(tr, {
+                x: oldTr.x,
+                y: oldTr.y
+              }));
             } else {
-              _results1.push(void 0);
+              _results1.push(_.extend(tr, midpoint(tr.a, tr.b)));
             }
           }
           return _results1;

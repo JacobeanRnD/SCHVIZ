@@ -60,7 +60,10 @@ exit = (cell, point) ->
   return {x: cell.x + d.x * e, y: cell.y + d.y * e}
 
 
-midpoint = (a, b) -> {x: (a.x+b.x)/2, y: (a.y+b.y)/2}
+midpoint = (a, b) -> {
+  x: ((a.x or 0) + (b.x or 0)) / 2
+  y: ((a.y or 0) + (b.y or 0)) / 2
+}
 
 
 transitionPath = (tr) ->
@@ -274,8 +277,9 @@ class force.Layout
           tr.label = label
           @s.transitions.push(tr)
           if (oldTr = findTransition(oldS.transitions, tr.a.id, tr.b.id))?
-            tr.x = oldTr.x
-            tr.y = oldTr.y
+            _.extend(tr, {x: oldTr.x, y: oldTr.y})
+          else
+            _.extend(tr, midpoint(tr.a, tr.b))
 
   svgCreate: (parent) ->
     width = $(parent).width() - 5
