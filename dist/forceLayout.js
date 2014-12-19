@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, def, exit, findTransition, force, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
+var CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
@@ -291,6 +291,63 @@ force.kielerLayout = function(kielerAlgorithm, top) {
   });
 };
 
+NewNodesAnimation = (function() {
+  function NewNodesAnimation(newNodes) {
+    var node, _i, _len, _ref;
+    this.newNodes = newNodes;
+    this.deferred = Q.defer();
+    this.promise = this.deferred.promise;
+    this.ticks = 50;
+    if (!(this.newNodes.length > 0)) {
+      this.abort();
+    }
+    this.targetMap = {};
+    _ref = this.newNodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      this.targetMap[node.id] = {
+        w: node.w,
+        h: node.h
+      };
+      node.w = node.h = 5;
+    }
+  }
+
+  NewNodesAnimation.prototype.tick = function() {
+    var node, target, _i, _len, _ref, _results;
+    if (!this.ticks) {
+      return;
+    }
+    if ((this.ticks -= 1) < 1) {
+      this.abort();
+      return;
+    }
+    _ref = this.newNodes;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      target = this.targetMap[node.id];
+      if (node.w < target.w) {
+        node.w += 1;
+      }
+      if (node.h < target.h) {
+        _results.push(node.h += 1);
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+
+  NewNodesAnimation.prototype.abort = function() {
+    this.ticks = 0;
+    return this.deferred.resolve();
+  };
+
+  return NewNodesAnimation;
+
+})();
+
 force.Layout = (function() {
   function Layout(options) {
     this.queue = async.queue((function(task, cb) {
@@ -301,6 +358,7 @@ force.Layout = (function() {
     this.svgCreate(options.parent);
     this.runSimulation = false;
     this.s = this._emptyState();
+    this.animation = new NewNodesAnimation([]);
     this._initialTree(options.tree || treeFromXml(options.doc).sc);
   }
 
@@ -322,7 +380,11 @@ force.Layout = (function() {
       return function(cb) {
         _this.loadTree(treeFromXml(doc).sc);
         _this.beginSimulation();
-        return cb();
+        if (!_this.runSimulation) {
+          _this.s.newNodes = [];
+        }
+        _this.animation = new NewNodesAnimation(_this.s.newNodes);
+        return _this.animation.promise.done(cb);
       };
     })(this));
   };
@@ -337,7 +399,8 @@ force.Layout = (function() {
       top: {
         children: [],
         controls: []
-      }
+      },
+      newNodes: []
     };
   };
 
@@ -351,7 +414,8 @@ force.Layout = (function() {
     this.layout.on('tick', (function(_this) {
       return function() {
         _this.adjustLayout();
-        return _this.svgUpdate();
+        _this.svgUpdate();
+        return _this.animation.tick();
       };
     })(this));
     return this.svgUpdate();
@@ -372,8 +436,7 @@ force.Layout = (function() {
           var oldNode;
           node.controls = [];
           node.children = node.children || [];
-          oldNode = oldS.nodeMap[node.id];
-          if (oldNode != null) {
+          if ((oldNode = oldS.nodeMap[node.id]) != null) {
             node.x = oldNode.x;
             node.y = oldNode.y;
             node.w = oldNode.w;
@@ -381,6 +444,7 @@ force.Layout = (function() {
           } else {
             node.w = CELL_MIN.w;
             node.h = CELL_MIN.h;
+            _this.s.newNodes.push(node);
           }
           _this.s.nodes.push(node);
           _this.s.cells.push(node);

@@ -180,6 +180,36 @@ force.kielerLayout = (kielerAlgorithm, top) ->
       throw Error(resp.responseText)
 
 
+class NewNodesAnimation
+
+  constructor: (@newNodes) ->
+    @deferred = Q.defer()
+    @promise = @deferred.promise
+    @ticks = 50
+    @abort() unless @newNodes.length > 0
+
+    @targetMap = {}
+
+    for node in @newNodes
+      @targetMap[node.id] = {w: node.w, h: node.h}
+      node.w = node.h = 5
+
+  tick: ->
+    return unless @ticks
+    if (@ticks -= 1) < 1
+      @abort()
+      return
+
+    for node in @newNodes
+      target = @targetMap[node.id]
+      node.w += 1 if node.w < target.w
+      node.h += 1 if node.h < target.h
+
+  abort: ->
+    @ticks = 0
+    @deferred.resolve()
+
+
 class force.Layout
 
   constructor: (options) ->
@@ -189,6 +219,7 @@ class force.Layout
     @svgCreate(options.parent)
     @runSimulation = false
     @s = @_emptyState()
+    @animation = new NewNodesAnimation([])
     @_initialTree(options.tree or treeFromXml(options.doc).sc)
 
   _initialTree: (tree) ->
@@ -206,7 +237,9 @@ class force.Layout
     @queue.push (cb) =>
       @loadTree(treeFromXml(doc).sc)
       @beginSimulation()
-      cb()
+      @s.newNodes = [] unless @runSimulation
+      @animation = new NewNodesAnimation(@s.newNodes)
+      @animation.promise.done(cb)
 
   _emptyState: -> {
       nodes: []
@@ -218,6 +251,7 @@ class force.Layout
         children: []
         controls: []
       }
+      newNodes: []
     }
 
   loadTree: (tree) ->
@@ -229,6 +263,7 @@ class force.Layout
     @layout.on 'tick', =>
       @adjustLayout()
       @svgUpdate()
+      @animation.tick()
     @svgUpdate()
 
   mergeTree: (tree) ->
@@ -241,8 +276,7 @@ class force.Layout
       walk topNode, (node, parent) =>
         node.controls = []
         node.children = node.children or []
-        oldNode = oldS.nodeMap[node.id]
-        if oldNode?
+        if (oldNode = oldS.nodeMap[node.id])?
           node.x = oldNode.x
           node.y = oldNode.y
           node.w = oldNode.w
@@ -250,6 +284,7 @@ class force.Layout
         else
           node.w = CELL_MIN.w
           node.h = CELL_MIN.h
+          @s.newNodes.push(node)
         @s.nodes.push(node)
         @s.cells.push(node)
         @s.nodeMap[node.id] = node
