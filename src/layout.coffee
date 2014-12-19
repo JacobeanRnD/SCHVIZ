@@ -315,6 +315,7 @@ class force.Layout
   svgNodes: ->
     @container.selectAll('.cell').remove()
     @container.selectAll('.transition').remove()
+    @container.selectAll('.transition-label').remove()
 
     cell = @container.selectAll('.cell')
         .data(@s.cells)

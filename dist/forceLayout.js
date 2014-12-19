@@ -446,6 +446,7 @@ force.Layout = (function() {
     var cell;
     this.container.selectAll('.cell').remove();
     this.container.selectAll('.transition').remove();
+    this.container.selectAll('.transition-label').remove();
     cell = this.container.selectAll('.cell').data(this.s.cells).enter().append('g').attr('class', function(cell) {
       return "cell cell-" + (cell.type || 'state') + " draggable";
     }).attr('id', function(cell) {
