@@ -94,6 +94,12 @@ transitionPath = (tr) ->
              #{t.x},#{t.y}"
 
 
+findTransition = (transitions, source, target) ->
+  for tr in transitions
+    if tr.a.id == source and tr.b.id == target
+      return tr
+
+
 toKielerFormat = (node) ->
   children = []
   edges = []
@@ -267,6 +273,9 @@ class force.Layout
           tr.selfie = node.id == tr.target
           tr.label = label
           @s.transitions.push(tr)
+          if (oldTr = findTransition(oldS.transitions, tr.a.id, tr.b.id))?
+            tr.x = oldTr.x
+            tr.y = oldTr.y
 
   svgCreate: (parent) ->
     width = $(parent).width() - 5
@@ -558,10 +567,9 @@ class force.Layout
         .classed('highlight', highlight)
 
   highlightTransition: (source, target, highlight=true) ->
-    for tr in @s.transitions
-      if tr.a.id == source and tr.b.id == target
-        @container.selectAll("#force-layout-transition-#{tr.id}")
-            .classed('highlight', highlight)
+    if (tr = findTransition(@s.transitions, source, target))?
+      @container.selectAll("#force-layout-transition-#{tr.id}")
+          .classed('highlight', highlight)
 
 
 force.render = (options) ->

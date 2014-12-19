@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, def, exit, force, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
+var CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, ROUND_CORNER, def, exit, findTransition, force, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
@@ -157,6 +157,16 @@ transitionPath = function(tr) {
       y: tm.y + d.y
     };
     return "M" + s.x + "," + s.y + " S" + i.x + "," + i.y + " " + c.x + "," + c.y + " S" + j.x + "," + j.y + " " + t.x + "," + t.y;
+  }
+};
+
+findTransition = function(transitions, source, target) {
+  var tr, _i, _len;
+  for (_i = 0, _len = transitions.length; _i < _len; _i++) {
+    tr = transitions[_i];
+    if (tr.a.id === source && tr.b.id === target) {
+      return tr;
+    }
   }
 };
 
@@ -384,7 +394,7 @@ force.Layout = (function() {
       topNode = tree[_j];
       _results.push(walk(topNode, (function(_this) {
         return function(node) {
-          var a, b, c, label, source, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results1;
+          var a, b, c, label, oldTr, source, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results1;
           _ref = node.transitions || [];
           _results1 = [];
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
@@ -409,7 +419,13 @@ force.Layout = (function() {
             tr.b = b;
             tr.selfie = node.id === tr.target;
             tr.label = label;
-            _results1.push(_this.s.transitions.push(tr));
+            _this.s.transitions.push(tr);
+            if ((oldTr = findTransition(oldS.transitions, tr.a.id, tr.b.id)) != null) {
+              tr.x = oldTr.x;
+              _results1.push(tr.y = oldTr.y);
+            } else {
+              _results1.push(void 0);
+            }
           }
           return _results1;
         };
@@ -737,21 +753,13 @@ force.Layout = (function() {
   };
 
   Layout.prototype.highlightTransition = function(source, target, highlight) {
-    var tr, _i, _len, _ref, _results;
+    var tr;
     if (highlight == null) {
       highlight = true;
     }
-    _ref = this.s.transitions;
-    _results = [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      tr = _ref[_i];
-      if (tr.a.id === source && tr.b.id === target) {
-        _results.push(this.container.selectAll("#force-layout-transition-" + tr.id).classed('highlight', highlight));
-      } else {
-        _results.push(void 0);
-      }
+    if ((tr = findTransition(this.s.transitions, source, target)) != null) {
+      return this.container.selectAll("#force-layout-transition-" + tr.id).classed('highlight', highlight);
     }
-    return _results;
   };
 
   return Layout;
