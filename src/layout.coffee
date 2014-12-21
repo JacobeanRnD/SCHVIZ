@@ -296,17 +296,19 @@ class force.Layout
     for topNode in tree
       walk topNode, (node) =>
         for tr in node.transitions or []
-          [a, c, b] = path(node, @s.nodeMap.get(tr.target))
+          unless (target = @s.nodeMap.get(tr.target))?
+            throw Error("missing transition target: #{tr.target}")
+          [a, c, b] = path(node, target)
           tr.parent = c or @s.top
           tr.w = CONTROL_SIZE.w
           tr.h = CONTROL_SIZE.h
           tr.id = tr.id or nextId()
           tr.parent.controls.push(tr)
           @s.nodes.push(tr)
-          for [source, target] in d3.pairs([a, tr, b])
+          for [link_source, link_target] in d3.pairs([a, tr, b])
             @s.links.push(
-              source: source
-              target: target
+              source: link_source
+              target: link_target
             )
           label = tr.event or ''
           tr.a = a

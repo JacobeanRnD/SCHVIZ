@@ -463,12 +463,15 @@ force.Layout = (function() {
       topNode = tree[_j];
       _results.push(walk(topNode, (function(_this) {
         return function(node) {
-          var a, b, c, label, oldTr, source, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results1;
+          var a, b, c, label, link_source, link_target, oldTr, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results1;
           _ref = node.transitions || [];
           _results1 = [];
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
             tr = _ref[_k];
-            _ref1 = path(node, _this.s.nodeMap.get(tr.target)), a = _ref1[0], c = _ref1[1], b = _ref1[2];
+            if ((target = _this.s.nodeMap.get(tr.target)) == null) {
+              throw Error("missing transition target: " + tr.target);
+            }
+            _ref1 = path(node, target), a = _ref1[0], c = _ref1[1], b = _ref1[2];
             tr.parent = c || _this.s.top;
             tr.w = CONTROL_SIZE.w;
             tr.h = CONTROL_SIZE.h;
@@ -477,10 +480,10 @@ force.Layout = (function() {
             _this.s.nodes.push(tr);
             _ref2 = d3.pairs([a, tr, b]);
             for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
-              _ref3 = _ref2[_l], source = _ref3[0], target = _ref3[1];
+              _ref3 = _ref2[_l], link_source = _ref3[0], link_target = _ref3[1];
               _this.s.links.push({
-                source: source,
-                target: target
+                source: link_source,
+                target: link_target
               });
             }
             label = tr.event || '';
