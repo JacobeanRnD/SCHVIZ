@@ -132,11 +132,9 @@ html, body { height: 100%; margin: 0; }
       }
 
       function reset() {
-        var parser = new window.DOMParser();
-        var doc = parser.parseFromString($src.val(), 'text/xml');
         layout.stop();
         $(layout.el).remove();
-        layout = invokeLayout({parent: parent, doc: doc});
+        layout = invokeLayout({parent: parent, doc: parse()});
       }
     }
 
