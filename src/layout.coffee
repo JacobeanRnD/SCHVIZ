@@ -234,11 +234,19 @@ class force.Layout
 
   update: (doc) ->
     @queue.push (cb) =>
-      @loadTree(treeFromXml(doc).sc)
-      @beginSimulation()
-      @s.newNodes = [] unless @runSimulation
-      @animation = new NewNodesAnimation(@s.newNodes)
-      @animation.promise.done(cb)
+      Q('x')
+        .then =>
+          @loadTree(treeFromXml(doc).sc)
+        .then =>
+          @beginSimulation()
+          @s.newNodes = [] unless @runSimulation
+        .then =>
+          @animation = new NewNodesAnimation(@s.newNodes)
+          return @animation.promise
+        .catch (e) =>
+          console.error e
+        .finally =>
+          cb()
 
   _emptyState: -> {
       nodes: []
@@ -267,10 +275,9 @@ class force.Layout
     @svgUpdate()
 
   mergeTree: (tree) ->
-    @layout.stop() if @layout
     oldS = @s
-    @s = @_emptyState()
-    @s.top.children = tree
+    newS = @_emptyState()
+    newS.top.children = tree
 
     for topNode in tree
       walk topNode, (node, parent) =>
@@ -287,26 +294,26 @@ class force.Layout
           if parent?
             node.x = parent.x
             node.y = parent.y
-          @s.newNodes.push(node)
-        @s.nodes.push(node)
-        @s.cells.push(node)
-        @s.nodeMap.set(node.id, node)
-        node.parent = if parent? then @s.nodeMap.get(parent.id) else @s.top
+          newS.newNodes.push(node)
+        newS.nodes.push(node)
+        newS.cells.push(node)
+        newS.nodeMap.set(node.id, node)
+        node.parent = if parent? then newS.nodeMap.get(parent.id) else newS.top
 
     for topNode in tree
       walk topNode, (node) =>
         for tr in node.transitions or []
-          unless (target = @s.nodeMap.get(tr.target))?
+          unless (target = newS.nodeMap.get(tr.target))?
             throw Error("missing transition target: #{tr.target}")
           [a, c, b] = path(node, target)
-          tr.parent = c or @s.top
+          tr.parent = c or newS.top
           tr.w = CONTROL_SIZE.w
           tr.h = CONTROL_SIZE.h
           tr.id = tr.id or nextId()
           tr.parent.controls.push(tr)
-          @s.nodes.push(tr)
+          newS.nodes.push(tr)
           for [link_source, link_target] in d3.pairs([a, tr, b])
-            @s.links.push(
+            newS.links.push(
               source: link_source
               target: link_target
             )
@@ -315,11 +322,14 @@ class force.Layout
           tr.b = b
           tr.selfie = node.id == tr.target
           tr.label = label
-          @s.transitions.push(tr)
+          newS.transitions.push(tr)
           if (oldTr = findTransition(oldS.transitions, tr.a.id, tr.b.id))?
             _.extend(tr, {x: oldTr.x, y: oldTr.y})
           else
             _.extend(tr, midpoint(tr.a, tr.b))
+
+    @layout.stop() if @layout
+    @s = newS
 
   svgCreate: (parent) ->
     width = $(parent).width() - 5

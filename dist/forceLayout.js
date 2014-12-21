@@ -378,13 +378,21 @@ force.Layout = (function() {
   Layout.prototype.update = function(doc) {
     return this.queue.push((function(_this) {
       return function(cb) {
-        _this.loadTree(treeFromXml(doc).sc);
-        _this.beginSimulation();
-        if (!_this.runSimulation) {
-          _this.s.newNodes = [];
-        }
-        _this.animation = new NewNodesAnimation(_this.s.newNodes);
-        return _this.animation.promise.done(cb);
+        return Q('x').then(function() {
+          return _this.loadTree(treeFromXml(doc).sc);
+        }).then(function() {
+          _this.beginSimulation();
+          if (!_this.runSimulation) {
+            return _this.s.newNodes = [];
+          }
+        }).then(function() {
+          _this.animation = new NewNodesAnimation(_this.s.newNodes);
+          return _this.animation.promise;
+        })["catch"](function(e) {
+          return console.error(e);
+        })["finally"](function() {
+          return cb();
+        });
       };
     })(this));
   };
@@ -423,13 +431,10 @@ force.Layout = (function() {
   };
 
   Layout.prototype.mergeTree = function(tree) {
-    var oldS, topNode, _i, _j, _len, _len1, _results;
-    if (this.layout) {
-      this.layout.stop();
-    }
+    var newS, oldS, topNode, _i, _j, _len, _len1;
     oldS = this.s;
-    this.s = this._emptyState();
-    this.s.top.children = tree;
+    newS = this._emptyState();
+    newS.top.children = tree;
     for (_i = 0, _len = tree.length; _i < _len; _i++) {
       topNode = tree[_i];
       walk(topNode, (function(_this) {
@@ -449,39 +454,38 @@ force.Layout = (function() {
               node.x = parent.x;
               node.y = parent.y;
             }
-            _this.s.newNodes.push(node);
+            newS.newNodes.push(node);
           }
-          _this.s.nodes.push(node);
-          _this.s.cells.push(node);
-          _this.s.nodeMap.set(node.id, node);
-          return node.parent = parent != null ? _this.s.nodeMap.get(parent.id) : _this.s.top;
+          newS.nodes.push(node);
+          newS.cells.push(node);
+          newS.nodeMap.set(node.id, node);
+          return node.parent = parent != null ? newS.nodeMap.get(parent.id) : newS.top;
         };
       })(this));
     }
-    _results = [];
     for (_j = 0, _len1 = tree.length; _j < _len1; _j++) {
       topNode = tree[_j];
-      _results.push(walk(topNode, (function(_this) {
+      walk(topNode, (function(_this) {
         return function(node) {
-          var a, b, c, label, link_source, link_target, oldTr, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results1;
+          var a, b, c, label, link_source, link_target, oldTr, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results;
           _ref = node.transitions || [];
-          _results1 = [];
+          _results = [];
           for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
             tr = _ref[_k];
-            if ((target = _this.s.nodeMap.get(tr.target)) == null) {
+            if ((target = newS.nodeMap.get(tr.target)) == null) {
               throw Error("missing transition target: " + tr.target);
             }
             _ref1 = path(node, target), a = _ref1[0], c = _ref1[1], b = _ref1[2];
-            tr.parent = c || _this.s.top;
+            tr.parent = c || newS.top;
             tr.w = CONTROL_SIZE.w;
             tr.h = CONTROL_SIZE.h;
             tr.id = tr.id || nextId();
             tr.parent.controls.push(tr);
-            _this.s.nodes.push(tr);
+            newS.nodes.push(tr);
             _ref2 = d3.pairs([a, tr, b]);
             for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
               _ref3 = _ref2[_l], link_source = _ref3[0], link_target = _ref3[1];
-              _this.s.links.push({
+              newS.links.push({
                 source: link_source,
                 target: link_target
               });
@@ -491,21 +495,24 @@ force.Layout = (function() {
             tr.b = b;
             tr.selfie = node.id === tr.target;
             tr.label = label;
-            _this.s.transitions.push(tr);
+            newS.transitions.push(tr);
             if ((oldTr = findTransition(oldS.transitions, tr.a.id, tr.b.id)) != null) {
-              _results1.push(_.extend(tr, {
+              _results.push(_.extend(tr, {
                 x: oldTr.x,
                 y: oldTr.y
               }));
             } else {
-              _results1.push(_.extend(tr, midpoint(tr.a, tr.b)));
+              _results.push(_.extend(tr, midpoint(tr.a, tr.b)));
             }
           }
-          return _results1;
+          return _results;
         };
-      })(this)));
+      })(this));
     }
-    return _results;
+    if (this.layout) {
+      this.layout.stop();
+    }
+    return this.s = newS;
   };
 
   Layout.prototype.svgCreate = function(parent) {
