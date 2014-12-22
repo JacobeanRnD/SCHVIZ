@@ -374,11 +374,17 @@ force.Layout = (function() {
     return this.queue.push((function(_this) {
       return function(cb) {
         _this.loadTree(tree);
-        return force.kielerLayout(_this.options.kielerAlgorithm, _this.s.top).then(function(treeWithLayout) {
-          return _this.beginSimulation();
-        })["catch"](function(e) {
-          return _this.el = $('<div>').text(e.message).replaceAll(_this.el)[0];
-        }).done(cb);
+        if (_this.options.geometry != null) {
+          _this.applyGeometry(_this.options.geometry);
+          _this.beginSimulation();
+          return cb();
+        } else {
+          return force.kielerLayout(_this.options.kielerAlgorithm, _this.s.top).then(function(treeWithLayout) {
+            return _this.beginSimulation();
+          })["catch"](function(e) {
+            return _this.el = $('<div>').text(e.message).replaceAll(_this.el)[0];
+          }).done(cb);
+        }
       };
     })(this));
   };
@@ -563,7 +569,7 @@ force.Layout = (function() {
       }
     }
     this.svgUpdate();
-    if (this.runSimulation) {
+    if (this.layout && this.runSimulation) {
       return this.layout.start();
     }
   };

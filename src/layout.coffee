@@ -229,12 +229,18 @@ class force.Layout
     @queue.push (cb) =>
       @loadTree(tree)
 
-      force.kielerLayout(@options.kielerAlgorithm, @s.top)
-        .then (treeWithLayout) =>
-          @beginSimulation()
-        .catch (e) =>
-          @el = $('<div>').text(e.message).replaceAll(@el)[0]
-        .done(cb)
+      if @options.geometry?
+        @applyGeometry(@options.geometry)
+        @beginSimulation()
+        cb()
+
+      else
+        force.kielerLayout(@options.kielerAlgorithm, @s.top)
+          .then (treeWithLayout) =>
+            @beginSimulation()
+          .catch (e) =>
+            @el = $('<div>').text(e.message).replaceAll(@el)[0]
+          .done(cb)
 
   update: (doc) ->
     @queue.push (cb) =>
@@ -358,7 +364,7 @@ class force.Layout
         node.px = node.x = saved.x
         node.py = node.y = saved.y
     @svgUpdate()
-    @layout.start() if @runSimulation
+    @layout.start() if @layout and @runSimulation
 
   svgCreate: (parent) ->
     width = $(parent).width() - 5
