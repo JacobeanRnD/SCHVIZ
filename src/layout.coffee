@@ -316,6 +316,7 @@ class force.Layout
           tr.w = CONTROL_SIZE.w
           tr.h = CONTROL_SIZE.h
           tr.id = tr.id or makeId("_transition/#{node.id}/#{target.id}/")
+          newS.nodeMap.set(tr.id, tr)
           tr.parent.controls.push(tr)
           newS.nodes.push(tr)
           for [link_source, link_target] in d3.pairs([a, tr, b])
@@ -336,6 +337,28 @@ class force.Layout
 
     @layout.stop() if @layout
     @s = newS
+
+  saveGeometry: ->
+    round = (x) -> Math.round(x)
+    return {
+      nodes: {
+        id: n.id
+        w: round(n.w)
+        h: round(n.h)
+        x: round(n.x)
+        y: round(n.y)
+      } for n in @s.nodes
+    }
+
+  applyGeometry: (geom) ->
+    for saved in geom.nodes
+      if (node = @s.nodeMap.get(saved.id))?
+        node.w = saved.w
+        node.h = saved.h
+        node.px = node.x = saved.x
+        node.py = node.y = saved.y
+    @svgUpdate()
+    @layout.start() if @runSimulation
 
   svgCreate: (parent) ->
     width = $(parent).width() - 5

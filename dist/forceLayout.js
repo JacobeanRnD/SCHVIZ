@@ -489,6 +489,7 @@ force.Layout = (function() {
             tr.w = CONTROL_SIZE.w;
             tr.h = CONTROL_SIZE.h;
             tr.id = tr.id || makeId("_transition/" + node.id + "/" + target.id + "/");
+            newS.nodeMap.set(tr.id, tr);
             tr.parent.controls.push(tr);
             newS.nodes.push(tr);
             _ref2 = d3.pairs([a, tr, b]);
@@ -522,6 +523,49 @@ force.Layout = (function() {
       this.layout.stop();
     }
     return this.s = newS;
+  };
+
+  Layout.prototype.saveGeometry = function() {
+    var n, round;
+    round = function(x) {
+      return Math.round(x);
+    };
+    return {
+      nodes: (function() {
+        var _i, _len, _ref, _results;
+        _ref = this.s.nodes;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          n = _ref[_i];
+          _results.push({
+            id: n.id,
+            w: round(n.w),
+            h: round(n.h),
+            x: round(n.x),
+            y: round(n.y)
+          });
+        }
+        return _results;
+      }).call(this)
+    };
+  };
+
+  Layout.prototype.applyGeometry = function(geom) {
+    var node, saved, _i, _len, _ref;
+    _ref = geom.nodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      saved = _ref[_i];
+      if ((node = this.s.nodeMap.get(saved.id)) != null) {
+        node.w = saved.w;
+        node.h = saved.h;
+        node.px = node.x = saved.x;
+        node.py = node.y = saved.y;
+      }
+    }
+    this.svgUpdate();
+    if (this.runSimulation) {
+      return this.layout.start();
+    }
   };
 
   Layout.prototype.svgCreate = function(parent) {
