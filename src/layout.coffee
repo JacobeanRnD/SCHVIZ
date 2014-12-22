@@ -18,12 +18,16 @@ MAX_ZOOM = 6
 ANIMATION_SPEED = 2
 
 
-nextId = (->
-  last = 0
-  return ->
-    last += 1
-    return "_force_id_#{last}_"
-)()
+idMaker = ->
+  counterMap = d3.map()
+  return (prefix='_force_id_') ->
+    counter = counterMap.get(prefix) or 0
+    counter += 1
+    counterMap.set(prefix, counter)
+    return "#{prefix}#{counter}"
+
+
+nextId = idMaker()
 
 
 def = (map, key, defaultValue) ->
