@@ -393,9 +393,11 @@ force.Layout = (function() {
   };
 
   Layout.prototype.update = function(doc) {
-    return this.queue.push((function(_this) {
+    var deferred;
+    deferred = Q.defer();
+    this.queue.push((function(_this) {
       return function(cb) {
-        return Q('x').then(function() {
+        return deferred.resolve(Q().then(function() {
           return _this.loadTree(treeFromXml(doc).sc);
         }).then(function() {
           _this.beginSimulation();
@@ -409,9 +411,10 @@ force.Layout = (function() {
           return console.error(e);
         })["finally"](function() {
           return cb();
-        });
+        }));
       };
     })(this));
+    return deferred.promise;
   };
 
   Layout.prototype._emptyState = function() {

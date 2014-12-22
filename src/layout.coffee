@@ -247,8 +247,10 @@ class force.Layout
         )
 
   update: (doc) ->
+    deferred = Q.defer()
     @queue.push (cb) =>
-      Q('x')
+      deferred.resolve(
+        Q()
         .then =>
           @loadTree(treeFromXml(doc).sc)
         .then =>
@@ -261,6 +263,9 @@ class force.Layout
           console.error e
         .finally =>
           cb()
+      )
+
+    return deferred.promise
 
   _emptyState: -> {
       nodes: []

@@ -24,8 +24,10 @@ layout.highlightState('state-id', false);
 layout.highlightTransition('src', 'dst', true);
 layout.highlightTransition('src', 'dst', false);
 
-// update the visualization with a new scxml
-layout.update(newXmlDocument);
+// update the visualization with a new scxml; the `update` method returns a
+// promise that can be checked for errors.
+layout.update(newXmlDocument)
+  .done(null, function(e) { console.log('update failed!', e) });
 
 // save state positions
 var geometry = layout.saveGeometry();
