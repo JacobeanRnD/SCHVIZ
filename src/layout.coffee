@@ -346,7 +346,7 @@ class force.Layout
 
   saveGeometry: ->
     round = (x) -> Math.round(x)
-    return JSON.stringify(
+    return JSON.stringify({
       nodes: {
         id: n.id
         w: round(n.w)
@@ -354,7 +354,7 @@ class force.Layout
         x: round(n.x)
         y: round(n.y)
       } for n in @s.nodes
-    )
+    })
 
   applyGeometry: (geom) ->
     for saved in JSON.parse(geom).nodes

@@ -536,24 +536,24 @@ force.Layout = (function() {
     round = function(x) {
       return Math.round(x);
     };
-    return JSON.stringify((function() {
-      var _i, _len, _ref, _results;
-      _ref = this.s.nodes;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        n = _ref[_i];
-        _results.push({
-          nodes: {
+    return JSON.stringify({
+      nodes: (function() {
+        var _i, _len, _ref, _results;
+        _ref = this.s.nodes;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          n = _ref[_i];
+          _results.push({
             id: n.id,
             w: round(n.w),
             h: round(n.h),
             x: round(n.x),
             y: round(n.y)
-          }
-        });
-      }
-      return _results;
-    }).call(this));
+          });
+        }
+        return _results;
+      }).call(this)
+    });
   };
 
   Layout.prototype.applyGeometry = function(geom) {
