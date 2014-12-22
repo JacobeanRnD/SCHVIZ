@@ -283,6 +283,8 @@ class force.Layout
     newS = @_emptyState()
     newS.top.children = tree
 
+    makeId = idMaker()
+
     for topNode in tree
       walk topNode, (node, parent) =>
         node.controls = []
@@ -313,7 +315,7 @@ class force.Layout
           tr.parent = c or newS.top
           tr.w = CONTROL_SIZE.w
           tr.h = CONTROL_SIZE.h
-          tr.id = tr.id or nextId()
+          tr.id = tr.id or makeId("_transition/#{node.id}/#{target.id}/")
           tr.parent.controls.push(tr)
           newS.nodes.push(tr)
           for [link_source, link_target] in d3.pairs([a, tr, b])

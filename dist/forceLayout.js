@@ -439,10 +439,11 @@ force.Layout = (function() {
   };
 
   Layout.prototype.mergeTree = function(tree) {
-    var newS, oldS, topNode, _i, _j, _len, _len1;
+    var makeId, newS, oldS, topNode, _i, _j, _len, _len1;
     oldS = this.s;
     newS = this._emptyState();
     newS.top.children = tree;
+    makeId = idMaker();
     for (_i = 0, _len = tree.length; _i < _len; _i++) {
       topNode = tree[_i];
       walk(topNode, (function(_this) {
@@ -487,7 +488,7 @@ force.Layout = (function() {
             tr.parent = c || newS.top;
             tr.w = CONTROL_SIZE.w;
             tr.h = CONTROL_SIZE.h;
-            tr.id = tr.id || nextId();
+            tr.id = tr.id || makeId("_transition/" + node.id + "/" + target.id + "/");
             tr.parent.controls.push(tr);
             newS.nodes.push(tr);
             _ref2 = d3.pairs([a, tr, b]);
