@@ -226,6 +226,9 @@ class force.Layout
     @_initialTree(options.tree or treeFromXml(options.doc).sc)
 
   _initialTree: (tree) ->
+    deferred = Q.defer()
+    @initialized = deferred.promise
+
     @queue.push (cb) =>
       @loadTree(tree)
 
@@ -233,14 +236,15 @@ class force.Layout
         @applyGeometry(@options.geometry)
         @beginSimulation()
         cb()
+        deferred.resolve()
 
       else
-        force.kielerLayout(@options.kielerAlgorithm, @s.top)
-          .then (treeWithLayout) =>
-            @beginSimulation()
-          .catch (e) =>
-            @el = $('<div>').text(e.message).replaceAll(@el)[0]
-          .done(cb)
+        deferred.resolve(
+          force.kielerLayout(@options.kielerAlgorithm, @s.top)
+            .then (treeWithLayout) =>
+              @beginSimulation()
+              cb()
+        )
 
   update: (doc) ->
     @queue.push (cb) =>

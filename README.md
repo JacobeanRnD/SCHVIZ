@@ -9,6 +9,10 @@ var layout = new forceLayout.Layout({
     geometry: null
 });
 
+// see if the simulation initialized correctly using the `initialized` promise
+layout.initalized
+  .done(null, function(e) { console.log('error!', e); });
+
 // begin the force layout simulation
 layout.start();
 
