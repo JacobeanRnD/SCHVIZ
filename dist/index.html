@@ -114,10 +114,6 @@ html, body { height: 100%; margin: 0; }
       var $clearGeom = $('<button>').text('clear geometry').click(clearGeom);
       var layout;
       $('body').append(parent, $src, '<br>', $update, $reset, $saveGeom, $clearGeom);
-      var geometry = null, savedGeom;
-      if(savedGeom = localStorage.getItem('desm-geometry')) {
-        geometry = JSON.parse(savedGeom);
-      }
 
       if(file) {
         $.get(file, function(_r, _s, req) {
@@ -125,7 +121,7 @@ html, body { height: 100%; margin: 0; }
           layout = invokeLayout({
             parent: parent,
             doc: parse(req.responseText),
-            geometry: geometry
+            geometry: localStorage.getItem('desm-geometry')
           });
         });
       }
@@ -147,7 +143,7 @@ html, body { height: 100%; margin: 0; }
 
       function saveGeom() {
         var geom = layout.saveGeometry();
-        localStorage.setItem('desm-geometry', JSON.stringify(geom));
+        localStorage.setItem('desm-geometry', geom);
       }
 
       function clearGeom() {

@@ -536,29 +536,29 @@ force.Layout = (function() {
     round = function(x) {
       return Math.round(x);
     };
-    return {
-      nodes: (function() {
-        var _i, _len, _ref, _results;
-        _ref = this.s.nodes;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          n = _ref[_i];
-          _results.push({
+    return JSON.stringify((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.s.nodes;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        n = _ref[_i];
+        _results.push({
+          nodes: {
             id: n.id,
             w: round(n.w),
             h: round(n.h),
             x: round(n.x),
             y: round(n.y)
-          });
-        }
-        return _results;
-      }).call(this)
-    };
+          }
+        });
+      }
+      return _results;
+    }).call(this));
   };
 
   Layout.prototype.applyGeometry = function(geom) {
     var node, saved, _i, _len, _ref;
-    _ref = geom.nodes;
+    _ref = JSON.parse(geom).nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       saved = _ref[_i];
       if ((node = this.s.nodeMap.get(saved.id)) != null) {
