@@ -898,17 +898,27 @@ force.Layout = (function() {
     if (highlight == null) {
       highlight = true;
     }
-    return d3.select(this.s.dom.get("cell-" + id)).classed('highlight', highlight);
+    return this.queue.push((function(_this) {
+      return function(cb) {
+        d3.select(_this.s.dom.get("cell-" + id)).classed('highlight', highlight);
+        return cb();
+      };
+    })(this));
   };
 
   Layout.prototype.highlightTransition = function(source, target, highlight) {
-    var tr;
     if (highlight == null) {
       highlight = true;
     }
-    if ((tr = findTransition(this.s.transitions, source, target)) != null) {
-      return d3.select(this.s.dom.get("transition-" + tr.id)).classed('highlight', highlight);
-    }
+    return this.queue.push((function(_this) {
+      return function(cb) {
+        var tr;
+        if ((tr = findTransition(_this.s.transitions, source, target)) != null) {
+          d3.select(_this.s.dom.get("transition-" + tr.id)).classed('highlight', highlight);
+        }
+        return cb();
+      };
+    })(this));
   };
 
   return Layout;

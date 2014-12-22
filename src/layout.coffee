@@ -669,13 +669,17 @@ class force.Layout
     @layout.stop() if @layout?
 
   highlightState: (id, highlight=true) ->
-    d3.select(@s.dom.get("cell-#{id}"))
-        .classed('highlight', highlight)
+    @queue.push (cb) =>
+      d3.select(@s.dom.get("cell-#{id}"))
+          .classed('highlight', highlight)
+      cb()
 
   highlightTransition: (source, target, highlight=true) ->
-    if (tr = findTransition(@s.transitions, source, target))?
-      d3.select(@s.dom.get("transition-#{tr.id}"))
-          .classed('highlight', highlight)
+    @queue.push (cb) =>
+      if (tr = findTransition(@s.transitions, source, target))?
+        d3.select(@s.dom.get("transition-#{tr.id}"))
+            .classed('highlight', highlight)
+      cb()
 
 
 force.render = (options) ->
