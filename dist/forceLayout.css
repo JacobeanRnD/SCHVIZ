@@ -50,3 +50,10 @@
   pointer-events: all;
   stroke: black;
 }
+.force-layout .loadingOverlay rect {
+  fill: white;
+  opacity: 80%;
+}
+.force-layout .loadingOverlay text {
+  text-anchor: middle;
+}

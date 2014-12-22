@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, idMaker, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
+var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, idMaker, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
 
 treeFromXml = require('./treeFromXml.coffee');
 
@@ -356,6 +356,24 @@ NewNodesAnimation = (function() {
 
 })();
 
+LoadingOverlay = (function() {
+  function LoadingOverlay(options) {
+    var h, w;
+    w = $(options.svg).width();
+    h = $(options.svg).height();
+    this.el = d3.select(options.svg).append('g').attr('class', "loadingOverlay");
+    this.el.append('rect').attr('width', w).attr('height', h);
+    this.el.append('text').attr('x', w / 2).attr('y', h / 2).text(options.text);
+  }
+
+  LoadingOverlay.prototype.destroy = function() {
+    return this.el.remove();
+  };
+
+  return LoadingOverlay;
+
+})();
+
 force.Layout = (function() {
   function Layout(options) {
     this.queue = async.queue((function(task, cb) {
@@ -376,6 +394,7 @@ force.Layout = (function() {
     this.initialized = deferred.promise;
     return this.queue.push((function(_this) {
       return function(cb) {
+        var loading;
         _this.loadTree(tree);
         if (_this.options.geometry != null) {
           _this.applyGeometry(_this.options.geometry);
@@ -383,7 +402,12 @@ force.Layout = (function() {
           cb();
           return deferred.resolve();
         } else {
+          loading = new LoadingOverlay({
+            svg: _this.el,
+            text: "Loading Kieler layout ..."
+          });
           return deferred.resolve(force.kielerLayout(_this.options.kielerAlgorithm, _this.s.top).then(function(treeWithLayout) {
+            loading.destroy();
             _this.beginSimulation();
             return cb();
           }));

@@ -213,6 +213,25 @@ class NewNodesAnimation
     @deferred.resolve()
 
 
+class LoadingOverlay
+
+  constructor: (options) ->
+    w = $(options.svg).width()
+    h = $(options.svg).height()
+    @el = d3.select(options.svg).append('g')
+        .attr('class', "loadingOverlay")
+    @el.append('rect')
+        .attr('width', w)
+        .attr('height', h)
+    @el.append('text')
+        .attr('x', w/2)
+        .attr('y', h/2)
+        .text(options.text)
+
+  destroy: ->
+    @el.remove()
+
+
 class force.Layout
 
   constructor: (options) ->
@@ -239,9 +258,11 @@ class force.Layout
         deferred.resolve()
 
       else
+        loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
         deferred.resolve(
           force.kielerLayout(@options.kielerAlgorithm, @s.top)
             .then (treeWithLayout) =>
+              loading.destroy()
               @beginSimulation()
               cb()
         )
