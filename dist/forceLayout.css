@@ -4,6 +4,7 @@
   stroke: steelblue;
   stroke-width: 2px;
   cursor: pointer;
+  transition: stroke 400ms;
 }
 .parallel-child .force-layout .cell .border {
   stroke-dasharray: 10,5;
@@ -15,6 +16,7 @@
   stroke: #555;
   stroke-opacity: .6;
   fill: none;
+  transition: stroke 400ms;
 }
 .force-layout .transition.highlight path {
   stroke: red;
