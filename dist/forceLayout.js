@@ -1085,7 +1085,7 @@ module.exports = function(doc) {
 
 
 
-},{}]},{},[1])
+},{}]},{},[1]);
 
 
 //# sourceMappingURL=forceLayout.js.map
