@@ -1,7 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, idMaker, midpoint, nextId, parents, path, toKielerFormat, transitionPath, treeFromXml, walk;
-
-treeFromXml = require('./treeFromXml.coffee');
+var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, idMaker, midpoint, nextId, parents, path, strip, toKielerFormat, transitionPath, treeFromXml, walk;
 
 force = window.forceLayout = module.exports = {};
 
@@ -41,6 +39,131 @@ MIN_ZOOM = 1 / 6;
 MAX_ZOOM = 6;
 
 ANIMATION_SPEED = 2;
+
+strip = function(obj) {
+  var key, value;
+  for (key in obj) {
+    value = obj[key];
+    if (value != null) {
+      if (_.isArray(value) && value.length === 0) {
+        delete obj[key];
+      } else if (_.isObject(value)) {
+        strip(value);
+        if (_.isEmpty(value)) {
+          delete obj[key];
+        }
+      }
+    } else {
+      delete obj[key];
+    }
+  }
+  return obj;
+};
+
+treeFromXml = function(doc) {
+  var parseActions, parseChildNodes, parseStates;
+  parseActions = function(container) {
+    var child, rv, _i, _len, _ref;
+    rv = [];
+    _ref = container.childNodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      child = _ref[_i];
+      if (child.tagName) {
+        rv.push({
+          xml: '' + child
+        });
+      }
+    }
+    return rv;
+  };
+  parseChildNodes = function(node) {
+    var child, onentry, onexit, target, transitions, _i, _len, _ref;
+    transitions = [];
+    onentry = [];
+    onexit = [];
+    _ref = node.childNodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      child = _ref[_i];
+      switch (child.tagName) {
+        case 'transition':
+          target = child.getAttribute('target');
+          if (!target) {
+            throw new Error("not implemented: transition with no target");
+          }
+          if (target.indexOf(' ') > -1) {
+            throw new Error("not implemented: transition with multiple targets");
+          }
+          transitions.push(strip({
+            target: target,
+            cond: child.getAttribute('cond') || null,
+            event: child.getAttribute('event') || null,
+            actions: parseActions(child)
+          }));
+          break;
+        case 'onentry':
+          onentry = onentry.concat(parseActions(child));
+          break;
+        case 'onexit':
+          onexit = onexit.concat(parseActions(child));
+      }
+    }
+    return {
+      transitions: transitions,
+      onentry: onentry,
+      onexit: onexit
+    };
+  };
+  parseStates = function(node) {
+    var state, stateList, _i, _len, _ref;
+    stateList = [];
+    _ref = node.childNodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      state = (function() {
+        switch (node.tagName) {
+          case 'initial':
+            return {
+              type: 'initial',
+              id: node.getAttribute('id') || null,
+              children: parseStates(node)
+            };
+          case 'state':
+            return {
+              type: 'state',
+              id: node.getAttribute('id') || null,
+              children: parseStates(node)
+            };
+          case 'final':
+            return {
+              type: 'final',
+              id: node.getAttribute('id') || null,
+              children: parseStates(node)
+            };
+          case 'parallel':
+            return {
+              type: 'parallel',
+              id: node.getAttribute('id') || null,
+              children: parseStates(node)
+            };
+          case 'history':
+            return {
+              type: 'history',
+              id: node.getAttribute('id') || null,
+              deep: node.getAttribute('type') === 'deep' || null
+            };
+        }
+      })();
+      if (state != null) {
+        _.extend(state, parseChildNodes(node));
+        stateList.push(strip(state));
+      }
+    }
+    return stateList;
+  };
+  return {
+    sc: parseStates(doc.documentElement)
+  };
+};
 
 idMaker = function() {
   var counterMap;
@@ -955,137 +1078,7 @@ force.render = function(options) {
 
 
 
-},{"./treeFromXml.coffee":2}],2:[function(require,module,exports){
-var strip;
-
-strip = function(obj) {
-  var key, value;
-  for (key in obj) {
-    value = obj[key];
-    if (value != null) {
-      if (_.isArray(value) && value.length === 0) {
-        delete obj[key];
-      } else if (_.isObject(value)) {
-        strip(value);
-        if (_.isEmpty(value)) {
-          delete obj[key];
-        }
-      }
-    } else {
-      delete obj[key];
-    }
-  }
-  return obj;
-};
-
-module.exports = function(doc) {
-  var parseActions, parseChildNodes, parseStates;
-  parseActions = function(container) {
-    var child, rv, _i, _len, _ref;
-    rv = [];
-    _ref = container.childNodes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      child = _ref[_i];
-      if (child.tagName) {
-        rv.push({
-          xml: '' + child
-        });
-      }
-    }
-    return rv;
-  };
-  parseChildNodes = function(node) {
-    var child, onentry, onexit, target, transitions, _i, _len, _ref;
-    transitions = [];
-    onentry = [];
-    onexit = [];
-    _ref = node.childNodes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      child = _ref[_i];
-      switch (child.tagName) {
-        case 'transition':
-          target = child.getAttribute('target');
-          if (!target) {
-            throw new Error("not implemented: transition with no target");
-          }
-          if (target.indexOf(' ') > -1) {
-            throw new Error("not implemented: transition with multiple targets");
-          }
-          transitions.push(strip({
-            target: target,
-            cond: child.getAttribute('cond') || null,
-            event: child.getAttribute('event') || null,
-            actions: parseActions(child)
-          }));
-          break;
-        case 'onentry':
-          onentry = onentry.concat(parseActions(child));
-          break;
-        case 'onexit':
-          onexit = onexit.concat(parseActions(child));
-      }
-    }
-    return {
-      transitions: transitions,
-      onentry: onentry,
-      onexit: onexit
-    };
-  };
-  parseStates = function(node) {
-    var state, stateList, _i, _len, _ref;
-    stateList = [];
-    _ref = node.childNodes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      node = _ref[_i];
-      state = (function() {
-        switch (node.tagName) {
-          case 'initial':
-            return {
-              type: 'initial',
-              id: node.getAttribute('id') || null,
-              children: parseStates(node)
-            };
-          case 'state':
-            return {
-              type: 'state',
-              id: node.getAttribute('id') || null,
-              children: parseStates(node)
-            };
-          case 'final':
-            return {
-              type: 'final',
-              id: node.getAttribute('id') || null,
-              children: parseStates(node)
-            };
-          case 'parallel':
-            return {
-              type: 'parallel',
-              id: node.getAttribute('id') || null,
-              children: parseStates(node)
-            };
-          case 'history':
-            return {
-              type: 'history',
-              id: node.getAttribute('id') || null,
-              deep: node.getAttribute('type') === 'deep' || null
-            };
-        }
-      })();
-      if (state != null) {
-        _.extend(state, parseChildNodes(node));
-        stateList.push(strip(state));
-      }
-    }
-    return stateList;
-  };
-  return {
-    sc: parseStates(doc.documentElement)
-  };
-};
-
-
-
-},{}]},{},[1]);
+},{}]},{},[1])
 
 
 //# sourceMappingURL=forceLayout.js.map
