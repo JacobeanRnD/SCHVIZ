@@ -1,10 +1,8 @@
 var gulp = require('gulp'),
     rename = require('gulp-rename'),
+    coffee = require('gulp-coffee'),
     less = require('gulp-less'),
     sourcemaps = require('gulp-sourcemaps'),
-    browserify = require('browserify'),
-    source = require('vinyl-source-stream'),
-    buffer = require('vinyl-buffer'),
     Q = require('q'),
     http = require('http'),
     express = require('express');
@@ -25,15 +23,10 @@ gulp.task('serve', function() {
 
 
 gulp.task('build', function() {
-  browserify({
-    entries: ['./src/layout.coffee'],
-    debug: true
-  })
-    .transform('coffeeify')
-    .bundle()
-    .pipe(source('forceLayout.js'))
-    .pipe(buffer())
-    .pipe(sourcemaps.init({loadMaps: true}))
+  gulp.src('./src/layout.coffee')
+    .pipe(sourcemaps.init())
+    .pipe(coffee())
+    .pipe(rename('forceLayout.js'))
     .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest('dist'));
 

@@ -1,4 +1,4 @@
-force = window.forceLayout = module.exports = {}
+force = window.forceLayout = {}
 
 KIELER_URL = 'http://kieler.herokuapp.com/live'
 MARGIN = 5
