@@ -261,16 +261,16 @@
       w = c.x - a.x;
       h = c.y - a.y;
       c1 = {
-        x: c.x - h / 2,
-        y: c.y + w / 2
+        x: c.x - h / 4,
+        y: c.y + w / 4
       };
       c2 = {
-        x: c.x + h / 2,
-        y: c.y - w / 2
+        x: c.x + h / 4,
+        y: c.y - w / 4
       };
       s = exit(a, c1);
-      t = exit(b, c2);
-      return "M" + s.x + "," + s.y + " C" + c1.x + "," + c1.y + " " + c2.x + "," + c2.y + " " + t.x + "," + t.y;
+      t = exit(a, c2);
+      return "M" + s.x + "," + s.y + " C" + c1.x + "," + c1.y + " " + c1.x + "," + c1.y + " " + c.x + "," + c.y + " C" + c2.x + "," + c2.y + " " + c2.x + "," + c2.y + " " + t.x + "," + t.y;
     } else {
       s = exit(a, c);
       t = exit(b, c);
