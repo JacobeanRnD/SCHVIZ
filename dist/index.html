@@ -59,6 +59,7 @@ html, body { height: 100%; margin: 0; }
             kielerAlgorithm: algorithm,
             debug: debug
           }, options));
+        layout.initialized.done();
         window.layout = layout;
         if(useForceLayout) { layout.start(); }
       }
