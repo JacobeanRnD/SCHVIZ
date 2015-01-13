@@ -46,10 +46,10 @@ treeFromXml = (doc) ->
       switch child.tagName
         when 'transition'
           target = child.getAttribute('target')
-          unless target
-            throw new Error("not implemented: transition with no target")
-          if target.indexOf(' ') > -1
+          if target and target.indexOf(' ') > -1
             throw new Error("not implemented: transition with multiple targets")
+          unless target
+            target = node.getAttribute('id')
           transitions.push(strip(
             target: target
             cond: child.getAttribute('cond') or null

@@ -87,11 +87,11 @@
         switch (child.tagName) {
           case 'transition':
             target = child.getAttribute('target');
-            if (!target) {
-              throw new Error("not implemented: transition with no target");
-            }
-            if (target.indexOf(' ') > -1) {
+            if (target && target.indexOf(' ') > -1) {
               throw new Error("not implemented: transition with multiple targets");
+            }
+            if (!target) {
+              target = node.getAttribute('id');
             }
             transitions.push(strip({
               target: target,
