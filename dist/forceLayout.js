@@ -405,21 +405,6 @@
         }
       });
       layoutDone = klay_ready.promise;
-      return klay_ready.promise.then(function(graphLayout) {
-        walk(graphLayout, (function(_this) {
-          return function(kNode) {
-            var edge, _i, _len, _ref, _results;
-            _ref = kNode.edges || [];
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              edge = _ref[_i];
-              _results.push(edgeMap.set(edge.id, edge));
-            }
-            return _results;
-          };
-        })(this));
-        return applyLayout(top, graphLayout);
-      });
     } else {
       form = {
         graph: JSON.stringify(graph),

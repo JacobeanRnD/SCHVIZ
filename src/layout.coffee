@@ -277,13 +277,6 @@ force.kielerLayout = (kielerAlgorithm, top) ->
 
     layoutDone = klay_ready.promise
 
-    return klay_ready.promise
-      .then (graphLayout) ->
-        walk graphLayout, (kNode) =>
-          for edge in kNode.edges or []
-            edgeMap.set(edge.id, edge)
-        applyLayout(top, graphLayout)
-
   else
     form = {
       graph: JSON.stringify(graph)
