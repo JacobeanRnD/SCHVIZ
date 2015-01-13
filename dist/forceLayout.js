@@ -341,7 +341,7 @@
   };
 
   force.kielerLayout = function(kielerAlgorithm, top) {
-    var applyLayout, edgeMap, form, graph;
+    var applyLayout, edgeMap, form, graph, klay_ready, layoutDone;
     edgeMap = d3.map();
     applyLayout = function(node, kNode, x0, y0) {
       var child, childMap, edge, kChild, points, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
@@ -395,17 +395,45 @@
       return _results;
     };
     graph = toKielerFormat(top);
-    form = {
-      graph: JSON.stringify(graph),
-      config: JSON.stringify({
-        algorithm: kielerAlgorithm
-      }),
-      iFormat: 'org.json',
-      oFormat: 'org.json'
-    };
-    return Q($.post(KIELER_URL, form)).then(function(resp) {
-      var graphLayout;
-      graphLayout = JSON.parse(resp)[0];
+    if (kielerAlgorithm === '__klayjs') {
+      klay_ready = Q.defer();
+      $klay.layout({
+        graph: graph,
+        success: klay_ready.resolve,
+        error: klay_ready.reject
+      });
+      layoutDone = klay_ready.promise;
+      return klay_ready.promise.then(function(graphLayout) {
+        walk(graphLayout, (function(_this) {
+          return function(kNode) {
+            var edge, _i, _len, _ref, _results;
+            _ref = kNode.edges || [];
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              edge = _ref[_i];
+              _results.push(edgeMap.set(edge.id, edge));
+            }
+            return _results;
+          };
+        })(this));
+        return applyLayout(top, graphLayout);
+      });
+    } else {
+      form = {
+        graph: JSON.stringify(graph),
+        config: JSON.stringify({
+          algorithm: kielerAlgorithm
+        }),
+        iFormat: 'org.json',
+        oFormat: 'org.json'
+      };
+      layoutDone = Q($.post(KIELER_URL, form))["catch"](function(resp) {
+        throw Error(resp.responseText);
+      }).then(function(resp) {
+        return JSON.parse(resp)[0];
+      });
+    }
+    return layoutDone.then(function(graphLayout) {
       walk(graphLayout, (function(_this) {
         return function(kNode) {
           var edge, _i, _len, _ref, _results;
@@ -419,8 +447,6 @@
         };
       })(this));
       return applyLayout(top, graphLayout);
-    })["catch"](function(resp) {
-      throw Error(resp.responseText);
     });
   };
 

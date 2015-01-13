@@ -267,24 +267,45 @@ force.kielerLayout = (kielerAlgorithm, top) ->
 
   graph = toKielerFormat(top)
 
-  form = {
-    graph: JSON.stringify(graph)
-    config: JSON.stringify(
-      algorithm: kielerAlgorithm
+  if kielerAlgorithm == '__klayjs'
+    klay_ready = Q.defer()
+    $klay.layout(
+      graph: graph
+      success: klay_ready.resolve
+      error: klay_ready.reject
     )
-    iFormat: 'org.json'
-    oFormat: 'org.json'
-  }
 
-  return Q($.post(KIELER_URL, form))
-    .then (resp) ->
-      graphLayout = JSON.parse(resp)[0]
+    layoutDone = klay_ready.promise
+
+    return klay_ready.promise
+      .then (graphLayout) ->
+        walk graphLayout, (kNode) =>
+          for edge in kNode.edges or []
+            edgeMap.set(edge.id, edge)
+        applyLayout(top, graphLayout)
+
+  else
+    form = {
+      graph: JSON.stringify(graph)
+      config: JSON.stringify(
+        algorithm: kielerAlgorithm
+      )
+      iFormat: 'org.json'
+      oFormat: 'org.json'
+    }
+
+    layoutDone = Q($.post(KIELER_URL, form))
+      .catch (resp) ->
+        throw Error(resp.responseText)
+      .then (resp) ->
+        return JSON.parse(resp)[0]
+
+  return layoutDone
+    .then (graphLayout) ->
       walk graphLayout, (kNode) =>
         for edge in kNode.edges or []
           edgeMap.set(edge.id, edge)
       applyLayout(top, graphLayout)
-    .catch (resp) ->
-      throw Error(resp.responseText)
 
 
 class NewNodesAnimation

@@ -36,8 +36,12 @@ html, body { height: 100%; margin: 0; }
       $forceCheckbox.attr('checked', useForceLayout = true);
     }
     $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
+      var algorithmList = ([]).concat(
+        resp.layoutAlgorithms,
+        [{id: '__klayjs', name: "KLayJS"}]
+      );
       $algoSelect.append(
-        resp.layoutAlgorithms.map(function(alg) {
+        algorithmList.map(function(alg) {
           return $('<option>')
               .text(alg.name)
               .attr('value', alg.id)
