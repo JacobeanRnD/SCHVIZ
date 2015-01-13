@@ -357,13 +357,13 @@
         x0 = -node.w / 2;
         y0 = -node.h / 2;
       }
-      node.x = x0 + kNode.x + node.w / 2;
-      node.y = y0 + kNode.y + node.h / 2;
+      node.x = x0 + (kNode.x || 0) + node.w / 2;
+      node.y = y0 + (kNode.y || 0) + node.h / 2;
       _ref = node.transitions || [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         tr = _ref[_i];
         edge = edgeMap.get(tr.id);
-        if (edge.bendPoints.length) {
+        if ((edge.bendPoints || []).length) {
           points = edge.bendPoints;
         } else {
           points = [edge.sourcePoint, edge.targetPoint];
