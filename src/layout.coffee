@@ -446,6 +446,11 @@ class force.Layout
 
     for topNode in tree
       walk topNode, (node, parent) =>
+        if node.id
+          node.label = node.id
+        else
+          node.id = makeId("_node_")
+          node.label = "<#{node.type}>"
         node.controls = []
         node.children = node.children or []
         if (oldNode = oldS.nodeMap.get(node.id))?
@@ -580,7 +585,7 @@ class force.Layout
         .attr('ry', ROUND_CORNER)
 
     cell.append('text')
-        .text((node) -> node.id)
+        .text((node) -> node.label)
         .each (node) ->
           node.textWidth = d3.min([$(@).width() + 2 * ROUND_CORNER, LABEL_SPACE])
           node.w = d3.max([node.w, node.textWidth])

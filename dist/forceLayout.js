@@ -636,6 +636,12 @@
         walk(topNode, (function(_this) {
           return function(node, parent) {
             var oldNode;
+            if (node.id) {
+              node.label = node.id;
+            } else {
+              node.id = makeId("_node_");
+              node.label = "<" + node.type + ">";
+            }
             node.controls = [];
             node.children = node.children || [];
             if ((oldNode = oldS.nodeMap.get(node.id)) != null) {
@@ -791,7 +797,7 @@
       });
       cell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
       cell.append('text').text(function(node) {
-        return node.id;
+        return node.label;
       }).each(function(node) {
         node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
         return node.w = d3.max([node.w, node.textWidth]);
