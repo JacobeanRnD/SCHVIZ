@@ -27,6 +27,8 @@ html, body { height: 100%; margin: 0; }
     var useForceLayout = false;
     var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
     var algorithm = localStorage.getItem('desm-layout-algorithm') || defaultAlgorithm;
+    var layout, createLayout;
+
     $forceCheckbox.change(function() {
       useForceLayout = $forceCheckbox.is(':checked');
       localStorage.setItem('desm-force-layout', useForceLayout || '');
@@ -57,8 +59,7 @@ html, body { height: 100%; margin: 0; }
     });
 
     function invokeLayout(options) {
-      var layout;
-      function createLayout() {
+      createLayout = function() {
         layout = new forceLayout.Layout(_.extend({
             kielerAlgorithm: algorithm,
             debug: debug
@@ -68,16 +69,16 @@ html, body { height: 100%; margin: 0; }
         if(useForceLayout) { layout.start(); }
       }
       createLayout();
-      controls.on('force', function(start) {
-        if(start) { layout.start(); } else { layout.stop(); }
-      });
-      controls.on('algorithm', function() {
-        layout.stop();
-        $(layout.el).remove();
-        createLayout();
-      });
-      return layout;
     }
+
+    controls.on('force', function(start) {
+      if(start) { layout.start(); } else { layout.stop(); }
+    });
+    controls.on('algorithm', function() {
+      layout.stop();
+      $(layout.el).remove();
+      createLayout();
+    });
 
 
     function demo(tree) {
@@ -118,13 +119,12 @@ html, body { height: 100%; margin: 0; }
       var $reset = $('<button>').text('reset').click(reset);
       var $saveGeom = $('<button>').text('save geometry').click(saveGeom);
       var $clearGeom = $('<button>').text('clear geometry').click(clearGeom);
-      var layout;
       $('body').append(parent, $src, '<br>', $update, $reset, $saveGeom, $clearGeom);
 
       if(file) {
         $.get(file, function(_r, _s, req) {
           $src.val(req.responseText);
-          layout = invokeLayout({
+          invokeLayout({
             parent: parent,
             doc: parse(req.responseText),
             geometry: localStorage.getItem('desm-geometry')
@@ -144,7 +144,7 @@ html, body { height: 100%; margin: 0; }
       function reset() {
         layout.stop();
         $(layout.el).remove();
-        layout = invokeLayout({parent: parent, doc: parse()});
+        invokeLayout({parent: parent, doc: parse()});
       }
 
       function saveGeom() {
