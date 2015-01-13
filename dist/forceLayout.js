@@ -400,7 +400,9 @@
       $klay.layout({
         graph: graph,
         success: klay_ready.resolve,
-        error: klay_ready.reject
+        error: function(err) {
+          return klay_ready.reject(new Error(err.text));
+        }
       });
       layoutDone = klay_ready.promise;
       return klay_ready.promise.then(function(graphLayout) {

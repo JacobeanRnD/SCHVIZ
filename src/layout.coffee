@@ -272,7 +272,7 @@ force.kielerLayout = (kielerAlgorithm, top) ->
     $klay.layout(
       graph: graph
       success: klay_ready.resolve
-      error: klay_ready.reject
+      error: (err) -> klay_ready.reject(new Error(err.text))
     )
 
     layoutDone = klay_ready.promise
