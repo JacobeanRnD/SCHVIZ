@@ -365,8 +365,10 @@
         edge = edgeMap.get(tr.id);
         if ((edge.bendPoints || []).length) {
           points = edge.bendPoints;
-        } else {
+        } else if (edge.sourcePoint && edge.targetPoint) {
           points = [edge.sourcePoint, edge.targetPoint];
+        } else {
+          points = [node];
         }
         tr.x = x0 + d3.mean(points, function(p) {
           return p.x;

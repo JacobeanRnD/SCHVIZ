@@ -252,8 +252,10 @@ force.kielerLayout = (kielerAlgorithm, top) ->
       edge = edgeMap.get(tr.id)
       if (edge.bendPoints or []).length
         points = edge.bendPoints
-      else
+      else if edge.sourcePoint and edge.targetPoint
         points = [edge.sourcePoint, edge.targetPoint]
+      else
+        points = [node]
       tr.x = x0 + d3.mean(points, (p) -> p.x)
       tr.y = y0 + d3.mean(points, (p) -> p.y)
 
