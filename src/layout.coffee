@@ -252,10 +252,8 @@ force.kielerLayout = (kielerAlgorithm, top) ->
       edge = edgeMap.get(tr.id)
       if (edge.bendPoints or []).length
         points = edge.bendPoints
-      else if edge.sourcePoint and edge.targetPoint
-        points = [edge.sourcePoint, edge.targetPoint]
       else
-        points = [node]
+        points = [edge.sourcePoint, edge.targetPoint]
       tr.x = x0 + d3.mean(points, (p) -> p.x)
       tr.y = y0 + d3.mean(points, (p) -> p.y)
 
@@ -273,6 +271,7 @@ force.kielerLayout = (kielerAlgorithm, top) ->
     klay_ready = Q.defer()
     $klay.layout(
       graph: graph
+      options: {layoutHierarchy: true}
       success: klay_ready.resolve
       error: (err) -> klay_ready.reject(new Error(err.text))
     )

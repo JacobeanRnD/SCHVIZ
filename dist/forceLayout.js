@@ -365,10 +365,8 @@
         edge = edgeMap.get(tr.id);
         if ((edge.bendPoints || []).length) {
           points = edge.bendPoints;
-        } else if (edge.sourcePoint && edge.targetPoint) {
-          points = [edge.sourcePoint, edge.targetPoint];
         } else {
-          points = [node];
+          points = [edge.sourcePoint, edge.targetPoint];
         }
         tr.x = x0 + d3.mean(points, function(p) {
           return p.x;
@@ -401,6 +399,9 @@
       klay_ready = Q.defer();
       $klay.layout({
         graph: graph,
+        options: {
+          layoutHierarchy: true
+        },
         success: klay_ready.resolve,
         error: function(err) {
           return klay_ready.reject(new Error(err.text));
