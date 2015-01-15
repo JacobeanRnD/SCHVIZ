@@ -412,7 +412,8 @@
       form = {
         graph: JSON.stringify(graph),
         config: JSON.stringify({
-          algorithm: kielerAlgorithm
+          algorithm: kielerAlgorithm,
+          layoutHierarchy: true
         }),
         iFormat: 'org.json',
         oFormat: 'org.json'
