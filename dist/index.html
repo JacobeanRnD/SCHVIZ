@@ -64,7 +64,12 @@ html, body { height: 100%; margin: 0; }
             kielerAlgorithm: algorithm,
             debug: debug
           }, options));
-        layout.initialized.done();
+        layout.initialized
+          .catch(function(err) {
+            console.log(err);
+            $(layout.el).replaceWith("Error: " + err.message);
+          })
+          .done();
         window.layout = layout;
         if(useForceLayout) { layout.start(); }
       }
