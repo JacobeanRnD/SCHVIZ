@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+html, body { height: 100%; margin: 0; }
+#controls { position: fixed; display: none; }
+</style>
+<link rel="stylesheet" href="forceLayout.css">
+<body>
+<div id="controls">
+  <label>Force layout <input type=checkbox name=force></label>
+  <label>Kieler algorithm <select name=algorithm></select></label>
+</div>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/q/q.js"></script>
+<script src="bower_components/lodash/dist/lodash.js"></script>
+<script src="bower_components/backbone/backbone.js"></script>
+<script src="bower_components/async/lib/async.js"></script>
+<script src="bower_components/klayjs/klay.js"></script>
+<script src="forceLayout.js"></script>
+<script>
+  (function(){'use strict';
+    var debug = (window.location.search.indexOf('debug=on') > -1);
+    var $forceCheckbox = $('#controls [name=force]');
+    var $algoSelect = $('#controls [name=algorithm]')
+    var controls = _.extend({}, Backbone.Events);
+    var useForceLayout = false;
+    var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
+    var algorithm = localStorage.getItem('desm-layout-algorithm') || defaultAlgorithm;
+    var layout, createLayout;
+
+    $forceCheckbox.change(function() {
+      useForceLayout = $forceCheckbox.is(':checked');
+      localStorage.setItem('desm-force-layout', useForceLayout || '');
+      controls.trigger('force', useForceLayout);
+    });
+    if(localStorage.getItem('desm-force-layout')) {
+      $forceCheckbox.attr('checked', useForceLayout = true);
+    }
+    $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
+      var algorithmList = ([]).concat(
+        resp.layoutAlgorithms,
+        [{id: '__klayjs', name: "KLayJS"}]
+      );
+      $algoSelect.append(
+        algorithmList.map(function(alg) {
+          return $('<option>')
+              .text(alg.name)
+              .attr('value', alg.id)
+              .attr('selected', alg.id === algorithm);
+        })
+      );
+      $algoSelect.change(function() {
+        algorithm = $algoSelect.val();
+        localStorage.setItem('desm-layout-algorithm', algorithm);
+        controls.trigger('algorithm', algorithm);
+      });
+      ready();
+    });
+
+    function invokeLayout(options) {
+      createLayout = function() {
+        layout = new forceLayout.Layout(_.extend({
+            kielerAlgorithm: algorithm,
+            debug: debug
+          }, options));
+        layout.initialized
+          .catch(function(err) {
+            console.log(err);
+            $(layout.el).replaceWith("Error: " + err.message);
+          })
+          .done();
+        window.layout = layout;
+        if(useForceLayout) { layout.start(); }
+      }
+      createLayout();
+    }
+
+    controls.on('force', function(start) {
+      if(start) { layout.start(); } else { layout.stop(); }
+    });
+    controls.on('algorithm', function() {
+      layout.stop();
+      $(layout.el).remove();
+      createLayout();
+    });
+
+
+    function demo(tree) {
+      var parent = $('<div style="width:400px;height:400px;float:left">')[0];
+      $('body').append(parent);
+      invokeLayout({parent: parent, tree: tree});
+    };
+
+
+    function ready() {
+      $('#controls').show();
+      var parent = $('<div style="width:45%;height:95%;float:right">')[0];
+      var $src = $('<textarea>').css({width: '45%', height: '80%', 'margin-top': '20px'});
+      $src.val(
+        '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<scxml xmlns="http://www.w3.org/2005/07/scxml">\n' +
+        '  <state id="a">\n' +
+        '    <transition target="b" event="e1"/>\n' +
+        '  </state>\n' +
+        '  <state id="b"/>\n' +
+        '</scxml>\n');
+      var $update = $('<button>').text('update').click(update);
+      var $reset = $('<button>').text('reset').click(reset);
+      var $saveGeom = $('<button>').text('save geometry').click(saveGeom);
+      var $clearGeom = $('<button>').text('clear geometry').click(clearGeom);
+      $('body').append(parent, $src, '<br>', $update, $reset, $saveGeom, $clearGeom);
+      invokeLayout({parent: parent, doc: parse()});
+
+      function parse() {
+        var parser = new window.DOMParser();
+        return parser.parseFromString($src.val(), 'text/xml');
+      }
+
+      function update() {
+        layout.update(parse());
+      }
+
+      function reset() {
+        layout.stop();
+        $(layout.el).remove();
+        invokeLayout({parent: parent, doc: parse()});
+      }
+
+      function saveGeom() {
+        var geom = layout.saveGeometry();
+        localStorage.setItem('desm-geometry', geom);
+      }
+
+      function clearGeom() {
+        localStorage.removeItem('desm-geometry');
+      }
+    }
+  })();
+</script>
