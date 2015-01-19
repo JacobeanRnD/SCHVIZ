@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+html, body { height: 100%; margin: 0; }
+#controls { float: left; display: none; width: 100%; }
+.visbox { float: left; width: 400px; height: 400px; border: 1px solid #888; }
+.visbox > h2 { position: absolute; }
+</style>
+<link rel="stylesheet" href="forceLayout.css">
+<body>
+<div id="controls">
+  <label>Force layout <input type=checkbox name=force></label>
+  <label>Kieler algorithm <select name=algorithm></select></label>
+  <label>Example document <select name=document></select></label>
+</div>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/q/q.js"></script>
+<script src="bower_components/lodash/dist/lodash.js"></script>
+<script src="bower_components/backbone/backbone.js"></script>
+<script src="bower_components/async/lib/async.js"></script>
+<script src="bower_components/klayjs/klay.js"></script>
+<script src="forceLayout.js"></script>
+<script>
+  (function(){'use strict';
+    var debug = (window.location.search.indexOf('debug=on') > -1);
+    var $forceCheckbox = $('#controls [name=force]');
+    var $algoSelect = $('#controls [name=algorithm]');
+    var $docSelect = $('#controls [name=document]');
+    var controls = _.extend({}, Backbone.Events);
+    var useForceLayout = false;
+    var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
+    var doc = null;
+    var algoMap = {};
+
+    $forceCheckbox.change(function() {
+      useForceLayout = $forceCheckbox.is(':checked');
+      localStorage.setItem('desm-force-layout', useForceLayout || '');
+      controls.trigger('force', useForceLayout);
+    });
+    if(localStorage.getItem('desm-force-layout')) {
+      $forceCheckbox.attr('checked', useForceLayout = true);
+    }
+
+    $docSelect.change(docChange);
+
+    $algoSelect.change(function() {
+      var algorithm = $algoSelect.val();
+      createCell(algorithm);
+      $algoSelect.val('__new');
+    });
+
+    $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
+      var algorithmList = ([]).concat(
+        resp.layoutAlgorithms,
+        [{id: '__klayjs', name: "KLayJS"}]
+      );
+      algorithmList.forEach(function(alg) {
+        algoMap[alg.id] = alg.name;
+      });
+      $algoSelect.append(
+        '<option disabled selected value="__new">create cell with layout ...</option>',
+        algorithmList.map(function(alg) {
+          return $('<option>')
+              .text(alg.name)
+              .attr('value', alg.id);
+        })
+      );
+      var exBase = 'https://dl.dropboxusercontent.com/u/103063/static/desm-devel/';
+      $.getJSON(exBase + 'index.json', function(index) {
+        $docSelect.append(
+          index.examples.map(function(ex) {
+            return $('<option>')
+                .text(ex.name)
+                .attr('value', exBase + ex.filename)
+          })
+        );
+        ready();
+        docChange();
+      });
+    });
+
+
+    function ready() {
+      var filem = window.location.search.match(/file=([^&]*)/) || [];
+      var file = filem[1];
+      $('#controls').show();
+    }
+
+    function docChange() {
+      $.get($docSelect.val(), function(resp) {
+        doc = resp;
+        controls.trigger('doc');
+      });
+    }
+
+    function createCell(algorithm) {
+      var layout, createLayout;
+      var $parent = $('<div class="visbox">').appendTo($('body'));
+      $('<h2>').text(algoMap[algorithm]).appendTo($parent);
+
+      if(doc) createLayout();
+      controls.on('force', onForce);
+      controls.on('doc', function() {
+        layout.stop();
+        $(layout.el).remove();
+        createLayout();
+      });
+
+      function createLayout() {
+        layout = new forceLayout.Layout({
+            kielerAlgorithm: algorithm,
+            parent: $parent[0],
+            doc: doc,
+            debug: debug
+          });
+        layout.initialized
+          .catch(function(err) {
+            console.log(err);
+            $(layout.el).replaceWith("Error: " + err.message);
+          })
+          .done();
+        if(useForceLayout) { layout.start(); }
+      }
+
+      function onForce(start) {
+        if(start) { layout.start(); } else { layout.stop(); }
+      }
+    }
+  })();
+</script>
