@@ -80,20 +80,14 @@ html, body { height: 100%; margin: 0; }
                 .attr('selected', ex.filename == config.file ? true : null)
           })
         );
-        ready();
+        $('#controls').show();
+        config.cells.forEach(createCell);
         docChange();
       });
     });
 
     function saveConfig() {
       window.location.hash = JSON.stringify(config);
-    }
-
-    function ready() {
-      var filem = window.location.search.match(/file=([^&]*)/) || [];
-      var file = filem[1];
-      $('#controls').show();
-      config.cells.forEach(createCell);
     }
 
     function docChange() {
@@ -106,7 +100,7 @@ html, body { height: 100%; margin: 0; }
     }
 
     function createCell(algorithm) {
-      var layout, createLayout;
+      var layout;
       var $container = $('<div class="visbox">').appendTo($('body'));
       $('<h2>').text(algoMap[algorithm]).appendTo($container);
       $('<div class="closebutton">')
