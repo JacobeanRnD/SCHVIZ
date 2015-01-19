@@ -29,20 +29,19 @@ html, body { height: 100%; margin: 0; }
     var $algoSelect = $('#controls [name=algorithm]');
     var $docSelect = $('#controls [name=document]');
     var controls = _.extend({}, Backbone.Events);
-    var useForceLayout = false;
     var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
     var doc = null;
     var algoMap = {};
-    var config = {file: 'helloworld.xml', cells: []};
+    var config = {file: 'helloworld.xml', cells: [], force: false};
     try { config = JSON.parse(window.location.hash.slice(1)); } catch(e) {}
 
     $forceCheckbox.change(function() {
-      useForceLayout = $forceCheckbox.is(':checked');
-      localStorage.setItem('desm-force-layout', useForceLayout || '');
-      controls.trigger('force', useForceLayout);
+      config.force = $forceCheckbox.is(':checked');
+      controls.trigger('force');
+      saveConfig();
     });
-    if(localStorage.getItem('desm-force-layout')) {
-      $forceCheckbox.attr('checked', useForceLayout = true);
+    if(config.force) {
+      $forceCheckbox.attr('checked', true);
     }
 
     $docSelect.change(docChange);
@@ -130,11 +129,11 @@ html, body { height: 100%; margin: 0; }
             $(layout.el).replaceWith("Error: " + err.message);
           })
           .done();
-        if(useForceLayout) { layout.start(); }
+        if(config.force) { layout.start(); }
       }
 
-      function onForce(start) {
-        if(start) { layout.start(); } else { layout.stop(); }
+      function onForce() {
+        if(config.force) { layout.start(); } else { layout.stop(); }
       }
     }
   })();
