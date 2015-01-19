@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+html, body { height: 100%; margin: 0; }
+#controls { float: left; display: none; width: 100%; }
+.visbox { float: left; width: 400px; height: 400px; border: 1px solid #888; position: relative; }
+.visbox > h2 { position: absolute; margin: 0; }
+.visbox > .closebutton { position: absolute; right: 0; }
+</style>
+<link rel="stylesheet" href="forceLayout.css">
+<body>
+<div id="controls">
+  <label>Force layout <input type=checkbox name=force></label>
+  <label>Kieler algorithm <select name=algorithm></select></label>
+  <label>Example document <select name=document></select></label>
+</div>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/q/q.js"></script>
+<script src="bower_components/lodash/dist/lodash.js"></script>
+<script src="bower_components/backbone/backbone.js"></script>
+<script src="bower_components/async/lib/async.js"></script>
+<script src="bower_components/klayjs/klay.js"></script>
+<script src="forceLayout.js"></script>
+<script>
+  (function(){'use strict';
+    var debug = (window.location.search.indexOf('debug=on') > -1);
+    var exBase = 'https://dl.dropboxusercontent.com/u/103063/static/desm-devel/';
+    var $forceCheckbox = $('#controls [name=force]');
+    var $algoSelect = $('#controls [name=algorithm]');
+    var $docSelect = $('#controls [name=document]');
+    var controls = _.extend({}, Backbone.Events);
+    var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
+    var doc = null;
+    var exMap = {};
+    var config = {algo: '__klayjs', cells: [], force: false};
+    try { config = JSON.parse(window.location.hash.slice(1)); } catch(e) {}
+
+    $forceCheckbox.change(function() {
+      config.force = $forceCheckbox.is(':checked');
+      controls.trigger('force');
+      saveConfig();
+    });
+    if(config.force) {
+      $forceCheckbox.attr('checked', true);
+    }
+
+    $algoSelect.change(algoChange);
+
+    $docSelect.change(function() {
+      var filename = $docSelect.val();
+      createCell(filename);
+      $docSelect.val('__new');
+      config.cells.push(filename);
+      saveConfig();
+    });
+
+    $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
+      var algorithmList = ([]).concat(
+        resp.layoutAlgorithms,
+        [{id: '__klayjs', name: "KLayJS"}]
+      );
+      $algoSelect.append(
+        algorithmList.map(function(alg) {
+          return $('<option>')
+              .text(alg.name)
+              .attr('value', alg.id)
+              .attr('selected', alg.id == config.algo ? true : null)
+        })
+      );
+      $.getJSON(exBase + 'index.json', function(index) {
+        index.examples.forEach(function(alg) {
+          exMap[alg.filename] = alg.name;
+        });
+        $docSelect.append(
+          '<option disabled selected value="__new">create cell with document ...</option>',
+          index.examples.map(function(ex) {
+            return $('<option>')
+                .text(ex.name)
+                .attr('value', ex.filename);
+          })
+        );
+        $('#controls').show();
+        config.cells.forEach(createCell);
+        algoChange();
+      });
+    });
+
+    function saveConfig() {
+      window.location.hash = JSON.stringify(config);
+    }
+
+    function algoChange() {
+      config.algo = $algoSelect.val();
+      saveConfig();
+      controls.trigger('algo');
+    }
+
+    function createCell(filename) {
+      $.get(exBase + filename, function(doc) {
+        var layout;
+        var $container = $('<div class="visbox">').appendTo($('body'));
+        $('<h2>').text(exMap[filename]).appendTo($container);
+        $('<div class="closebutton">')
+          .append('[', $('<a>').text('x').click(close), ']')
+          .appendTo($container);
+
+        createLayout();
+        controls.on('force', onForce);
+        controls.on('algo', onAlgo);
+
+        function close() {
+          controls.off('force', onForce);
+          controls.off('algo', onAlgo);
+          destroyLayout();
+          $container.remove();
+          config.cells.splice(config.cells.indexOf(filename), 1);
+          saveConfig();
+        }
+
+        function createLayout() {
+          layout = new forceLayout.Layout({
+              kielerAlgorithm: config.algo,
+              parent: $container[0],
+              doc: doc,
+              debug: debug
+            });
+          layout.initialized
+            .catch(function(err) {
+              console.log(err);
+              $(layout.el).replaceWith("Error: " + err.message);
+            })
+            .done();
+          if(config.force) { layout.start(); }
+        }
+
+        function destroyLayout() {
+          layout.stop();
+          $(layout.el).remove();
+        }
+
+        function onAlgo() {
+          destroyLayout();
+          createLayout();
+        }
+
+        function onForce() {
+          if(config.force) { layout.start(); } else { layout.stop(); }
+        }
+      });
+    }
+  })();
+</script>
