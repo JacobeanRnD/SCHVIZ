@@ -81,6 +81,7 @@ html, body { height: 100%; margin: 0; }
           })
         );
         $('#controls').show();
+        console.log(config.cells);
         config.cells.forEach(createCell);
         algoChange();
       });
@@ -97,9 +98,9 @@ html, body { height: 100%; margin: 0; }
     }
 
     function createCell(filename) {
+      var $container = $('<div class="visbox">').appendTo($('body'));
       $.get(exBase + filename, function(doc) {
         var layout;
-        var $container = $('<div class="visbox">').appendTo($('body'));
         $('<h2>').text(exMap[filename]).appendTo($container);
         $('<div class="closebutton">')
           .append('[', $('<a>').text('x').click(close), ']')
