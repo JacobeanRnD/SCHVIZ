@@ -528,6 +528,7 @@ class force.Layout
         .scaleExtent([MIN_ZOOM, MAX_ZOOM])
 
     svg = d3.select(parent).append('svg')
+        .attr('xmlns:xmlns:xlink', 'http://www.w3.org/1999/xlink')
         .classed('force-layout', true)
         .classed('debug', @debug)
     @el = svg[0][0]
@@ -592,23 +593,33 @@ class force.Layout
         .attr('class', 'transition')
       .append('path')
         .attr('style', "marker-end: url(##{@id}-arrow)")
+        .attr('id', (tr) => "#{@id}-transition/#{tr.id}")
 
-    @container.selectAll('.transition-label')
+    transitionLabel = @container.selectAll('.transition-label')
         .data(@s.transitions)
       .enter().append('g')
         .attr('class', 'transition-label draggable')
-      .append('text')
+
+    if @options.textOnPath
+      transitionLabel.append('text')
+        .append('textPath')
+          .attr('xlink:href', (tr) => "##{@id}-transition/#{tr.id}")
+          .attr('startOffset', '50%')
+          .text((tr) -> tr.label)
+
+    else
+      transitionLabel.append('text')
         .text((tr) -> tr.label)
         .each (tr) ->
           tr.textWidth = d3.min([$(@).width() + 5, LABEL_SPACE])
           tr.w = d3.max([tr.w, tr.textWidth])
         .attr('dy', '.3em')
 
-    @container.selectAll('.transition-label').append('rect')
-        .attr('x', (tr) -> -tr.w / 2)
-        .attr('y', (tr) -> -tr.h / 2)
-        .attr('width', (tr) -> tr.w)
-        .attr('height', (tr) -> tr.h)
+      transitionLabel.append('rect')
+          .attr('x', (tr) -> -tr.w / 2)
+          .attr('y', (tr) -> -tr.h / 2)
+          .attr('width', (tr) -> tr.w)
+          .attr('height', (tr) -> tr.h)
 
     dom = @s.dom
 
@@ -640,8 +651,9 @@ class force.Layout
     @container.selectAll('.transition').selectAll('path')
         .attr 'd', transitionPath
 
-    @container.selectAll('.transition-label')
-        .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
+    unless @options.textOnPath
+      @container.selectAll('.transition-label')
+          .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
   setupD3Layout: ->
     @layout = d3.layout.force()

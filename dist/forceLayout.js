@@ -756,7 +756,7 @@
       width = $(parent).width() - 5;
       height = $(parent).height() - 5;
       zoom = d3.behavior.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]);
-      svg = d3.select(parent).append('svg').classed('force-layout', true).classed('debug', this.debug);
+      svg = d3.select(parent).append('svg').attr('xmlns:xmlns:xlink', 'http://www.w3.org/1999/xlink').classed('force-layout', true).classed('debug', this.debug);
       this.el = svg[0][0];
       defs = svg.append('defs');
       zoomNode = svg.append('g');
@@ -776,7 +776,7 @@
     };
 
     Layout.prototype.svgNodes = function() {
-      var cell, dom;
+      var cell, dom, transitionLabel;
       this.container.selectAll('.cell').remove();
       this.container.selectAll('.transition').remove();
       this.container.selectAll('.transition-label').remove();
@@ -792,22 +792,37 @@
         node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
         return node.w = d3.max([node.w, node.textWidth]);
       });
-      this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)");
-      this.container.selectAll('.transition-label').data(this.s.transitions).enter().append('g').attr('class', 'transition-label draggable').append('text').text(function(tr) {
-        return tr.label;
-      }).each(function(tr) {
-        tr.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
-        return tr.w = d3.max([tr.w, tr.textWidth]);
-      }).attr('dy', '.3em');
-      this.container.selectAll('.transition-label').append('rect').attr('x', function(tr) {
-        return -tr.w / 2;
-      }).attr('y', function(tr) {
-        return -tr.h / 2;
-      }).attr('width', function(tr) {
-        return tr.w;
-      }).attr('height', function(tr) {
-        return tr.h;
-      });
+      this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
+        return function(tr) {
+          return "" + _this.id + "-transition/" + tr.id;
+        };
+      })(this));
+      transitionLabel = this.container.selectAll('.transition-label').data(this.s.transitions).enter().append('g').attr('class', 'transition-label draggable');
+      if (this.options.textOnPath) {
+        transitionLabel.append('text').append('textPath').attr('xlink:href', (function(_this) {
+          return function(tr) {
+            return "#" + _this.id + "-transition/" + tr.id;
+          };
+        })(this)).attr('startOffset', '50%').text(function(tr) {
+          return tr.label;
+        });
+      } else {
+        transitionLabel.append('text').text(function(tr) {
+          return tr.label;
+        }).each(function(tr) {
+          tr.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
+          return tr.w = d3.max([tr.w, tr.textWidth]);
+        }).attr('dy', '.3em');
+        transitionLabel.append('rect').attr('x', function(tr) {
+          return -tr.w / 2;
+        }).attr('y', function(tr) {
+          return -tr.h / 2;
+        }).attr('width', function(tr) {
+          return tr.w;
+        }).attr('height', function(tr) {
+          return tr.h;
+        });
+      }
       dom = this.s.dom;
       this.container.selectAll('.cell').each(function(node) {
         return dom.set("cell-" + node.id, this);
@@ -831,9 +846,11 @@
       });
       this.container.selectAll('.selfie').remove();
       this.container.selectAll('.transition').selectAll('path').attr('d', transitionPath);
-      return this.container.selectAll('.transition-label').attr('transform', function(tr) {
-        return "translate(" + tr.x + "," + tr.y + ")";
-      });
+      if (!this.options.textOnPath) {
+        return this.container.selectAll('.transition-label').attr('transform', function(tr) {
+          return "translate(" + tr.x + "," + tr.y + ")";
+        });
+      }
     };
 
     Layout.prototype.setupD3Layout = function() {

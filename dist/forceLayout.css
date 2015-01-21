@@ -40,7 +40,6 @@
   stroke: none;
   fill: rgba(255, 255, 255, 0.01);
 }
-.force-layout .transition-label text,
 .force-layout .force {
   pointer-events: none;
 }
