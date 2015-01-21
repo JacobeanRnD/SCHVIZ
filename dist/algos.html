@@ -6,6 +6,7 @@ html, body { height: 100%; margin: 0; }
 .visbox { float: left; width: 400px; height: 400px; border: 1px solid #888; position: relative; }
 .visbox > h2 { position: absolute; margin: 0; }
 .visbox > .closebutton { position: absolute; right: 0; }
+.visbox.maximized { position: absolute; height: 90%; width: 98%; top: 5%; left: 1%; background: white; z-index: 1; }
 </style>
 <link rel="stylesheet" href="forceLayout.css">
 <body>
@@ -115,6 +116,7 @@ html, body { height: 100%; margin: 0; }
       var $container = $('<div class="visbox">').appendTo($('body'));
       $('<h2>').text(algoMap[algorithm]).appendTo($container);
       $('<div class="closebutton">')
+        .append('[', $('<a>').text('<->').click(zoom), ']')
         .append('[', $('<a>').text('x').click(close), ']')
         .appendTo($container);
 
@@ -122,6 +124,8 @@ html, body { height: 100%; margin: 0; }
       controls.on('force', onForce);
       controls.on('doc', recreate);
       controls.on('textOnPath', recreate);
+
+      $(window).resize(function() { if(layout) layout.invalidateSize(); });
 
       function close() {
         controls.off('force', onForce);
@@ -131,6 +135,11 @@ html, body { height: 100%; margin: 0; }
         $container.remove();
         config.cells.splice(config.cells.indexOf(algorithm), 1);
         saveConfig();
+      }
+
+      function zoom() {
+        $container.toggleClass('maximized');
+        if(layout) layout.invalidateSize();
       }
 
       function createLayout() {
