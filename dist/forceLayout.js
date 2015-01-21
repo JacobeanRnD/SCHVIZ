@@ -752,27 +752,34 @@
     };
 
     Layout.prototype.svgCreate = function(parent) {
-      var defs, height, svg, width, zoom, zoomNode, zoomRect;
-      width = $(parent).width() - 5;
-      height = $(parent).height() - 5;
-      zoom = d3.behavior.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]);
+      var defs, svg;
+      this.zoomBehavior = d3.behavior.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]);
       svg = d3.select(parent).append('svg').attr('xmlns:xmlns:xlink', 'http://www.w3.org/1999/xlink').classed('force-layout', true).classed('debug', this.debug);
       this.el = svg[0][0];
       defs = svg.append('defs');
-      zoomNode = svg.append('g');
-      this.container = zoomNode.call(zoom).append('g');
-      zoomRect = this.container.append('rect').attr('class', 'zoomRect');
-      svg.attr('width', width).attr('height', height);
-      zoomRect.attr('width', width / MIN_ZOOM).attr('height', height / MIN_ZOOM).attr('x', -width / 2 / MIN_ZOOM).attr('y', -height / 2 / MIN_ZOOM);
-      zoom.on('zoom', (function(_this) {
+      this.zoomNode = svg.append('g').call(this.zoomBehavior);
+      this.container = this.zoomNode.append('g');
+      this.container.append('rect').attr('class', 'zoomRect');
+      this.zoomBehavior.on('zoom', (function(_this) {
         return function() {
           var e;
           e = d3.event;
           return _this.container.attr('transform', "translate(" + e.translate + "),scale(" + e.scale + ")");
         };
       })(this));
-      zoom.size([width, height]).translate([width / 2, height / 2]).event(zoomNode);
-      return defs.append('marker').attr('id', "" + this.id + "-arrow").attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
+      defs.append('marker').attr('id', "" + this.id + "-arrow").attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
+      return this.invalidateSize();
+    };
+
+    Layout.prototype.invalidateSize = function() {
+      var $parent, height, width;
+      $parent = $(this.el).parent();
+      width = $parent.width() - 5;
+      height = $parent.height() - 5;
+      d3.select(this.el).attr('width', width).attr('height', height);
+      this.container.select('.zoomRect').attr('width', width / MIN_ZOOM).attr('height', height / MIN_ZOOM).attr('x', -width / 2 / MIN_ZOOM).attr('y', -height / 2 / MIN_ZOOM);
+      this.zoomBehavior.size([width, height]).translate([width / 2, height / 2]);
+      return this.zoomBehavior.event(this.zoomNode);
     };
 
     Layout.prototype.svgNodes = function() {

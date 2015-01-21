@@ -521,10 +521,7 @@ class force.Layout
     @layout.start() if @layout and @runSimulation
 
   svgCreate: (parent) ->
-    width = $(parent).width() - 5
-    height = $(parent).height() - 5
-
-    zoom = d3.behavior.zoom()
+    @zoomBehavior = d3.behavior.zoom()
         .scaleExtent([MIN_ZOOM, MAX_ZOOM])
 
     svg = d3.select(parent).append('svg')
@@ -533,26 +530,15 @@ class force.Layout
         .classed('debug', @debug)
     @el = svg[0][0]
     defs = svg.append('defs')
-    zoomNode = svg.append('g')
-    @container = zoomNode.call(zoom).append('g')
-    zoomRect = @container.append('rect')
+    @zoomNode = svg.append('g').call(@zoomBehavior)
+    @container = @zoomNode.append('g')
+
+    @container.append('rect')
         .attr('class', 'zoomRect')
 
-    svg.attr('width', width).attr('height', height)
-
-    zoomRect
-        .attr('width', width / MIN_ZOOM)
-        .attr('height', height / MIN_ZOOM)
-        .attr('x', - width / 2 / MIN_ZOOM)
-        .attr('y', - height / 2 / MIN_ZOOM)
-
-    zoom.on 'zoom', =>
+    @zoomBehavior.on 'zoom', =>
         e = d3.event
         @container.attr('transform', "translate(#{e.translate}),scale(#{e.scale})")
-
-    zoom.size([width, height])
-        .translate([width / 2, height / 2])
-        .event(zoomNode)
 
     defs.append('marker')
         .attr('id', "#{@id}-arrow")
@@ -564,6 +550,29 @@ class force.Layout
       .append('path')
         .attr('d', 'M 0 0 L 10 5 L 0 10 z')
         .attr('class', 'arrow')
+
+    @invalidateSize()
+
+  invalidateSize: ->
+    $parent = $(@el).parent()
+    width = $parent.width() - 5
+    height = $parent.height() - 5
+
+    d3.select(@el)
+        .attr('width', width)
+        .attr('height', height)
+
+    @container.select('.zoomRect')
+        .attr('width', width / MIN_ZOOM)
+        .attr('height', height / MIN_ZOOM)
+        .attr('x', - width / 2 / MIN_ZOOM)
+        .attr('y', - height / 2 / MIN_ZOOM)
+
+    @zoomBehavior
+        .size([width, height])
+        .translate([width / 2, height / 2])
+
+    @zoomBehavior.event(@zoomNode)
 
   svgNodes: ->
     @container.selectAll('.cell').remove()
