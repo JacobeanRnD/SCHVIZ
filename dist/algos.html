@@ -11,6 +11,7 @@ html, body { height: 100%; margin: 0; }
 <body>
 <div id="controls">
   <label>Force layout <input type=checkbox name=force></label>
+  <label>Text-on-path <input type=checkbox name=textOnPath></label>
   <label>Kieler algorithm <select name=algorithm></select></label>
   <label>Example document <select name=document></select></label>
 </div>
@@ -27,13 +28,14 @@ html, body { height: 100%; margin: 0; }
     var debug = (window.location.search.indexOf('debug=on') > -1);
     var exBase = 'https://dl.dropboxusercontent.com/u/103063/static/desm-devel/';
     var $forceCheckbox = $('#controls [name=force]');
+    var $textOnPathCheckbox = $('#controls [name=textOnPath]');
     var $algoSelect = $('#controls [name=algorithm]');
     var $docSelect = $('#controls [name=document]');
     var controls = _.extend({}, Backbone.Events);
     var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
     var doc = null;
     var algoMap = {};
-    var config = {file: 'helloworld.xml', cells: [], force: false};
+    var config = {file: 'helloworld.xml', cells: [], force: false, textOnPath: false};
     try { config = JSON.parse(window.location.hash.slice(1)); } catch(e) {}
 
     $forceCheckbox.change(function() {
@@ -43,6 +45,15 @@ html, body { height: 100%; margin: 0; }
     });
     if(config.force) {
       $forceCheckbox.attr('checked', true);
+    }
+
+    $textOnPathCheckbox.change(function() {
+      config.textOnPath = $textOnPathCheckbox.is(':checked');
+      controls.trigger('textOnPath');
+      saveConfig();
+    });
+    if(config.textOnPath) {
+      $textOnPathCheckbox.attr('checked', true);
     }
 
     $docSelect.change(docChange);
@@ -109,11 +120,13 @@ html, body { height: 100%; margin: 0; }
 
       if(doc) createLayout();
       controls.on('force', onForce);
-      controls.on('doc', onDoc);
+      controls.on('doc', recreate);
+      controls.on('textOnPath', recreate);
 
       function close() {
         controls.off('force', onForce);
-        controls.off('doc', onDoc);
+        controls.off('doc', recreate);
+        controls.off('textOnPath', recreate);
         destroyLayout();
         $container.remove();
         config.cells.splice(config.cells.indexOf(algorithm), 1);
@@ -125,6 +138,7 @@ html, body { height: 100%; margin: 0; }
             kielerAlgorithm: algorithm,
             parent: $container[0],
             doc: doc,
+            textOnPath: config.textOnPath || false,
             debug: debug
           });
         layout.initialized
@@ -140,7 +154,7 @@ html, body { height: 100%; margin: 0; }
         if(layout) { layout.stop(); $(layout.el).remove(); }
       }
 
-      function onDoc() {
+      function recreate() {
         destroyLayout();
         createLayout();
       }
