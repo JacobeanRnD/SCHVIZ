@@ -271,7 +271,9 @@ force.kielerLayout = (kielerAlgorithm, top) ->
     klay_ready = Q.defer()
     $klay.layout(
       graph: graph
-      options: {layoutHierarchy: true}
+      options:
+        layoutHierarchy: true
+        edgeRouting: 'ORTHOGONAL'
       success: klay_ready.resolve
       error: (err) -> klay_ready.reject(new Error(err.text))
     )
@@ -283,6 +285,7 @@ force.kielerLayout = (kielerAlgorithm, top) ->
       graph: JSON.stringify(graph)
       config: JSON.stringify(
         algorithm: kielerAlgorithm
+        edgeRouting: 'ORTHOGONAL'
         layoutHierarchy: true
       )
       iFormat: 'org.json'

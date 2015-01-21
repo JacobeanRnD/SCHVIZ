@@ -400,7 +400,8 @@
       $klay.layout({
         graph: graph,
         options: {
-          layoutHierarchy: true
+          layoutHierarchy: true,
+          edgeRouting: 'ORTHOGONAL'
         },
         success: klay_ready.resolve,
         error: function(err) {
@@ -413,6 +414,7 @@
         graph: JSON.stringify(graph),
         config: JSON.stringify({
           algorithm: kielerAlgorithm,
+          edgeRouting: 'ORTHOGONAL',
           layoutHierarchy: true
         }),
         iFormat: 'org.json',
