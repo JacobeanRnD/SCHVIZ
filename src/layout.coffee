@@ -353,6 +353,7 @@ class LoadingOverlay
 class force.Layout
 
   constructor: (options) ->
+    @id = nextId()
     @queue = async.queue(((task, cb) -> task(cb)), 1)
     @options = options
     @debug = options.debug or false
@@ -553,7 +554,7 @@ class force.Layout
         .event(zoomNode)
 
     defs.append('marker')
-        .attr('id', (@_arrow_id = nextId()))
+        .attr('id', "#{@id}-arrow")
         .attr('refX', '7')
         .attr('refY', '5')
         .attr('markerWidth', '10')
@@ -590,7 +591,7 @@ class force.Layout
       .enter().append('g')
         .attr('class', 'transition')
       .append('path')
-        .attr('style', "marker-end: url(##{@_arrow_id})")
+        .attr('style', "marker-end: url(##{@id}-arrow)")
 
     @container.selectAll('.transition-label')
         .data(@s.transitions)

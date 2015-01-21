@@ -516,6 +516,7 @@
 
   force.Layout = (function() {
     function Layout(options) {
+      this.id = nextId();
       this.queue = async.queue((function(task, cb) {
         return task(cb);
       }), 1);
@@ -771,7 +772,7 @@
         };
       })(this));
       zoom.size([width, height]).translate([width / 2, height / 2]).event(zoomNode);
-      return defs.append('marker').attr('id', (this._arrow_id = nextId())).attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
+      return defs.append('marker').attr('id', "" + this.id + "-arrow").attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
     };
 
     Layout.prototype.svgNodes = function() {
@@ -791,7 +792,7 @@
         node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
         return node.w = d3.max([node.w, node.textWidth]);
       });
-      this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this._arrow_id + ")");
+      this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)");
       this.container.selectAll('.transition-label').data(this.s.transitions).enter().append('g').attr('class', 'transition-label draggable').append('text').text(function(tr) {
         return tr.label;
       }).each(function(tr) {
