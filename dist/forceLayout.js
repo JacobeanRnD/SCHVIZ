@@ -352,10 +352,11 @@
   };
 
   force.kielerLayout = function(kielerAlgorithm, top) {
-    var applyLayout, form, graph, kNodeMap, klay_ready, layoutDone;
+    var applyLayout, form, graph, kEdgeMap, kNodeMap, klay_ready, layoutDone;
     kNodeMap = d3.map();
+    kEdgeMap = d3.map();
     applyLayout = function(node, kNode, x0, y0) {
-      var child, childMap, kChild, kTr, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+      var child, childMap, e1, e2, kChild, kTr, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
       if (x0 == null) {
         x0 = null;
       }
@@ -376,6 +377,11 @@
         kTr = kNodeMap.get(tr.id);
         tr.x = x0 + kTr.x + kTr.width / 2;
         tr.y = y0 + kTr.y + kTr.height / 2;
+        e1 = kEdgeMap.get("" + tr.id + "#1");
+        e2 = kEdgeMap.get("" + tr.id + "#2");
+        tr.route = [].concat([e1.sourcePoint], e1.bendPoints || [], [e1.targetPoint], [e2.sourcePoint], e2.bendPoints || [], [e2.targetPoint]).map(function(d) {
+          return [x0 + d.x, y0 + d.y];
+        });
       }
       childMap = d3.map();
       _ref1 = node.children || [];
@@ -435,7 +441,15 @@
     return layoutDone.then(function(graphLayout) {
       walk(graphLayout, (function(_this) {
         return function(kNode) {
-          return kNodeMap.set(kNode.id, kNode);
+          var kEdge, _i, _len, _ref, _results;
+          kNodeMap.set(kNode.id, kNode);
+          _ref = kNode.edges || [];
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            kEdge = _ref[_i];
+            _results.push(kEdgeMap.set(kEdge.id, kEdge));
+          }
+          return _results;
         };
       })(this));
       return applyLayout(top, graphLayout);
@@ -853,7 +867,13 @@
         });
       });
       this.container.selectAll('.selfie').remove();
-      this.container.selectAll('.transition').selectAll('path').attr('d', transitionPath);
+      this.container.selectAll('.transition').selectAll('path').attr('d', function(tr) {
+        if (tr.route != null) {
+          return d3.svg.line()(tr.route);
+        } else {
+          return transitionPath(tr);
+        }
+      });
       if (!this.options.textOnPath) {
         return this.container.selectAll('.transition-label').attr('transform', function(tr) {
           return "translate(" + tr.x + "," + tr.y + ")";
@@ -927,7 +947,7 @@
     };
 
     Layout.prototype.adjustLayout = function() {
-      var adjustNode, handleCollisions, move, node, tick, _i, _len, _ref;
+      var adjustNode, handleCollisions, move, node, tick, tr, _i, _j, _len, _len1, _ref, _ref1;
       tick = {
         gravity: this.layout.alpha() * 0.1,
         forces: d3.map()
@@ -1061,14 +1081,19 @@
         x: 0,
         y: 0
       }, tick);
+      _ref1 = this.s.transitions;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        tr = _ref1[_j];
+        delete tr.route;
+      }
       if (this.debug) {
         this.container.selectAll('.cell .force').remove();
         return this.container.selectAll('.cell').each(function(node) {
-          var _j, _len1, _ref1, _results;
-          _ref1 = tick.forces.get(node.id) || [];
+          var _k, _len2, _ref2, _results;
+          _ref2 = tick.forces.get(node.id) || [];
           _results = [];
-          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-            force = _ref1[_j];
+          for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+            force = _ref2[_k];
             _results.push(d3.select(this).append('line').attr('class', "force " + force.cls).attr('x1', 0).attr('y1', 0).attr('x2', force.value[0] * DEBUG_FORCE_FACTOR).attr('y2', force.value[1] * DEBUG_FORCE_FACTOR));
           }
           return _results;

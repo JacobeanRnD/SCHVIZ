@@ -247,6 +247,7 @@ toKielerFormat = (node) ->
 
 force.kielerLayout = (kielerAlgorithm, top) ->
   kNodeMap = d3.map()
+  kEdgeMap = d3.map()
 
   applyLayout = (node, kNode, x0 = null, y0 = null) ->
     node.w = kNode.width
@@ -263,6 +264,17 @@ force.kielerLayout = (kielerAlgorithm, top) ->
       kTr = kNodeMap.get(tr.id)
       tr.x = x0 + kTr.x + kTr.width/2
       tr.y = y0 + kTr.y + kTr.height/2
+
+      e1 = kEdgeMap.get("#{tr.id}#1")
+      e2 = kEdgeMap.get("#{tr.id}#2")
+      tr.route = [].concat(
+        [e1.sourcePoint]
+        e1.bendPoints or []
+        [e1.targetPoint]
+        [e2.sourcePoint]
+        e2.bendPoints or []
+        [e2.targetPoint]
+      ).map((d) -> [x0 + d.x, y0 + d.y])
 
     childMap = d3.map()
     for child in node.children or []
@@ -310,6 +322,8 @@ force.kielerLayout = (kielerAlgorithm, top) ->
     .then (graphLayout) ->
       walk graphLayout, (kNode) =>
         kNodeMap.set(kNode.id, kNode)
+        for kEdge in kNode.edges or []
+          kEdgeMap.set(kEdge.id, kEdge)
       applyLayout(top, graphLayout)
 
 
@@ -668,7 +682,8 @@ class force.Layout
     @container.selectAll('.selfie').remove()
 
     @container.selectAll('.transition').selectAll('path')
-        .attr 'd', transitionPath
+        .attr 'd', (tr) ->
+          if tr.route? then d3.svg.line()(tr.route) else transitionPath(tr)
 
     unless @options.textOnPath
       @container.selectAll('.transition-label')
@@ -822,6 +837,9 @@ class force.Layout
       walk(node, adjustNode, null, true)
 
     handleCollisions(@s.top, {x: 0, y: 0}, tick)
+
+    for tr in @s.transitions
+      delete tr.route
 
     if @debug
       @container.selectAll('.cell .force').remove()
