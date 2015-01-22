@@ -314,9 +314,20 @@
       _ref1 = child.transitions || [];
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         transition = _ref1[_j];
-        edges.push({
+        children.push({
           id: transition.id,
+          desmTransition: true,
+          width: transition.textWidth,
+          height: 25
+        });
+        edges.push({
+          id: "" + transition.id + "#1",
           source: child.id,
+          target: transition.id
+        });
+        edges.push({
+          id: "" + transition.id + "#2",
+          source: transition.id,
           target: transition.target
         });
       }
@@ -341,10 +352,10 @@
   };
 
   force.kielerLayout = function(kielerAlgorithm, top) {
-    var applyLayout, edgeMap, form, graph, klay_ready, layoutDone;
-    edgeMap = d3.map();
+    var applyLayout, form, graph, kNodeMap, klay_ready, layoutDone;
+    kNodeMap = d3.map();
     applyLayout = function(node, kNode, x0, y0) {
-      var child, childMap, edge, kChild, points, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+      var child, childMap, kChild, kTr, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
       if (x0 == null) {
         x0 = null;
       }
@@ -362,18 +373,9 @@
       _ref = node.transitions || [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         tr = _ref[_i];
-        edge = edgeMap.get(tr.id);
-        if ((edge.bendPoints || []).length) {
-          points = edge.bendPoints;
-        } else {
-          points = [edge.sourcePoint, edge.targetPoint];
-        }
-        tr.x = x0 + d3.mean(points, function(p) {
-          return p.x;
-        });
-        tr.y = y0 + d3.mean(points, function(p) {
-          return p.y;
-        });
+        kTr = kNodeMap.get(tr.id);
+        tr.x = x0 + kTr.x + kTr.width / 2;
+        tr.y = y0 + kTr.y + kTr.height / 2;
       }
       childMap = d3.map();
       _ref1 = node.children || [];
@@ -390,7 +392,11 @@
         if ((child = childMap.get(kChild.id)) == null) {
           continue;
         }
-        _results.push(applyLayout(child, kChild, node.x - node.w / 2, node.y - node.h / 2));
+        if (!kChild.desmTransition) {
+          _results.push(applyLayout(child, kChild, node.x - node.w / 2, node.y - node.h / 2));
+        } else {
+          _results.push(void 0);
+        }
       }
       return _results;
     };
@@ -429,14 +435,7 @@
     return layoutDone.then(function(graphLayout) {
       walk(graphLayout, (function(_this) {
         return function(kNode) {
-          var edge, _i, _len, _ref, _results;
-          _ref = kNode.edges || [];
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            edge = _ref[_i];
-            _results.push(edgeMap.set(edge.id, edge));
-          }
-          return _results;
+          return kNodeMap.set(kNode.id, kNode);
         };
       })(this));
       return applyLayout(top, graphLayout);

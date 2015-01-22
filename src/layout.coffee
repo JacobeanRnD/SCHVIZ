@@ -216,9 +216,20 @@ toKielerFormat = (node) ->
   for child in node.children or []
     children.push(toKielerFormat(child))
     for transition in child.transitions or []
-      edges.push(
+      children.push(
         id: transition.id
+        desmTransition: true
+        width: transition.textWidth
+        height: 25
+      )
+      edges.push(
+        id: "#{transition.id}#1"
         source: child.id
+        target: transition.id
+      )
+      edges.push(
+        id: "#{transition.id}#2"
+        source: transition.id
         target: transition.target
       )
   rv = {
@@ -235,7 +246,7 @@ toKielerFormat = (node) ->
 
 
 force.kielerLayout = (kielerAlgorithm, top) ->
-  edgeMap = d3.map()
+  kNodeMap = d3.map()
 
   applyLayout = (node, kNode, x0 = null, y0 = null) ->
     node.w = kNode.width
@@ -249,13 +260,9 @@ force.kielerLayout = (kielerAlgorithm, top) ->
     node.y = y0 + (kNode.y or 0) + node.h/2
 
     for tr in node.transitions or []
-      edge = edgeMap.get(tr.id)
-      if (edge.bendPoints or []).length
-        points = edge.bendPoints
-      else
-        points = [edge.sourcePoint, edge.targetPoint]
-      tr.x = x0 + d3.mean(points, (p) -> p.x)
-      tr.y = y0 + d3.mean(points, (p) -> p.y)
+      kTr = kNodeMap.get(tr.id)
+      tr.x = x0 + kTr.x + kTr.width/2
+      tr.y = y0 + kTr.y + kTr.height/2
 
     childMap = d3.map()
     for child in node.children or []
@@ -263,7 +270,8 @@ force.kielerLayout = (kielerAlgorithm, top) ->
 
     for kChild in kNode.children or []
       unless (child = childMap.get(kChild.id))? then continue
-      applyLayout(child, kChild, node.x - node.w/2, node.y - node.h/2)
+      unless kChild.desmTransition
+        applyLayout(child, kChild, node.x - node.w/2, node.y - node.h/2)
 
   graph = toKielerFormat(top)
 
@@ -301,8 +309,7 @@ force.kielerLayout = (kielerAlgorithm, top) ->
   return layoutDone
     .then (graphLayout) ->
       walk graphLayout, (kNode) =>
-        for edge in kNode.edges or []
-          edgeMap.set(edge.id, edge)
+        kNodeMap.set(kNode.id, kNode)
       applyLayout(top, graphLayout)
 
 
