@@ -38,14 +38,20 @@ html, body { height: 100%; margin: 0; }
       $forceCheckbox.attr('checked', useForceLayout = true);
     }
     $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
+      var category = {};
+      resp.categories.forEach(function(alg) { category[alg.id] = alg.name });
       var algorithmList = ([]).concat(
-        resp.layoutAlgorithms,
+        resp.layoutAlgorithms.map(function(alg) {
+          alg.name = alg.name + " (" + category[alg.category] + ")";
+          return alg;
+        }),
         [{id: '__klayjs', name: "KLayJS"}]
       );
       $algoSelect.append(
         algorithmList.map(function(alg) {
           return $('<option>')
               .text(alg.name)
+              .attr('title', alg.description)
               .attr('value', alg.id)
               .attr('selected', alg.id === algorithm);
         })
