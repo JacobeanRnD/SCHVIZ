@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, idMaker, midpoint, nextId, parents, path, strip, toKielerFormat, transitionPath, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, transitionPath, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -351,6 +351,28 @@
     return rv;
   };
 
+  kielerSpline = function(edge, x0, y0) {
+    var c, c1, c2, points, rv, t, xy, _ref;
+    xy = function(p) {
+      return [x0 + p.x, y0 + p.y];
+    };
+    rv = "M" + (xy(edge.sourcePoint));
+    points = [].concat(edge.bendPoints || [], [edge.targetPoint]);
+    while (points.length > 2) {
+      _ref = points.slice(0, 3), c1 = _ref[0], c2 = _ref[1], t = _ref[2];
+      rv += " C " + (xy(c1)) + " " + (xy(c2)) + " " + (xy(t));
+      points = points.slice(3);
+    }
+    if (points.length === 2) {
+      c = points[0], t = points[1];
+      rv += " Q " + (xy(c)) + " " + (xy(t));
+    } else if (points.length === 1) {
+      t = points[0];
+      rv += " L " + (xy(t));
+    }
+    return rv;
+  };
+
   force.kielerLayout = function(top, options) {
     var applyLayout, form, graph, kEdgeMap, kNodeMap, klay_ready, layoutDone;
     kNodeMap = d3.map();
@@ -379,9 +401,13 @@
         tr.y = y0 + kTr.y + kTr.height / 2 - 10;
         e1 = kEdgeMap.get("" + tr.id + "#1");
         e2 = kEdgeMap.get("" + tr.id + "#2");
-        tr.route = d3.svg.line()([].concat([e1.sourcePoint], e1.bendPoints || [], [e1.targetPoint], [e2.sourcePoint], e2.bendPoints || [], [e2.targetPoint]).map(function(d) {
-          return [x0 + d.x, y0 + d.y];
-        }));
+        if (options.routing === 'SPLINES') {
+          tr.route = kielerSpline(e1, x0, y0) + " L" + kielerSpline(e2, x0, y0).slice(1);
+        } else {
+          tr.route = d3.svg.line()([].concat([e1.sourcePoint], e1.bendPoints || [], [e1.targetPoint], [e2.sourcePoint], e2.bendPoints || [], [e2.targetPoint]).map(function(d) {
+            return [x0 + d.x, y0 + d.y];
+          }));
+        }
       }
       childMap = d3.map();
       _ref1 = node.children || [];
