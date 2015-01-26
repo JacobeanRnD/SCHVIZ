@@ -379,9 +379,9 @@
         tr.y = y0 + kTr.y + kTr.height / 2 - 10;
         e1 = kEdgeMap.get("" + tr.id + "#1");
         e2 = kEdgeMap.get("" + tr.id + "#2");
-        tr.route = [].concat([e1.sourcePoint], e1.bendPoints || [], [e1.targetPoint], [e2.sourcePoint], e2.bendPoints || [], [e2.targetPoint]).map(function(d) {
+        tr.route = d3.svg.line()([].concat([e1.sourcePoint], e1.bendPoints || [], [e1.targetPoint], [e2.sourcePoint], e2.bendPoints || [], [e2.targetPoint]).map(function(d) {
           return [x0 + d.x, y0 + d.y];
-        });
+        }));
       }
       childMap = d3.map();
       _ref1 = node.children || [];
@@ -871,11 +871,7 @@
       });
       this.container.selectAll('.selfie').remove();
       this.container.selectAll('.transition').selectAll('path').attr('d', function(tr) {
-        if (tr.route != null) {
-          return d3.svg.line()(tr.route);
-        } else {
-          return transitionPath(tr);
-        }
+        return tr.route || transitionPath(tr);
       });
       if (!this.options.textOnPath) {
         return this.container.selectAll('.transition-label').attr('transform', function(tr) {

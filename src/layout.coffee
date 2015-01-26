@@ -267,14 +267,14 @@ force.kielerLayout = (top, options) ->
 
       e1 = kEdgeMap.get("#{tr.id}#1")
       e2 = kEdgeMap.get("#{tr.id}#2")
-      tr.route = [].concat(
+      tr.route = d3.svg.line()([].concat(
         [e1.sourcePoint]
         e1.bendPoints or []
         [e1.targetPoint]
         [e2.sourcePoint]
         e2.bendPoints or []
         [e2.targetPoint]
-      ).map((d) -> [x0 + d.x, y0 + d.y])
+      ).map((d) -> [x0 + d.x, y0 + d.y]))
 
     childMap = d3.map()
     for child in node.children or []
@@ -686,7 +686,7 @@ class force.Layout
 
     @container.selectAll('.transition').selectAll('path')
         .attr 'd', (tr) ->
-          if tr.route? then d3.svg.line()(tr.route) else transitionPath(tr)
+          tr.route or transitionPath(tr)
 
     unless @options.textOnPath
       @container.selectAll('.transition-label')
