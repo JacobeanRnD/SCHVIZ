@@ -263,7 +263,7 @@ force.kielerLayout = (kielerAlgorithm, top) ->
     for tr in node.transitions or []
       kTr = kNodeMap.get(tr.id)
       tr.x = x0 + kTr.x + kTr.width/2
-      tr.y = y0 + kTr.y + kTr.height/2
+      tr.y = y0 + kTr.y + kTr.height/2 - 10
 
       e1 = kEdgeMap.get("#{tr.id}#1")
       e2 = kEdgeMap.get("#{tr.id}#2")
