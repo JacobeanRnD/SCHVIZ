@@ -245,7 +245,7 @@ toKielerFormat = (node) ->
   return rv
 
 
-force.kielerLayout = (kielerAlgorithm, top) ->
+force.kielerLayout = (top, options) ->
   kNodeMap = d3.map()
   kEdgeMap = d3.map()
 
@@ -287,13 +287,13 @@ force.kielerLayout = (kielerAlgorithm, top) ->
 
   graph = toKielerFormat(top)
 
-  if kielerAlgorithm == '__klayjs'
+  if options.algorithm == '__klayjs'
     klay_ready = Q.defer()
     $klay.layout(
       graph: graph
       options:
         layoutHierarchy: true
-        edgeRouting: 'ORTHOGONAL'
+        edgeRouting: options.routing
       success: klay_ready.resolve
       error: (err) -> klay_ready.reject(new Error(err.text))
     )
@@ -304,7 +304,7 @@ force.kielerLayout = (kielerAlgorithm, top) ->
     form = {
       graph: JSON.stringify(graph)
       config: JSON.stringify(
-        algorithm: kielerAlgorithm
+        algorithm: options.algorithm
         edgeRouting: 'ORTHOGONAL'
         layoutHierarchy: true
       )
@@ -403,7 +403,10 @@ class force.Layout
       else
         loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
         deferred.resolve(
-          force.kielerLayout(@options.kielerAlgorithm, @s.top)
+          force.kielerLayout(@s.top, {
+            algorithm: @options.kielerAlgorithm
+            routing: @options.routing || 'ORTHOGONAL'
+          })
             .then (treeWithLayout) =>
               loading.destroy()
               @beginSimulation()

@@ -351,7 +351,7 @@
     return rv;
   };
 
-  force.kielerLayout = function(kielerAlgorithm, top) {
+  force.kielerLayout = function(top, options) {
     var applyLayout, form, graph, kEdgeMap, kNodeMap, klay_ready, layoutDone;
     kNodeMap = d3.map();
     kEdgeMap = d3.map();
@@ -407,13 +407,13 @@
       return _results;
     };
     graph = toKielerFormat(top);
-    if (kielerAlgorithm === '__klayjs') {
+    if (options.algorithm === '__klayjs') {
       klay_ready = Q.defer();
       $klay.layout({
         graph: graph,
         options: {
           layoutHierarchy: true,
-          edgeRouting: 'ORTHOGONAL'
+          edgeRouting: options.routing
         },
         success: klay_ready.resolve,
         error: function(err) {
@@ -425,7 +425,7 @@
       form = {
         graph: JSON.stringify(graph),
         config: JSON.stringify({
-          algorithm: kielerAlgorithm,
+          algorithm: options.algorithm,
           edgeRouting: 'ORTHOGONAL',
           layoutHierarchy: true
         }),
@@ -562,7 +562,10 @@
               svg: _this.el,
               text: "Loading Kieler layout ..."
             });
-            return deferred.resolve(force.kielerLayout(_this.options.kielerAlgorithm, _this.s.top).then(function(treeWithLayout) {
+            return deferred.resolve(force.kielerLayout(_this.s.top, {
+              algorithm: _this.options.kielerAlgorithm,
+              routing: _this.options.routing || 'ORTHOGONAL'
+            }).then(function(treeWithLayout) {
               loading.destroy();
               _this.beginSimulation();
               return cb();

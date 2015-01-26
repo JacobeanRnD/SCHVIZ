@@ -13,6 +13,7 @@ html, body { height: 100%; margin: 0; }
 <div id="controls">
   <label>Force layout <input type=checkbox name=force></label>
   <label>Text-on-path <input type=checkbox name=textOnPath></label>
+  <label>Edge routing <select name=routing></select></label>
   <label>Kieler algorithm <select name=algorithm></select></label>
   <label>Example document <select name=document></select></label>
 </div>
@@ -30,13 +31,20 @@ html, body { height: 100%; margin: 0; }
     var exBase = 'https://dl.dropboxusercontent.com/u/103063/static/desm-devel/';
     var $forceCheckbox = $('#controls [name=force]');
     var $textOnPathCheckbox = $('#controls [name=textOnPath]');
+    var $routingSelect = $('#controls [name=routing]');
     var $algoSelect = $('#controls [name=algorithm]');
     var $docSelect = $('#controls [name=document]');
     var controls = _.extend({}, Backbone.Events);
     var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
     var doc = null;
     var exMap = {};
-    var config = {algo: '__klayjs', cells: [], force: false, textOnPath: false};
+    var config = {
+      algo: '__klayjs',
+      cells: [],
+      force: false,
+      textOnPath: false,
+      routing: 'ORTHOGONAL'
+    };
     try { config = JSON.parse(window.location.hash.slice(1)); } catch(e) {}
 
     $forceCheckbox.change(function() {
@@ -57,7 +65,23 @@ html, body { height: 100%; margin: 0; }
       $textOnPathCheckbox.attr('checked', true);
     }
 
-    $algoSelect.change(algoChange);
+    var routingOptions = [
+      {name: "Orthogonal", value: "ORTHOGONAL"},
+      {name: "Polyline", value: "POLYLINE"},
+      {name: "Splines", value: "SPLINES"}
+    ];
+
+    $routingSelect.append(
+      routingOptions.map(function(r) {
+        return $('<option>')
+            .text(r.name)
+            .attr('value', r.value)
+            .attr('selected', r.value == config.routing ? true : null)
+      })
+    );
+
+    $routingSelect.change(recreateLayout);
+    $algoSelect.change(recreateLayout);
 
     $docSelect.change(function() {
       var filename = $docSelect.val();
@@ -100,7 +124,7 @@ html, body { height: 100%; margin: 0; }
         );
         $('#controls').show();
         config.cells.forEach(createCell);
-        algoChange();
+        recreateLayout();
       });
     });
 
@@ -108,10 +132,11 @@ html, body { height: 100%; margin: 0; }
       window.location.hash = JSON.stringify(config);
     }
 
-    function algoChange() {
+    function recreateLayout() {
+      config.routing = $routingSelect.val();
       config.algo = $algoSelect.val();
       saveConfig();
-      controls.trigger('algo');
+      controls.trigger('recreate');
     }
 
     function createCell(filename) {
@@ -126,14 +151,14 @@ html, body { height: 100%; margin: 0; }
 
         createLayout();
         controls.on('force', onForce);
-        controls.on('algo', recreate);
+        controls.on('recreate', recreate);
         controls.on('textOnPath', recreate);
 
         $(window).resize(function() { layout.invalidateSize(); });
 
         function close() {
           controls.off('force', onForce);
-          controls.off('algo', recreate);
+          controls.off('recreate', recreate);
           controls.off('textOnPath', recreate);
           destroyLayout();
           $container.remove();
@@ -152,6 +177,7 @@ html, body { height: 100%; margin: 0; }
               parent: $container[0],
               doc: doc,
               textOnPath: config.textOnPath || false,
+              routing: config.routing,
               debug: debug
             });
           layout.initialized
