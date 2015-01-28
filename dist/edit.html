@@ -147,10 +147,7 @@ html, body { height: 100%; margin: 0; }
       $.get('forceLayout.css', function(resp) { css = resp; });
 
       function exportSvg() {
-        var svg = layout.exportSvg({
-          tmpContainer: $('html')[0],
-          css: css
-        });
+        var svg = layout.exportSvg({css: css});
         window.open('data:image/svg+xml;base64,' + btoa(svg));
       }
     }

@@ -36,10 +36,6 @@ var geometry = layout.saveGeometry();
 
 // export as SVG
 var svg = layout.exportSvg({
-  // a temporary (hidden) div that is part of the page, this is needed
-  // in order to compute the dimensions of the rendered graph
-  tmpContainer: $('html')[0],
-  // the contents of forceLayout.css, it will be embedded in the SVG
-  css: css
+  css: css // the contents of forceLayout.css, it will be embedded in the SVG
 });
 ```
