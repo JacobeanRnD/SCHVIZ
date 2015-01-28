@@ -915,22 +915,20 @@ class force.Layout
       cb()
 
   exportSvg: (options) ->
+    [xMin, xMax, yMin, yMax] = envelope(@s.top, EXPORT_PAD)
     div = $('<div style="positoin:relative">')[0]
     $(options.tmpContainer).append(div)
     svg = d3.select(div).append('svg')
+        .attr('xmlns', 'http://www.w3.org/2000/svg')
+        .attr('viewBox', "#{xMin} #{yMin} #{xMax - xMin} #{yMax - yMin}")
         .classed('force-layout', true)
-    g = svg.append('g')
-        .html(@container.html())
     svg.append('defs')
         .html(d3.select(@el).select('defs').html())
         .append('style')
           .html(options.css)
+    svg.append('g')
+        .html(@container.html())
     $(div).find('.zoomRect').remove()
-    [xMin, xMax, yMin, yMax] = envelope(@s.top, EXPORT_PAD)
-    g.attr('transform', "translate(#{[-xMin, -yMin]})")
-    $(div).find('svg')
-        .attr('xmlns', 'http://www.w3.org/2000/svg')
-        .attr('viewBox', "0 0 #{xMax - xMin} #{yMax - yMin}")
     $(div).remove()
     return div.innerHTML
 

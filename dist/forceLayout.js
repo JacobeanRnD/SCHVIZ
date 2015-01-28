@@ -1190,16 +1190,14 @@
     };
 
     Layout.prototype.exportSvg = function(options) {
-      var div, g, svg, xMax, xMin, yMax, yMin, _ref;
+      var div, svg, xMax, xMin, yMax, yMin, _ref;
+      _ref = envelope(this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
       div = $('<div style="positoin:relative">')[0];
       $(options.tmpContainer).append(div);
-      svg = d3.select(div).append('svg').classed('force-layout', true);
-      g = svg.append('g').html(this.container.html());
+      svg = d3.select(div).append('svg').attr('xmlns', 'http://www.w3.org/2000/svg').attr('viewBox', "" + xMin + " " + yMin + " " + (xMax - xMin) + " " + (yMax - yMin)).classed('force-layout', true);
       svg.append('defs').html(d3.select(this.el).select('defs').html()).append('style').html(options.css);
+      svg.append('g').html(this.container.html());
       $(div).find('.zoomRect').remove();
-      _ref = envelope(this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
-      g.attr('transform', "translate(" + [-xMin, -yMin] + ")");
-      $(div).find('svg').attr('xmlns', 'http://www.w3.org/2000/svg').attr('viewBox', "0 0 " + (xMax - xMin) + " " + (yMax - yMin));
       $(div).remove();
       return div.innerHTML;
     };
