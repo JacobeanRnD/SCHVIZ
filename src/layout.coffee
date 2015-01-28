@@ -5,6 +5,7 @@ MARGIN = 5
 ROUND_CORNER = 5
 CELL_MIN = {w: 40, h: 40}
 CELL_PAD = {top: 20, bottom: 5, left: 5, right: 5}
+EXPORT_PAD = {top: 10, bottom: 10, left: 10, right: 10}
 LABEL_SPACE = 400
 CONTROL_SIZE = {w: 25, h: 25}
 LINK_STRENGTH = .1
@@ -208,6 +209,15 @@ findTransition = (transitions, source, target) ->
   for tr in transitions
     if tr.a.id == source and tr.b.id == target
       return tr
+
+
+envelope = (node, pad={}) ->
+  contents = [].concat(node.children, node.controls)
+  xMin = d3.min(contents, (d) -> d.x - d.w / 2) - (pad.left or 0)
+  xMax = d3.max(contents, (d) -> d.x + d.w / 2) + (pad.right or 0)
+  yMin = d3.min(contents, (d) -> d.y - d.h / 2) - (pad.top or 0)
+  yMax = d3.max(contents, (d) -> d.y + d.h / 2) + (pad.bottom or 0)
+  return [xMin, xMax, yMin, yMax]
 
 
 toKielerFormat = (node) ->
@@ -846,12 +856,7 @@ class force.Layout
     adjustNode = (node) =>
       if node.children.length > 0
         handleCollisions(node, node, tick)
-
-        contents = [].concat(node.children, node.controls)
-        xMin = d3.min(contents, (d) -> d.x - d.w / 2) - CELL_PAD.left
-        xMax = d3.max(contents, (d) -> d.x + d.w / 2) + CELL_PAD.right
-        yMin = d3.min(contents, (d) -> d.y - d.h / 2) - CELL_PAD.top
-        yMax = d3.max(contents, (d) -> d.y + d.h / 2) + CELL_PAD.bottom
+        [xMin, xMax, yMin, yMax] = envelope(node, CELL_PAD)
         grow = node.textWidth - (xMax - xMin)
         if grow > 0
           xMin -= grow / 2
@@ -921,11 +926,11 @@ class force.Layout
         .append('style')
           .html(options.css)
     $(div).find('.zoomRect').remove()
-    tmpOffset = $(div).offset()
-    offset = $(g[0][0]).offset()
-    translate = [tmpOffset.left - offset.left, tmpOffset.top - offset.top ]
-    g.attr('transform', "translate(#{translate})")
-    $(div).find('svg').attr('xmlns', 'http://www.w3.org/2000/svg')
+    [xMin, xMax, yMin, yMax] = envelope(@s.top, EXPORT_PAD)
+    g.attr('transform', "translate(#{[-xMin, -yMin]})")
+    $(div).find('svg')
+        .attr('xmlns', 'http://www.w3.org/2000/svg')
+        .attr('viewBox', "0 0 #{xMax - xMin} #{yMax - yMin}")
     $(div).remove()
     return div.innerHTML
 

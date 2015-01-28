@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, exit, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, transitionPath, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, envelope, exit, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, transitionPath, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -19,6 +19,13 @@
     bottom: 5,
     left: 5,
     right: 5
+  };
+
+  EXPORT_PAD = {
+    top: 10,
+    bottom: 10,
+    left: 10,
+    right: 10
   };
 
   LABEL_SPACE = 400;
@@ -301,6 +308,27 @@
         return tr;
       }
     }
+  };
+
+  envelope = function(node, pad) {
+    var contents, xMax, xMin, yMax, yMin;
+    if (pad == null) {
+      pad = {};
+    }
+    contents = [].concat(node.children, node.controls);
+    xMin = d3.min(contents, function(d) {
+      return d.x - d.w / 2;
+    }) - (pad.left || 0);
+    xMax = d3.max(contents, function(d) {
+      return d.x + d.w / 2;
+    }) + (pad.right || 0);
+    yMin = d3.min(contents, function(d) {
+      return d.y - d.h / 2;
+    }) - (pad.top || 0);
+    yMax = d3.max(contents, function(d) {
+      return d.y + d.h / 2;
+    }) + (pad.bottom || 0);
+    return [xMin, xMax, yMin, yMax];
   };
 
   toKielerFormat = function(node) {
@@ -1069,22 +1097,10 @@
       })(this);
       adjustNode = (function(_this) {
         return function(node) {
-          var contents, dx, dy, grow, xMax, xMin, yMax, yMin;
+          var dx, dy, grow, xMax, xMin, yMax, yMin, _ref;
           if (node.children.length > 0) {
             handleCollisions(node, node, tick);
-            contents = [].concat(node.children, node.controls);
-            xMin = d3.min(contents, function(d) {
-              return d.x - d.w / 2;
-            }) - CELL_PAD.left;
-            xMax = d3.max(contents, function(d) {
-              return d.x + d.w / 2;
-            }) + CELL_PAD.right;
-            yMin = d3.min(contents, function(d) {
-              return d.y - d.h / 2;
-            }) - CELL_PAD.top;
-            yMax = d3.max(contents, function(d) {
-              return d.y + d.h / 2;
-            }) + CELL_PAD.bottom;
+            _ref = envelope(node, CELL_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
             grow = node.textWidth - (xMax - xMin);
             if (grow > 0) {
               xMin -= grow / 2;
@@ -1174,18 +1190,16 @@
     };
 
     Layout.prototype.exportSvg = function(options) {
-      var div, g, offset, svg, tmpOffset, translate;
+      var div, g, svg, xMax, xMin, yMax, yMin, _ref;
       div = $('<div style="positoin:relative">')[0];
       $(options.tmpContainer).append(div);
       svg = d3.select(div).append('svg').classed('force-layout', true);
       g = svg.append('g').html(this.container.html());
       svg.append('defs').html(d3.select(this.el).select('defs').html()).append('style').html(options.css);
       $(div).find('.zoomRect').remove();
-      tmpOffset = $(div).offset();
-      offset = $(g[0][0]).offset();
-      translate = [tmpOffset.left - offset.left, tmpOffset.top - offset.top];
-      g.attr('transform', "translate(" + translate + ")");
-      $(div).find('svg').attr('xmlns', 'http://www.w3.org/2000/svg');
+      _ref = envelope(this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
+      g.attr('transform', "translate(" + [-xMin, -yMin] + ")");
+      $(div).find('svg').attr('xmlns', 'http://www.w3.org/2000/svg').attr('viewBox', "0 0 " + (xMax - xMin) + " " + (yMax - yMin));
       $(div).remove();
       return div.innerHTML;
     };
