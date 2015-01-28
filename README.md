@@ -33,4 +33,13 @@ layout.update(newXmlDocument)
 var geometry = layout.saveGeometry();
 // pass "geometry" argument to Layout constructor to use the saved geometry
 // and skip kieler layout
+
+// export as SVG
+var svg = layout.exportSvg({
+  // a temporary (hidden) div that is part of the page, this is needed
+  // in order to compute the dimensions of the rendered graph
+  tmpContainer: $('html')[0],
+  // the contents of forceLayout.css, it will be embedded in the SVG
+  css: css
+});
 ```
