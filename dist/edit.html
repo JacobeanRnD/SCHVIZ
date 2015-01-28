@@ -143,13 +143,15 @@ html, body { height: 100%; margin: 0; }
         localStorage.removeItem('desm-geometry');
       }
 
+      var css;
+      $.get('forceLayout.css', function(resp) { css = resp; });
+
       function exportSvg() {
-        $.get('forceLayout.css', function(css) {
-          console.log(layout.exportSvg({
-            tmpContainer: $('html')[0],
-            css: css
-          }));
+        var svg = layout.exportSvg({
+          tmpContainer: $('html')[0],
+          css: css
         });
+        window.open('data:image/svg+xml;base64,' + btoa(svg));
       }
     }
   })();
