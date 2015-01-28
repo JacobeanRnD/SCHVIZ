@@ -144,7 +144,12 @@ html, body { height: 100%; margin: 0; }
       }
 
       function exportSvg() {
-        layout.exportSvg();
+        $.get('forceLayout.css', function(css) {
+          console.log(layout.exportSvg({
+            tmpContainer: $('html')[0],
+            css: css
+          }));
+        });
       }
     }
   })();

@@ -1167,24 +1167,21 @@
       })(this));
     };
 
-    Layout.prototype.exportSvg = function() {
-      var defs, offset, svg, tmp, tmpContainer, tmpOffset, translate;
-      tmp = $('<div style="positoin:relative">')[0];
-      svg = d3.select(tmp).append('svg').classed('force-layout', true);
-      tmpContainer = svg.append('g').attr('class', 'tmpContainer').html(this.container[0][0].innerHTML);
-      defs = svg.append('defs').html(d3.select(this.el).select('defs').html());
-      $(tmp).find('.zoomRect').remove();
-      $('html').append(tmp);
-      tmpOffset = $(tmp).offset();
-      offset = $(tmp).find('.tmpContainer').offset();
+    Layout.prototype.exportSvg = function(options) {
+      var div, g, offset, svg, tmpOffset, translate;
+      div = $('<div style="positoin:relative">')[0];
+      $(options.tmpContainer).append(div);
+      svg = d3.select(div).append('svg').classed('force-layout', true);
+      g = svg.append('g').html(this.container.html());
+      svg.append('defs').html(d3.select(this.el).select('defs').html()).append('style').html(options.css);
+      $(div).find('.zoomRect').remove();
+      tmpOffset = $(div).offset();
+      offset = $(g[0][0]).offset();
       translate = [tmpOffset.left - offset.left, tmpOffset.top - offset.top];
-      tmpContainer.attr('transform', "translate(" + translate + ")");
-      $(tmp).find('svg').attr('xmlns', 'http://www.w3.org/2000/svg');
-      return $.get('forceLayout.css', function(css) {
-        defs.append('style').html(css);
-        $(tmp).remove();
-        return console.log(tmp.innerHTML);
-      });
+      g.attr('transform', "translate(" + translate + ")");
+      $(div).find('svg').attr('xmlns', 'http://www.w3.org/2000/svg');
+      $(div).remove();
+      return div.innerHTML;
     };
 
     return Layout;
