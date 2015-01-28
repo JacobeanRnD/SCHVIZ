@@ -182,7 +182,7 @@ html, body { height: 100%; margin: 0; }
             });
           layout.initialized
             .catch(function(err) {
-              console.log(err);
+              console.error(err);
               $(layout.el).replaceWith("Error: " + err.message);
             })
             .done();

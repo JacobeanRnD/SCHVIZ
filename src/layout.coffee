@@ -418,26 +418,31 @@ class force.Layout
     @initialized = deferred.promise
 
     @queue.push (cb) =>
-      @loadTree(tree)
+      try
+        @loadTree(tree)
 
-      if @options.geometry?
-        @applyGeometry(@options.geometry)
-        @beginSimulation()
+        if @options.geometry?
+          @applyGeometry(@options.geometry)
+          @beginSimulation()
+          cb()
+          deferred.resolve()
+
+        else
+          loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
+          deferred.resolve(
+            force.kielerLayout(@s.top, {
+              algorithm: @options.kielerAlgorithm
+              routing: @options.routing || 'ORTHOGONAL'
+            })
+              .then (treeWithLayout) =>
+                loading.destroy()
+                @beginSimulation()
+                cb()
+          )
+
+      catch e
+        deferred.reject(e)
         cb()
-        deferred.resolve()
-
-      else
-        loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
-        deferred.resolve(
-          force.kielerLayout(@s.top, {
-            algorithm: @options.kielerAlgorithm
-            routing: @options.routing || 'ORTHOGONAL'
-          })
-            .then (treeWithLayout) =>
-              loading.destroy()
-              @beginSimulation()
-              cb()
-        )
 
   update: (doc) ->
     deferred = Q.defer()

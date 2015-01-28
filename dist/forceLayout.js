@@ -576,26 +576,32 @@
       this.initialized = deferred.promise;
       return this.queue.push((function(_this) {
         return function(cb) {
-          var loading;
-          _this.loadTree(tree);
-          if (_this.options.geometry != null) {
-            _this.applyGeometry(_this.options.geometry);
-            _this.beginSimulation();
-            cb();
-            return deferred.resolve();
-          } else {
-            loading = new LoadingOverlay({
-              svg: _this.el,
-              text: "Loading Kieler layout ..."
-            });
-            return deferred.resolve(force.kielerLayout(_this.s.top, {
-              algorithm: _this.options.kielerAlgorithm,
-              routing: _this.options.routing || 'ORTHOGONAL'
-            }).then(function(treeWithLayout) {
-              loading.destroy();
+          var e, loading;
+          try {
+            _this.loadTree(tree);
+            if (_this.options.geometry != null) {
+              _this.applyGeometry(_this.options.geometry);
               _this.beginSimulation();
-              return cb();
-            }));
+              cb();
+              return deferred.resolve();
+            } else {
+              loading = new LoadingOverlay({
+                svg: _this.el,
+                text: "Loading Kieler layout ..."
+              });
+              return deferred.resolve(force.kielerLayout(_this.s.top, {
+                algorithm: _this.options.kielerAlgorithm,
+                routing: _this.options.routing || 'ORTHOGONAL'
+              }).then(function(treeWithLayout) {
+                loading.destroy();
+                _this.beginSimulation();
+                return cb();
+              }));
+            }
+          } catch (_error) {
+            e = _error;
+            deferred.reject(e);
+            return cb();
           }
         };
       })(this));
