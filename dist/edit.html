@@ -114,9 +114,10 @@ html, body { height: 100%; margin: 0; }
       var $update = $('<button>').text('update').click(update);
       var $reset = $('<button>').text('reset').click(reset);
       var $saveGeom = $('<button>').text('save geometry').click(saveGeom);
+      var $loadGeom = $('<button>').text('load geometry').click(loadGeom);
       var $clearGeom = $('<button>').text('clear geometry').click(clearGeom);
       var $exportSvg = $('<button>').text('export SVG').click(exportSvg);
-      $('body').append(parent, $src, '<br>', $update, $reset, $saveGeom, $clearGeom, $exportSvg);
+      $('body').append(parent, $src, '<br>', $update, $reset, $saveGeom, $loadGeom, $clearGeom, $exportSvg);
       invokeLayout({parent: parent, doc: parse()});
 
       function parse() {
@@ -137,6 +138,16 @@ html, body { height: 100%; margin: 0; }
       function saveGeom() {
         var geom = layout.saveGeometry();
         localStorage.setItem('desm-geometry', geom);
+      }
+
+      function loadGeom() {
+        layout.stop();
+        $(layout.el).remove();
+        invokeLayout({
+          parent: parent,
+          doc: parse(),
+          geometry: localStorage.getItem('desm-geometry')
+       });
       }
 
       function clearGeom() {
