@@ -576,15 +576,23 @@ class force.Layout
         x: round(n.x)
         y: round(n.y)
       } for n in @s.nodes
+      transitions: {
+        id: tr.id
+        route: tr.route
+      } for tr in @s.transitions
     })
 
-  applyGeometry: (geom) ->
-    for saved in JSON.parse(geom).nodes
+  applyGeometry: (geom_json) ->
+    geom = JSON.parse(geom_json)
+    for saved in geom.nodes
       if (node = @s.nodeMap.get(saved.id))?
         node.w = saved.w
         node.h = saved.h
         node.px = node.x = saved.x
         node.py = node.y = saved.y
+    for saved in geom.transitions or []
+      if (tr = @s.nodeMap.get(saved.id))?
+        tr.route = saved.route
     @svgUpdate()
     @layout.start() if @layout and @runSimulation
 

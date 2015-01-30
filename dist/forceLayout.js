@@ -787,7 +787,7 @@
     };
 
     Layout.prototype.saveGeometry = function() {
-      var n, round;
+      var n, round, tr;
       round = function(x) {
         return Math.round(x);
       };
@@ -807,13 +807,27 @@
             });
           }
           return _results;
+        }).call(this),
+        transitions: (function() {
+          var _i, _len, _ref, _results;
+          _ref = this.s.transitions;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            tr = _ref[_i];
+            _results.push({
+              id: tr.id,
+              route: tr.route
+            });
+          }
+          return _results;
         }).call(this)
       });
     };
 
-    Layout.prototype.applyGeometry = function(geom) {
-      var node, saved, _i, _len, _ref;
-      _ref = JSON.parse(geom).nodes;
+    Layout.prototype.applyGeometry = function(geom_json) {
+      var geom, node, saved, tr, _i, _j, _len, _len1, _ref, _ref1;
+      geom = JSON.parse(geom_json);
+      _ref = geom.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         saved = _ref[_i];
         if ((node = this.s.nodeMap.get(saved.id)) != null) {
@@ -821,6 +835,13 @@
           node.h = saved.h;
           node.px = node.x = saved.x;
           node.py = node.y = saved.y;
+        }
+      }
+      _ref1 = geom.transitions || [];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        saved = _ref1[_j];
+        if ((tr = this.s.nodeMap.get(saved.id)) != null) {
+          tr.route = saved.route;
         }
       }
       this.svgUpdate();
