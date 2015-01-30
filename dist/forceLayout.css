@@ -6,11 +6,11 @@
   cursor: pointer;
   transition: stroke 400ms;
 }
-.parallel-child .force-layout .cell .border {
-  stroke-dasharray: 10,5;
-}
 .force-layout .cell.highlight .border {
   stroke: red;
+}
+.force-layout .cell.parallel-child .border {
+  stroke-dasharray: 10,5;
 }
 .force-layout .transition path {
   stroke: #555;

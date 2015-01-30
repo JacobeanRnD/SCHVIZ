@@ -8,15 +8,15 @@
             stroke-width: 2px;
             cursor: pointer;
             transition: stroke 400ms;
-
-            .parallel-child & {
-                stroke-dasharray: 10,5;
-            }
         }
 
         &.highlight .border {
             stroke: red;
         }
+    }
+
+    .cell.parallel-child .border {
+        stroke-dasharray: 10,5;
     }
 
 
