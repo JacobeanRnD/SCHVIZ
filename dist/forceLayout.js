@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, def, envelope, exit, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, transitionPath, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, envelope, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, transitionPath, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -189,13 +189,6 @@
 
   nextId = idMaker();
 
-  def = function(map, key, defaultValue) {
-    if (!map.has(key)) {
-      map.set(key, defaultValue);
-    }
-    return map.get(key);
-  };
-
   walk = function(node, callback, parent, postorder) {
     var child, _i, _len, _ref;
     if (parent == null) {
@@ -237,21 +230,6 @@
       eq = n;
     }
     return [node1, parents1[eq], node2];
-  };
-
-  exit = function(cell, point) {
-    var d, e, ex, ey;
-    d = {
-      x: point.x - cell.x,
-      y: point.y - cell.y
-    };
-    ex = cell.w / 2 / d.x;
-    ey = cell.h / 2 / d.y;
-    e = d3.min([ex, ey], Math.abs);
-    return {
-      x: cell.x + d.x * e,
-      y: cell.y + d.y * e
-    };
   };
 
   midpoint = function(a, b) {
@@ -592,7 +570,6 @@
       this.options = options;
       this.debug = options.debug || false;
       this.svgCreate(options.parent);
-      this.runSimulation = false;
       this.s = this._emptyState();
       this.animation = new NewNodesAnimation([]);
       this._initialTree(options.tree || treeFromXml(options.doc).sc);
@@ -644,9 +621,7 @@
             return _this.loadTree(treeFromXml(doc).sc);
           }).then(function() {
             _this.beginSimulation();
-            if (!_this.runSimulation) {
-              return _this.s.newNodes = [];
-            }
+            return _this.s.newNodes = [];
           }).then(function() {
             _this.animation = new NewNodesAnimation(_this.s.newNodes);
             return _this.animation.promise;
@@ -683,13 +658,6 @@
 
     Layout.prototype.beginSimulation = function() {
       this.setupD3Layout();
-      this.layout.on('tick', (function(_this) {
-        return function() {
-          _this.adjustLayout();
-          _this.svgUpdate();
-          return _this.animation.tick();
-        };
-      })(this));
       return this.svgUpdate();
     };
 
@@ -780,9 +748,6 @@
           };
         })(this));
       }
-      if (this.layout) {
-        this.layout.stop();
-      }
       return this.s = newS;
     };
 
@@ -833,8 +798,6 @@
         if ((node = this.s.nodeMap.get(saved.id)) != null) {
           node.w = saved.w;
           node.h = saved.h;
-          node.px = node.x = saved.x;
-          node.py = node.y = saved.y;
         }
       }
       _ref1 = geom.transitions || [];
@@ -844,10 +807,7 @@
           tr.route = saved.route;
         }
       }
-      this.svgUpdate();
-      if (this.layout && this.runSimulation) {
-        return this.layout.start();
-      }
+      return this.svgUpdate();
     };
 
     Layout.prototype.svgCreate = function(parent) {
@@ -963,10 +923,6 @@
 
     Layout.prototype.setupD3Layout = function() {
       var drag, lock;
-      this.layout = d3.layout.force().charge(0).gravity(0).linkStrength(LINK_STRENGTH).linkDistance(LINK_DISTANCE).nodes(this.s.nodes).links(this.s.links).start();
-      if (!this.runSimulation) {
-        this.layout.stop();
-      }
       lock = {
         node: null,
         drag: false
@@ -982,16 +938,10 @@
       })(this)).on('drag', (function(_this) {
         return function(node) {
           d3.event.sourceEvent.stopPropagation();
-          node.px = d3.event.x;
-          node.py = d3.event.y;
-          if (_this.runSimulation) {
-            return _this.layout.resume();
-          } else {
-            node.x = node.px;
-            node.y = node.py;
-            _this.adjustLayout();
-            return _this.svgUpdate();
-          }
+          node.x = d3.event.x;
+          node.y = d3.event.y;
+          _this.adjustLayout();
+          return _this.svgUpdate();
         };
       })(this)).on('dragend', (function(_this) {
         return function(node) {
@@ -1010,8 +960,6 @@
             lock.node.fixed = false;
           }
           (lock.node = node).fixed = true;
-          node.px = node.x;
-          node.py = node.y;
           return _this.svgUpdate();
         };
       })(this)).on('mouseout', (function(_this) {
@@ -1027,11 +975,7 @@
     };
 
     Layout.prototype.adjustLayout = function() {
-      var adjustNode, handleCollisions, move, node, tick, tr, _i, _j, _len, _len1, _ref, _ref1;
-      tick = {
-        gravity: this.layout.alpha() * 0.1,
-        forces: d3.map()
-      };
+      var adjustNode, handleCollisions, move, node, tr, _i, _j, _len, _len1, _ref, _ref1, _results;
       move = function(node, dx, dy) {
         var child, control, _i, _j, _len, _len1, _ref, _ref1, _results;
         node.x += dx;
@@ -1050,30 +994,19 @@
         return _results;
       };
       handleCollisions = (function(_this) {
-        return function(parent, center, tick) {
-          var child, collide, dx, dy, node, nx1, nx2, ny1, ny2, objects, q, _i, _j, _len, _len1, _ref, _results;
-          _ref = parent.children;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            child = _ref[_i];
-            dx = (center.x - child.x) * tick.gravity;
-            dy = (center.y - child.y) * tick.gravity;
-            move(child, dx, dy);
-            def(tick.forces, child.id, []).push({
-              value: [dx, dy],
-              cls: 'gravity'
-            });
-          }
+        return function(parent, center) {
+          var collide, node, nx1, nx2, ny1, ny2, objects, q, _i, _len, _results;
           objects = [].concat(parent.children, parent.controls);
           q = d3.geom.quadtree(objects);
           _results = [];
-          for (_j = 0, _len1 = objects.length; _j < _len1; _j++) {
-            node = objects[_j];
+          for (_i = 0, _len = objects.length; _i < _len; _i++) {
+            node = objects[_i];
             nx1 = node.x - node.w - 100;
             nx2 = node.x + node.w + 100;
             ny1 = node.y - node.h - 100;
             ny2 = node.y + node.h + 100;
             collide = function(quad, x1, y1, x2, y2) {
-              var cx, cy, dx1, dx2, dy1, dy2, f, h, na, oa, other, s, w;
+              var cx, cy, dx, dx1, dx2, dy, dy1, dy2, f, h, na, oa, other, s, w;
               other = quad.point;
               if (other && (other !== node)) {
                 dx = node.x - other.x;
@@ -1099,14 +1032,6 @@
                   }
                   move(node, dx1, dy1);
                   move(other, dx2, dy2);
-                  def(tick.forces, node.id, []).push({
-                    value: [dx1, dy1],
-                    cls: 'collision'
-                  });
-                  def(tick.forces, other.id, []).push({
-                    value: [dx2, dy2],
-                    cls: 'collision'
-                  });
                 }
               }
               return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
@@ -1120,7 +1045,7 @@
         return function(node) {
           var dx, dy, grow, xMax, xMin, yMax, yMin, _ref;
           if (node.children.length > 0) {
-            handleCollisions(node, node, tick);
+            handleCollisions(node, node);
             _ref = envelope(node, CELL_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
             grow = node.textWidth - (xMax - xMin);
             if (grow > 0) {
@@ -1148,39 +1073,14 @@
       handleCollisions(this.s.top, {
         x: 0,
         y: 0
-      }, tick);
+      });
       _ref1 = this.s.transitions;
+      _results = [];
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         tr = _ref1[_j];
-        delete tr.route;
+        _results.push(delete tr.route);
       }
-      if (this.debug) {
-        this.container.selectAll('.cell .force').remove();
-        return this.container.selectAll('.cell').each(function(node) {
-          var _k, _len2, _ref2, _results;
-          _ref2 = tick.forces.get(node.id) || [];
-          _results = [];
-          for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-            force = _ref2[_k];
-            _results.push(d3.select(this).append('line').attr('class', "force " + force.cls).attr('x1', 0).attr('y1', 0).attr('x2', force.value[0] * DEBUG_FORCE_FACTOR).attr('y2', force.value[1] * DEBUG_FORCE_FACTOR));
-          }
-          return _results;
-        });
-      }
-    };
-
-    Layout.prototype.start = function() {
-      this.runSimulation = true;
-      if (this.layout != null) {
-        return this.layout.start();
-      }
-    };
-
-    Layout.prototype.stop = function() {
-      this.runSimulation = false;
-      if (this.layout != null) {
-        return this.layout.stop();
-      }
+      return _results;
     };
 
     Layout.prototype.highlightState = function(id, highlight) {

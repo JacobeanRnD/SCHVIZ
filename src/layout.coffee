@@ -130,12 +130,6 @@ idMaker = ->
 nextId = idMaker()
 
 
-def = (map, key, defaultValue) ->
-  unless map.has(key)
-    map.set(key, defaultValue)
-  return map.get(key)
-
-
 walk = (node, callback, parent=null, postorder=false) ->
   callback(node, parent) unless postorder
   for child in node.children or []
@@ -155,14 +149,6 @@ path = (node1, node2) ->
     if parents1[n] != parents2[n] then break
     eq = n
   return [node1, parents1[eq], node2]
-
-
-exit = (cell, point) ->
-  d = {x: point.x - cell.x, y: point.y - cell.y}
-  ex = cell.w / 2 / d.x
-  ey = cell.h / 2 / d.y
-  e = d3.min([ex, ey], Math.abs)
-  return {x: cell.x + d.x * e, y: cell.y + d.y * e}
 
 
 midpoint = (a, b) -> {
@@ -418,7 +404,6 @@ class force.Layout
     @options = options
     @debug = options.debug or false
     @svgCreate(options.parent)
-    @runSimulation = false
     @s = @_emptyState()
     @animation = new NewNodesAnimation([])
     @_initialTree(options.tree or treeFromXml(options.doc).sc)
@@ -463,7 +448,7 @@ class force.Layout
           @loadTree(treeFromXml(doc).sc)
         .then =>
           @beginSimulation()
-          @s.newNodes = [] unless @runSimulation
+          @s.newNodes = []
         .then =>
           @animation = new NewNodesAnimation(@s.newNodes)
           return @animation.promise
@@ -495,10 +480,6 @@ class force.Layout
 
   beginSimulation: ->
     @setupD3Layout()
-    @layout.on 'tick', =>
-      @adjustLayout()
-      @svgUpdate()
-      @animation.tick()
     @svgUpdate()
 
   mergeTree: (tree) ->
@@ -563,7 +544,6 @@ class force.Layout
           else
             _.extend(tr, midpoint(tr.a, tr.b))
 
-    @layout.stop() if @layout
     @s = newS
 
   saveGeometry: ->
@@ -588,13 +568,10 @@ class force.Layout
       if (node = @s.nodeMap.get(saved.id))?
         node.w = saved.w
         node.h = saved.h
-        node.px = node.x = saved.x
-        node.py = node.y = saved.y
     for saved in geom.transitions or []
       if (tr = @s.nodeMap.get(saved.id))?
         tr.route = saved.route
     @svgUpdate()
-    @layout.start() if @layout and @runSimulation
 
   svgCreate: (parent) ->
     @zoomBehavior = d3.behavior.zoom()
@@ -742,17 +719,6 @@ class force.Layout
           .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
   setupD3Layout: ->
-    @layout = d3.layout.force()
-        .charge(0)
-        .gravity(0)
-        .linkStrength(LINK_STRENGTH)
-        .linkDistance(LINK_DISTANCE)
-        .nodes(@s.nodes)
-        .links(@s.links)
-        .start()
-
-    @layout.stop() unless @runSimulation
-
     lock = {node: null, drag: false}
 
     drag = d3.behavior.drag()
@@ -763,15 +729,10 @@ class force.Layout
           lock.drag = true
         .on 'drag', (node) =>
           d3.event.sourceEvent.stopPropagation()
-          node.px = d3.event.x
-          node.py = d3.event.y
-          if @runSimulation
-            @layout.resume()
-          else
-            node.x = node.px
-            node.y = node.py
-            @adjustLayout()
-            @svgUpdate()
+          node.x = d3.event.x
+          node.y = d3.event.y
+          @adjustLayout()
+          @svgUpdate()
         .on 'dragend', (node) =>
           d3.event.sourceEvent.stopPropagation()
           lock.drag = false
@@ -783,8 +744,6 @@ class force.Layout
           if lock.drag then return
           if lock.node then lock.node.fixed = false
           (lock.node = node).fixed = true
-          node.px = node.x
-          node.py = node.y
           @svgUpdate()
         .on 'mouseout', (node) =>
           if lock.drag then return
@@ -794,11 +753,6 @@ class force.Layout
         .call(drag)
 
   adjustLayout: ->
-    tick = {
-      gravity: @layout.alpha() * 0.1
-      forces: d3.map()
-    }
-
     move = (node, dx, dy) ->
       node.x += dx
       node.y += dy
@@ -808,13 +762,7 @@ class force.Layout
         move(control, dx, dy)
 
 
-    handleCollisions = (parent, center, tick) =>
-      for child in parent.children
-        dx = (center.x - child.x) * tick.gravity
-        dy = (center.y - child.y) * tick.gravity
-        move(child, dx, dy)
-        def(tick.forces, child.id, []).push(value: [dx, dy], cls: 'gravity')
-
+    handleCollisions = (parent, center) =>
       objects = [].concat(parent.children, parent.controls)
       q = d3.geom.quadtree(objects)
 
@@ -853,8 +801,6 @@ class force.Layout
 
               move(node, dx1, dy1)
               move(other, dx2, dy2)
-              def(tick.forces, node.id, []).push(value: [dx1, dy1], cls: 'collision')
-              def(tick.forces, other.id, []).push(value: [dx2, dy2], cls: 'collision')
 
           return x1 > nx2 or x2 < nx1 or y1 > ny2 or y2 < ny1
 
@@ -863,7 +809,7 @@ class force.Layout
 
     adjustNode = (node) =>
       if node.children.length > 0
-        handleCollisions(node, node, tick)
+        handleCollisions(node, node)
         [xMin, xMax, yMin, yMax] = envelope(node, CELL_PAD)
         grow = node.textWidth - (xMax - xMin)
         if grow > 0
@@ -883,31 +829,10 @@ class force.Layout
     for node in @s.top.children
       walk(node, adjustNode, null, true)
 
-    handleCollisions(@s.top, {x: 0, y: 0}, tick)
+    handleCollisions(@s.top, {x: 0, y: 0})
 
     for tr in @s.transitions
       delete tr.route
-
-    if @debug
-      @container.selectAll('.cell .force').remove()
-
-      @container.selectAll('.cell')
-          .each (node) ->
-            for force in tick.forces.get(node.id) or []
-              d3.select(@).append('line')
-                  .attr('class', "force #{force.cls}")
-                  .attr('x1', 0)
-                  .attr('y1', 0)
-                  .attr('x2', force.value[0] * DEBUG_FORCE_FACTOR)
-                  .attr('y2', force.value[1] * DEBUG_FORCE_FACTOR)
-
-  start: ->
-    @runSimulation = true
-    @layout.start() if @layout?
-
-  stop: ->
-    @runSimulation = false
-    @layout.stop() if @layout?
 
   highlightState: (id, highlight=true) ->
     @queue.push (cb) =>

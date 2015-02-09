@@ -13,9 +13,6 @@ var layout = new forceLayout.Layout({
 layout.initalized
   .done(null, function(e) { console.log('error!', e); });
 
-// begin the force layout simulation
-layout.start();
-
 // add/remove state highlight
 layout.highlightState('state-id', true);
 layout.highlightState('state-id', false);
