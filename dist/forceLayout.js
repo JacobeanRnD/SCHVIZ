@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, envelope, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, transitionPath, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, envelope, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -237,45 +237,6 @@
       x: ((a.x || 0) + (b.x || 0)) / 2,
       y: ((a.y || 0) + (b.y || 0)) / 2
     };
-  };
-
-  transitionPath = function(tr) {
-    var a, b, c, c1, c2, d, h, i, j, m, s, sc, sm, t, tc, tm, w, _ref;
-    _ref = [tr.a, tr.b, tr], a = _ref[0], b = _ref[1], c = _ref[2];
-    if (tr.selfie) {
-      w = c.x - a.x;
-      h = c.y - a.y;
-      c1 = {
-        x: c.x - h / 4,
-        y: c.y + w / 4
-      };
-      c2 = {
-        x: c.x + h / 4,
-        y: c.y - w / 4
-      };
-      s = exit(a, c1);
-      t = exit(a, c2);
-      return "M" + s.x + "," + s.y + " C" + c1.x + "," + c1.y + " " + c1.x + "," + c1.y + " " + c.x + "," + c.y + " C" + c2.x + "," + c2.y + " " + c2.x + "," + c2.y + " " + t.x + "," + t.y;
-    } else {
-      s = exit(a, c);
-      t = exit(b, c);
-      m = midpoint(c, midpoint(s, t));
-      d = {
-        x: c.x - m.x,
-        y: c.y - m.y
-      };
-      sm = midpoint(s, m);
-      tm = midpoint(t, m);
-      i = sc = {
-        x: sm.x + d.x,
-        y: sm.y + d.y
-      };
-      j = tc = {
-        x: tm.x + d.x,
-        y: tm.y + d.y
-      };
-      return "M" + s.x + "," + s.y + " S" + i.x + "," + i.y + " " + c.x + "," + c.y + " S" + j.x + "," + j.y + " " + t.x + "," + t.y;
-    }
   };
 
   findTransition = function(transitions, source, target) {
@@ -912,7 +873,7 @@
       });
       this.container.selectAll('.selfie').remove();
       this.container.selectAll('.transition').selectAll('path').attr('d', function(tr) {
-        return tr.route || transitionPath(tr);
+        return tr.route;
       });
       if (!this.options.textOnPath) {
         return this.container.selectAll('.transition-label').attr('transform', function(tr) {
@@ -975,7 +936,7 @@
     };
 
     Layout.prototype.adjustLayout = function() {
-      var adjustNode, handleCollisions, move, node, tr, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var adjustNode, handleCollisions, move, node, _i, _len, _ref;
       move = function(node, dx, dy) {
         var child, control, _i, _j, _len, _len1, _ref, _ref1, _results;
         node.x += dx;
@@ -1070,17 +1031,10 @@
         node = _ref[_i];
         walk(node, adjustNode, null, true);
       }
-      handleCollisions(this.s.top, {
+      return handleCollisions(this.s.top, {
         x: 0,
         y: 0
       });
-      _ref1 = this.s.transitions;
-      _results = [];
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        tr = _ref1[_j];
-        _results.push(delete tr.route);
-      }
-      return _results;
     };
 
     Layout.prototype.highlightState = function(id, highlight) {
