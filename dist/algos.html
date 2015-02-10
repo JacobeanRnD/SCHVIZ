@@ -11,7 +11,6 @@ html, body { height: 100%; margin: 0; }
 <link rel="stylesheet" href="forceLayout.css">
 <body>
 <div id="controls">
-  <label>Force layout <input type=checkbox name=force></label>
   <label>Text-on-path <input type=checkbox name=textOnPath></label>
   <label>Edge routing <select name=routing></select></label>
   <label>Kieler algorithm <select name=algorithm></select></label>
@@ -29,7 +28,6 @@ html, body { height: 100%; margin: 0; }
   (function(){'use strict';
     var debug = (window.location.search.indexOf('debug=on') > -1);
     var exBase = 'https://dl.dropboxusercontent.com/u/103063/static/desm-devel/';
-    var $forceCheckbox = $('#controls [name=force]');
     var $textOnPathCheckbox = $('#controls [name=textOnPath]');
     var $routingSelect = $('#controls [name=routing]');
     var $algoSelect = $('#controls [name=algorithm]');
@@ -41,20 +39,10 @@ html, body { height: 100%; margin: 0; }
     var config = {
       file: 'helloworld.xml',
       cells: [],
-      force: false,
       textOnPath: false,
       routing: 'ORTHOGONAL'
     };
     try { config = JSON.parse(window.location.hash.slice(1)); } catch(e) {}
-
-    $forceCheckbox.change(function() {
-      config.force = $forceCheckbox.is(':checked');
-      controls.trigger('force');
-      saveConfig();
-    });
-    if(config.force) {
-      $forceCheckbox.attr('checked', true);
-    }
 
     $textOnPathCheckbox.change(function() {
       config.textOnPath = $textOnPathCheckbox.is(':checked');
@@ -152,14 +140,12 @@ html, body { height: 100%; margin: 0; }
         .appendTo($container);
 
       if(doc) createLayout();
-      controls.on('force', onForce);
       controls.on('doc', recreate);
       controls.on('textOnPath', recreate);
 
       $(window).resize(function() { if(layout) layout.invalidateSize(); });
 
       function close() {
-        controls.off('force', onForce);
         controls.off('doc', recreate);
         controls.off('textOnPath', recreate);
         destroyLayout();
@@ -188,20 +174,15 @@ html, body { height: 100%; margin: 0; }
             $(layout.el).replaceWith("Error: " + err.message);
           })
           .done();
-        if(config.force) { layout.start(); }
       }
 
       function destroyLayout() {
-        if(layout) { layout.stop(); $(layout.el).remove(); }
+        if(layout) { $(layout.el).remove(); }
       }
 
       function recreate() {
         destroyLayout();
         createLayout();
-      }
-
-      function onForce() {
-        if(config.force) { layout.start(); } else { layout.stop(); }
       }
     }
   })();

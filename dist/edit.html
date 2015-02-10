@@ -7,7 +7,6 @@ html, body { height: 100%; margin: 0; }
 <link rel="stylesheet" href="forceLayout.css">
 <body>
 <div id="controls">
-  <label>Force layout <input type=checkbox name=force></label>
   <label>Kieler algorithm <select name=algorithm></select></label>
 </div>
 <script src="bower_components/d3/d3.min.js"></script>
@@ -21,22 +20,12 @@ html, body { height: 100%; margin: 0; }
 <script>
   (function(){'use strict';
     var debug = (window.location.search.indexOf('debug=on') > -1);
-    var $forceCheckbox = $('#controls [name=force]');
     var $algoSelect = $('#controls [name=algorithm]')
     var controls = _.extend({}, Backbone.Events);
-    var useForceLayout = false;
     var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
     var algorithm = localStorage.getItem('desm-layout-algorithm') || defaultAlgorithm;
     var layout, createLayout;
 
-    $forceCheckbox.change(function() {
-      useForceLayout = $forceCheckbox.is(':checked');
-      localStorage.setItem('desm-force-layout', useForceLayout || '');
-      controls.trigger('force', useForceLayout);
-    });
-    if(localStorage.getItem('desm-force-layout')) {
-      $forceCheckbox.attr('checked', useForceLayout = true);
-    }
     $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
       var category = {};
       resp.categories.forEach(function(alg) { category[alg.id] = alg.name });
@@ -77,16 +66,11 @@ html, body { height: 100%; margin: 0; }
           })
           .done();
         window.layout = layout;
-        if(useForceLayout) { layout.start(); }
       }
       createLayout();
     }
 
-    controls.on('force', function(start) {
-      if(start) { layout.start(); } else { layout.stop(); }
-    });
     controls.on('algorithm', function() {
-      layout.stop();
       $(layout.el).remove();
       createLayout();
     });
@@ -130,7 +114,6 @@ html, body { height: 100%; margin: 0; }
       }
 
       function reset() {
-        layout.stop();
         $(layout.el).remove();
         invokeLayout({parent: parent, doc: parse()});
       }
@@ -141,7 +124,6 @@ html, body { height: 100%; margin: 0; }
       }
 
       function loadGeom() {
-        layout.stop();
         $(layout.el).remove();
         invokeLayout({
           parent: parent,
