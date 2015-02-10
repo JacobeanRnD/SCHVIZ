@@ -12,7 +12,6 @@ html, body { height: 100%; margin: 0; }
 <body>
 <div id="controls">
   <label>Text-on-path <input type=checkbox name=textOnPath></label>
-  <label>Edge routing <select name=routing></select></label>
   <label>Kieler algorithm <select name=algorithm></select></label>
   <label>Example document <select name=document></select></label>
 </div>
@@ -29,7 +28,6 @@ html, body { height: 100%; margin: 0; }
     var debug = (window.location.search.indexOf('debug=on') > -1);
     var exBase = 'https://dl.dropboxusercontent.com/u/103063/static/desm-devel/';
     var $textOnPathCheckbox = $('#controls [name=textOnPath]');
-    var $routingSelect = $('#controls [name=routing]');
     var $algoSelect = $('#controls [name=algorithm]');
     var $docSelect = $('#controls [name=document]');
     var controls = _.extend({}, Backbone.Events);
@@ -39,8 +37,7 @@ html, body { height: 100%; margin: 0; }
     var config = {
       algo: '__klayjs',
       cells: [],
-      textOnPath: false,
-      routing: 'ORTHOGONAL'
+      textOnPath: false
     };
     try { config = JSON.parse(window.location.hash.slice(1)); } catch(e) {}
 
@@ -53,22 +50,6 @@ html, body { height: 100%; margin: 0; }
       $textOnPathCheckbox.attr('checked', true);
     }
 
-    var routingOptions = [
-      {name: "Orthogonal", value: "ORTHOGONAL"},
-      {name: "Polyline", value: "POLYLINE"},
-      {name: "Splines", value: "SPLINES"}
-    ];
-
-    $routingSelect.append(
-      routingOptions.map(function(r) {
-        return $('<option>')
-            .text(r.name)
-            .attr('value', r.value)
-            .attr('selected', r.value == config.routing ? true : null)
-      })
-    );
-
-    $routingSelect.change(recreateLayout);
     $algoSelect.change(recreateLayout);
 
     $docSelect.change(function() {
@@ -121,7 +102,6 @@ html, body { height: 100%; margin: 0; }
     }
 
     function recreateLayout() {
-      config.routing = $routingSelect.val();
       config.algo = $algoSelect.val();
       saveConfig();
       controls.trigger('recreate');
@@ -163,7 +143,6 @@ html, body { height: 100%; margin: 0; }
               parent: $container[0],
               doc: doc,
               textOnPath: config.textOnPath || false,
-              routing: config.routing,
               debug: debug
             });
           layout.initialized
