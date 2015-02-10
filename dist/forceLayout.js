@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, envelope, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, envelope, findTransition, force, idMaker, kielerSpline, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -46,6 +46,8 @@
   MAX_ZOOM = 6;
 
   ANIMATION_SPEED = 2;
+
+  GEOMETRY_VERSION = 2;
 
   strip = function(obj) {
     var key, value;
@@ -746,13 +748,17 @@
             });
           }
           return _results;
-        }).call(this)
+        }).call(this),
+        version: GEOMETRY_VERSION
       });
     };
 
     Layout.prototype.applyGeometry = function(geom_json) {
       var geom, node, saved, tr, _i, _j, _len, _len1, _ref, _ref1;
       geom = JSON.parse(geom_json);
+      if (geom.version !== GEOMETRY_VERSION) {
+        return;
+      }
       _ref = geom.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         saved = _ref[_i];

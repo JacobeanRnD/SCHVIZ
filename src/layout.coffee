@@ -14,6 +14,7 @@ DEBUG_FORCE_FACTOR = 50
 MIN_ZOOM = 1/6
 MAX_ZOOM = 6
 ANIMATION_SPEED = 2
+GEOMETRY_VERSION = 2
 
 
 strip = (obj) ->
@@ -526,10 +527,12 @@ class force.Layout
         id: tr.id
         route: tr.route
       } for tr in @s.transitions
+      version: GEOMETRY_VERSION
     })
 
   applyGeometry: (geom_json) ->
     geom = JSON.parse(geom_json)
+    return if geom.version != GEOMETRY_VERSION
     for saved in geom.nodes
       if (node = @s.nodeMap.get(saved.id))?
         node.w = saved.w
