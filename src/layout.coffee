@@ -694,16 +694,15 @@ class force.Layout
           @svgUpdate()
         .call(drag)
 
+  moveNode: (node, dx, dy) ->
+    node.x += dx
+    node.y += dy
+    for child in node.children or []
+      @moveNode(child, dx, dy)
+    for control in node.controls or []
+      @moveNode(control, dx, dy)
+
   adjustLayout: ->
-    move = (node, dx, dy) ->
-      node.x += dx
-      node.y += dy
-      for child in node.children or []
-        move(child, dx, dy)
-      for control in node.controls or []
-        move(control, dx, dy)
-
-
     handleCollisions = (parent, center) =>
       objects = [].concat(parent.children, parent.controls)
       q = d3.geom.quadtree(objects)
@@ -741,8 +740,8 @@ class force.Layout
                 dy1 = s * f * cy
                 dy2 = s * (f-1) * cy
 
-              move(node, dx1, dy1)
-              move(other, dx2, dy2)
+              @moveNode(node, dx1, dy1)
+              @moveNode(other, dx2, dy2)
 
           return x1 > nx2 or x2 < nx1 or y1 > ny2 or y2 < ny1
 
@@ -764,7 +763,7 @@ class force.Layout
         node.x += dx
         node.y += dy
         if node.fixed
-          move(node, -dx, -dy)
+          @moveNode(node, -dx, -dy)
 
       node.weight = node.w * node.h
 

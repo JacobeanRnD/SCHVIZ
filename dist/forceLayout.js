@@ -914,25 +914,26 @@
       })(this)).call(drag);
     };
 
+    Layout.prototype.moveNode = function(node, dx, dy) {
+      var child, control, _i, _j, _len, _len1, _ref, _ref1, _results;
+      node.x += dx;
+      node.y += dy;
+      _ref = node.children || [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        child = _ref[_i];
+        this.moveNode(child, dx, dy);
+      }
+      _ref1 = node.controls || [];
+      _results = [];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        control = _ref1[_j];
+        _results.push(this.moveNode(control, dx, dy));
+      }
+      return _results;
+    };
+
     Layout.prototype.adjustLayout = function() {
-      var adjustNode, handleCollisions, move, node, _i, _len, _ref;
-      move = function(node, dx, dy) {
-        var child, control, _i, _j, _len, _len1, _ref, _ref1, _results;
-        node.x += dx;
-        node.y += dy;
-        _ref = node.children || [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          child = _ref[_i];
-          move(child, dx, dy);
-        }
-        _ref1 = node.controls || [];
-        _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          control = _ref1[_j];
-          _results.push(move(control, dx, dy));
-        }
-        return _results;
-      };
+      var adjustNode, handleCollisions, node, _i, _len, _ref;
       handleCollisions = (function(_this) {
         return function(parent, center) {
           var collide, node, nx1, nx2, ny1, ny2, objects, q, _i, _len, _results;
@@ -970,8 +971,8 @@
                     dy1 = s * f * cy;
                     dy2 = s * (f - 1) * cy;
                   }
-                  move(node, dx1, dy1);
-                  move(other, dx2, dy2);
+                  _this.moveNode(node, dx1, dy1);
+                  _this.moveNode(other, dx2, dy2);
                 }
               }
               return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
@@ -999,7 +1000,7 @@
             node.x += dx;
             node.y += dy;
             if (node.fixed) {
-              move(node, -dx, -dy);
+              _this.moveNode(node, -dx, -dy);
             }
           }
           return node.weight = node.w * node.h;
