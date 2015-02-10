@@ -208,27 +208,6 @@ toKielerFormat = (node) ->
   return rv
 
 
-kielerSpline = (edge, x0, y0) ->
-  xy = (p) -> [x0 + p.x, y0 + p.y]
-  rv = "M#{xy(edge.sourcePoint)}"
-  points = [].concat(edge.bendPoints or [], [edge.targetPoint])
-
-  while points.length > 2
-    [c1, c2, t] = points.slice(0, 3)
-    rv += " C #{xy(c1)} #{xy(c2)} #{xy(t)}"
-    points = points.slice(3)
-
-  if points.length == 2
-    [c, t] = points
-    rv += " Q #{xy(c)} #{xy(t)}"
-
-  else if points.length == 1
-    [t] = points
-    rv += " L #{xy(t)}"
-
-  return rv
-
-
 force.kielerLayout = (top, options) ->
   kNodeMap = d3.map()
   kEdgeMap = d3.map()
@@ -252,18 +231,14 @@ force.kielerLayout = (top, options) ->
       e1 = kEdgeMap.get("#{tr.id}#1")
       e2 = kEdgeMap.get("#{tr.id}#2")
 
-      if options.routing == 'SPLINES'
-        tr.route = kielerSpline(e1, x0, y0) + " L" + kielerSpline(e2, x0, y0).slice(1)
-
-      else
-        tr.route = d3.svg.line()([].concat(
-          [e1.sourcePoint]
-          e1.bendPoints or []
-          [e1.targetPoint]
-          [e2.sourcePoint]
-          e2.bendPoints or []
-          [e2.targetPoint]
-        ).map((d) -> [x0 + d.x, y0 + d.y]))
+      tr.route = d3.svg.line()([].concat(
+        [e1.sourcePoint]
+        e1.bendPoints or []
+        [e1.targetPoint]
+        [e2.sourcePoint]
+        e2.bendPoints or []
+        [e2.targetPoint]
+      ).map((d) -> [x0 + d.x, y0 + d.y]))
 
     childMap = d3.map()
     for child in node.children or []
@@ -282,7 +257,7 @@ force.kielerLayout = (top, options) ->
       graph: graph
       options:
         layoutHierarchy: true
-        edgeRouting: options.routing
+        edgeRouting: 'ORTHOGONAL'
       success: klay_ready.resolve
       error: (err) -> klay_ready.reject(new Error(err.text))
     )
@@ -394,7 +369,6 @@ class force.Layout
           deferred.resolve(
             force.kielerLayout(@s.top, {
               algorithm: @options.kielerAlgorithm
-              routing: @options.routing || 'ORTHOGONAL'
             })
               .then (treeWithLayout) =>
                 loading.destroy()
