@@ -325,7 +325,7 @@
     kNodeMap = d3.map();
     kEdgeMap = d3.map();
     applyLayout = function(node, kNode, x0, y0) {
-      var child, childMap, e1, e2, kChild, kTr, tr, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+      var child, childMap, e1, e2, kChild, kTr, tr, translate, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
       if (x0 == null) {
         x0 = null;
       }
@@ -348,9 +348,17 @@
         tr.y = y0 + kTr.y + kTr.height / 2 - 10;
         e1 = kEdgeMap.get("" + tr.id + "#1");
         e2 = kEdgeMap.get("" + tr.id + "#2");
-        tr.route = d3.svg.line()([].concat([e1.sourcePoint], e1.bendPoints || [], [e1.targetPoint], [e2.sourcePoint], e2.bendPoints || [], [e2.targetPoint]).map(function(d) {
+        translate = function(d) {
           return [x0 + d.x, y0 + d.y];
-        }));
+        };
+        tr.route = {
+          src: translate(e1.sourcePoint),
+          segment1: (e1.bendPoints || []).map(translate),
+          label1: translate(e1.targetPoint),
+          label2: translate(e2.sourcePoint),
+          segment2: (e2.bendPoints || []).map(translate),
+          dst: translate(e2.targetPoint)
+        };
       }
       childMap = d3.map();
       _ref1 = node.children || [];
@@ -852,7 +860,7 @@
       });
       this.container.selectAll('.selfie').remove();
       this.container.selectAll('.transition').selectAll('path').attr('d', function(tr) {
-        return tr.route;
+        return d3.svg.line()([].concat([tr.route.src], tr.route.segment1, [tr.route.label1], [tr.route.label2], tr.route.segment2, [tr.route.dst]));
       });
       if (!this.options.textOnPath) {
         return this.container.selectAll('.transition-label').attr('transform', function(tr) {

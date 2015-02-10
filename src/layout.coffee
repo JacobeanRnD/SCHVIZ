@@ -231,14 +231,16 @@ force.kielerLayout = (top, options) ->
       e1 = kEdgeMap.get("#{tr.id}#1")
       e2 = kEdgeMap.get("#{tr.id}#2")
 
-      tr.route = d3.svg.line()([].concat(
-        [e1.sourcePoint]
-        e1.bendPoints or []
-        [e1.targetPoint]
-        [e2.sourcePoint]
-        e2.bendPoints or []
-        [e2.targetPoint]
-      ).map((d) -> [x0 + d.x, y0 + d.y]))
+      translate = (d) -> [x0 + d.x, y0 + d.y]
+
+      tr.route = {
+        src: translate(e1.sourcePoint)
+        segment1: (e1.bendPoints or []).map(translate)
+        label1: translate(e1.targetPoint)
+        label2: translate(e2.sourcePoint)
+        segment2: (e2.bendPoints or []).map(translate)
+        dst: translate(e2.targetPoint)
+      }
 
     childMap = d3.map()
     for child in node.children or []
@@ -654,7 +656,15 @@ class force.Layout
     @container.selectAll('.selfie').remove()
 
     @container.selectAll('.transition').selectAll('path')
-        .attr 'd', (tr) -> tr.route
+        .attr 'd', (tr) ->
+          d3.svg.line()([].concat(
+            [tr.route.src]
+            tr.route.segment1
+            [tr.route.label1]
+            [tr.route.label2]
+            tr.route.segment2
+            [tr.route.dst]
+          ))
 
     unless @options.textOnPath
       @container.selectAll('.transition-label')
