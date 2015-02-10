@@ -886,8 +886,7 @@
       })(this)).on('drag', (function(_this) {
         return function(node) {
           d3.event.sourceEvent.stopPropagation();
-          node.x = d3.event.x;
-          node.y = d3.event.y;
+          _this.moveNode(node, d3.event.dx, d3.event.dy);
           _this.adjustLayout();
           return _this.svgUpdate();
         };
@@ -923,18 +922,37 @@
     };
 
     Layout.prototype.moveNode = function(node, dx, dy) {
-      var child, control, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var child, control, tr, translate, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
       node.x += dx;
       node.y += dy;
-      _ref = node.children || [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        child = _ref[_i];
+      translate = function(p, dx, dy) {
+        p[0] += dx;
+        return p[1] += dy;
+      };
+      if (node.route != null) {
+        translate(node.route.label1, dx, dy);
+        translate(node.route.label2, dx, dy);
+      } else {
+        _ref = this.s.transitions;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          tr = _ref[_i];
+          if (tr.a.id === node.id) {
+            translate(tr.route.src, dx, dy);
+          }
+          if (tr.b.id === node.id) {
+            translate(tr.route.dst, dx, dy);
+          }
+        }
+      }
+      _ref1 = node.children || [];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        child = _ref1[_j];
         this.moveNode(child, dx, dy);
       }
-      _ref1 = node.controls || [];
+      _ref2 = node.controls || [];
       _results = [];
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        control = _ref1[_j];
+      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+        control = _ref2[_k];
         _results.push(this.moveNode(control, dx, dy));
       }
       return _results;

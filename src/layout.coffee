@@ -681,8 +681,7 @@ class force.Layout
           lock.drag = true
         .on 'drag', (node) =>
           d3.event.sourceEvent.stopPropagation()
-          node.x = d3.event.x
-          node.y = d3.event.y
+          @moveNode(node, d3.event.dx, d3.event.dy)
           @adjustLayout()
           @svgUpdate()
         .on 'dragend', (node) =>
@@ -707,6 +706,20 @@ class force.Layout
   moveNode: (node, dx, dy) ->
     node.x += dx
     node.y += dy
+
+    translate = (p, dx, dy) -> p[0] += dx; p[1] += dy
+
+    if node.route?
+      translate(node.route.label1, dx, dy)
+      translate(node.route.label2, dx, dy)
+
+    else
+      for tr in @s.transitions
+        if tr.a.id == node.id
+          translate(tr.route.src, dx, dy)
+        if tr.b.id == node.id
+          translate(tr.route.dst, dx, dy)
+
     for child in node.children or []
       @moveNode(child, dx, dy)
     for control in node.controls or []
