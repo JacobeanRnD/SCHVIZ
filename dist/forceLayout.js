@@ -280,26 +280,26 @@
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       child = _ref[_i];
       children.push(toKielerFormat(child));
-      _ref1 = child.transitions || [];
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        transition = _ref1[_j];
-        children.push({
-          id: transition.id,
-          desmTransition: true,
-          width: transition.textWidth,
-          height: 25
-        });
-        edges.push({
-          id: "" + transition.id + "#1",
-          source: child.id,
-          target: transition.id
-        });
-        edges.push({
-          id: "" + transition.id + "#2",
-          source: transition.id,
-          target: transition.target
-        });
-      }
+    }
+    _ref1 = node.controls || [];
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      transition = _ref1[_j];
+      children.push({
+        id: transition.id,
+        desmTransition: true,
+        width: transition.textWidth,
+        height: 25
+      });
+      edges.push({
+        id: "" + transition.id + "#1",
+        source: child.id,
+        target: transition.id
+      });
+      edges.push({
+        id: "" + transition.id + "#2",
+        source: transition.id,
+        target: transition.target
+      });
     }
     rv = {
       id: node.id,

@@ -178,23 +178,23 @@ toKielerFormat = (node) ->
   edges = []
   for child in node.children or []
     children.push(toKielerFormat(child))
-    for transition in child.transitions or []
-      children.push(
-        id: transition.id
-        desmTransition: true
-        width: transition.textWidth
-        height: 25
-      )
-      edges.push(
-        id: "#{transition.id}#1"
-        source: child.id
-        target: transition.id
-      )
-      edges.push(
-        id: "#{transition.id}#2"
-        source: transition.id
-        target: transition.target
-      )
+  for transition in node.controls or []
+    children.push(
+      id: transition.id
+      desmTransition: true
+      width: transition.textWidth
+      height: 25
+    )
+    edges.push(
+      id: "#{transition.id}#1"
+      source: child.id
+      target: transition.id
+    )
+    edges.push(
+      id: "#{transition.id}#2"
+      source: transition.id
+      target: transition.target
+    )
   rv = {
     id: node.id
     children: children
