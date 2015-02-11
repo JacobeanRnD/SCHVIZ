@@ -306,16 +306,13 @@
       children: children,
       edges: edges
     };
-    if (node.id != null) {
-      rv.labels = [
-        {
-          text: node.id
-        }
-      ];
-    }
     if ((node.children || []).length === 0) {
       rv.width = node.w;
       rv.height = node.h;
+    } else if (node.id != null) {
+      rv.padding = {
+        top: 15
+      };
     }
     return rv;
   };
@@ -325,7 +322,7 @@
     kNodeMap = d3.map();
     kEdgeMap = d3.map();
     applyLayout = function(node, kNode, x0, y0) {
-      var child, childMap, e1, e2, kChild, kTr, tr, translate, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+      var child, childMap, child_x0, child_y0, e1, e2, kChild, kTr, padding, tr, translate, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
       if (x0 == null) {
         x0 = null;
       }
@@ -338,6 +335,10 @@
         x0 = -node.w / 2;
         y0 = -node.h / 2;
       }
+      padding = _.extend({
+        top: 0,
+        left: 0
+      }, kNode.padding);
       node.x = x0 + (kNode.x || 0) + node.w / 2;
       node.y = y0 + (kNode.y || 0) + node.h / 2;
       _ref = node.transitions || [];
@@ -376,7 +377,9 @@
           continue;
         }
         if (!kChild.desmTransition) {
-          _results.push(applyLayout(child, kChild, node.x - node.w / 2, node.y - node.h / 2));
+          child_x0 = node.x - node.w / 2 + padding.left;
+          child_y0 = node.y - node.h / 2 + padding.top;
+          _results.push(applyLayout(child, kChild, child_x0, child_y0));
         } else {
           _results.push(void 0);
         }

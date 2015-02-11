@@ -200,11 +200,11 @@ toKielerFormat = (node) ->
     children: children
     edges: edges
   }
-  if node.id?
-    rv.labels = [{text: node.id}]
   if (node.children or []).length == 0
     rv.width = node.w
     rv.height = node.h
+  else if node.id?
+    rv.padding = {top: 15}
   return rv
 
 
@@ -219,6 +219,8 @@ force.kielerLayout = (top, options) ->
     unless x0? and y0?
       x0 = -node.w/2
       y0 = -node.h/2
+
+    padding = _.extend({top: 0, left: 0}, kNode.padding)
 
     node.x = x0 + (kNode.x or 0) + node.w/2
     node.y = y0 + (kNode.y or 0) + node.h/2
@@ -249,7 +251,9 @@ force.kielerLayout = (top, options) ->
     for kChild in kNode.children or []
       unless (child = childMap.get(kChild.id))? then continue
       unless kChild.desmTransition
-        applyLayout(child, kChild, node.x - node.w/2, node.y - node.h/2)
+        child_x0 = node.x - node.w/2 + padding.left
+        child_y0 = node.y - node.h/2 + padding.top
+        applyLayout(child, kChild, child_x0, child_y0)
 
   graph = toKielerFormat(top)
 
