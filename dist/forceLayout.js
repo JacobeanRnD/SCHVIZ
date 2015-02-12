@@ -292,13 +292,13 @@
       });
       edges.push({
         id: "" + transition.id + "#1",
-        source: child.id,
+        source: transition.a.id,
         target: transition.id
       });
       edges.push({
         id: "" + transition.id + "#2",
         source: transition.id,
-        target: transition.target
+        target: transition.b.id
       });
     }
     rv = {
