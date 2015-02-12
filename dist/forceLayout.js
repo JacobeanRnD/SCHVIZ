@@ -324,44 +324,42 @@
     kEdgeMap = d3.map();
     offsetMap = d3.map();
     applyLayout = function(kNode) {
-      var e1, e2, kChild, kTr, node, offset, tr, translate, x0, y0, _i, _j, _len, _len1, _ref, _ref1, _results;
-      node = s.nodeMap.get(kNode.id);
-      if (node.desmTransition) {
-        return;
-      }
-      offset = offsetMap.get(kNode.id);
-      if (kNode.id !== '__ROOT__') {
+      var e1, e2, kChild, kTr, node, offset, offset1, offset2, tr, translate1, translate2, _i, _len, _ref, _results;
+      if (kNode.desmTransition) {
+        tr = s.nodeMap.get(kNode.id);
+        offset1 = offsetMap.get(tr.a.id);
+        offset2 = offsetMap.get(tr.id);
+        kTr = kNodeMap.get(tr.id);
+        tr.x = offset2.x + kTr.x + kTr.width / 2;
+        tr.y = offset2.y + kTr.y + kTr.height / 2 - 10;
+        e1 = kEdgeMap.get("" + tr.id + "#1");
+        e2 = kEdgeMap.get("" + tr.id + "#2");
+        translate1 = function(d) {
+          return [offset1.x + d.x, offset1.y + d.y];
+        };
+        translate2 = function(d) {
+          return [offset2.x + d.x, offset2.y + d.y];
+        };
+        tr.route = {
+          src: translate1(e1.sourcePoint),
+          segment1: (e1.bendPoints || []).map(translate1),
+          label1: translate1(e1.targetPoint),
+          label2: translate2(e2.sourcePoint),
+          segment2: (e2.bendPoints || []).map(translate2),
+          dst: translate2(e2.targetPoint)
+        };
+      } else if (kNode.id !== '__ROOT__') {
+        node = s.nodeMap.get(kNode.id);
+        offset = offsetMap.get(kNode.id);
         node.w = kNode.width;
         node.h = kNode.height;
         node.x = offset.x + (kNode.x || 0) + node.w / 2;
         node.y = offset.y + (kNode.y || 0) + node.h / 2;
       }
-      _ref = node.transitions || [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        tr = _ref[_i];
-        x0 = offset.x;
-        y0 = offset.y;
-        kTr = kNodeMap.get(tr.id);
-        tr.x = x0 + kTr.x + kTr.width / 2;
-        tr.y = y0 + kTr.y + kTr.height / 2 - 10;
-        e1 = kEdgeMap.get("" + tr.id + "#1");
-        e2 = kEdgeMap.get("" + tr.id + "#2");
-        translate = function(d) {
-          return [x0 + d.x, y0 + d.y];
-        };
-        tr.route = {
-          src: translate(e1.sourcePoint),
-          segment1: (e1.bendPoints || []).map(translate),
-          label1: translate(e1.targetPoint),
-          label2: translate(e2.sourcePoint),
-          segment2: (e2.bendPoints || []).map(translate),
-          dst: translate(e2.targetPoint)
-        };
-      }
-      _ref1 = kNode.children || [];
+      _ref = kNode.children || [];
       _results = [];
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        kChild = _ref1[_j];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        kChild = _ref[_i];
         _results.push(applyLayout(kChild));
       }
       return _results;

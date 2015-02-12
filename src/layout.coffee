@@ -215,36 +215,36 @@ force.kielerLayout = (s, options) ->
   offsetMap = d3.map()
 
   applyLayout = (kNode) ->
-    node = s.nodeMap.get(kNode.id)
-    return if node.desmTransition
-
-    offset = offsetMap.get(kNode.id)
-    if kNode.id != '__ROOT__'
-      node.w = kNode.width
-      node.h = kNode.height
-      node.x = offset.x + (kNode.x or 0) + node.w/2
-      node.y = offset.y + (kNode.y or 0) + node.h/2
-
-    for tr in node.transitions or []
-      x0 = offset.x
-      y0 = offset.y
+    if kNode.desmTransition
+      tr = s.nodeMap.get(kNode.id)
+      offset1 = offsetMap.get(tr.a.id)
+      offset2 = offsetMap.get(tr.id)
       kTr = kNodeMap.get(tr.id)
-      tr.x = x0 + kTr.x + kTr.width/2
-      tr.y = y0 + kTr.y + kTr.height/2 - 10
+      tr.x = offset2.x + kTr.x + kTr.width/2
+      tr.y = offset2.y + kTr.y + kTr.height/2 - 10
 
       e1 = kEdgeMap.get("#{tr.id}#1")
       e2 = kEdgeMap.get("#{tr.id}#2")
 
-      translate = (d) -> [x0 + d.x, y0 + d.y]
+      translate1 = (d) -> [offset1.x + d.x, offset1.y + d.y]
+      translate2 = (d) -> [offset2.x + d.x, offset2.y + d.y]
 
       tr.route = {
-        src: translate(e1.sourcePoint)
-        segment1: (e1.bendPoints or []).map(translate)
-        label1: translate(e1.targetPoint)
-        label2: translate(e2.sourcePoint)
-        segment2: (e2.bendPoints or []).map(translate)
-        dst: translate(e2.targetPoint)
+        src: translate1(e1.sourcePoint)
+        segment1: (e1.bendPoints or []).map(translate1)
+        label1: translate1(e1.targetPoint)
+        label2: translate2(e2.sourcePoint)
+        segment2: (e2.bendPoints or []).map(translate2)
+        dst: translate2(e2.targetPoint)
       }
+
+    else if kNode.id != '__ROOT__'
+      node = s.nodeMap.get(kNode.id)
+      offset = offsetMap.get(kNode.id)
+      node.w = kNode.width
+      node.h = kNode.height
+      node.x = offset.x + (kNode.x or 0) + node.w/2
+      node.y = offset.y + (kNode.y or 0) + node.h/2
 
     for kChild in kNode.children or []
       applyLayout(kChild)
