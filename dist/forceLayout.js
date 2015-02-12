@@ -317,13 +317,18 @@
     return rv;
   };
 
-  force.kielerLayout = function(top, options) {
-    var applyLayout, form, graph, kEdgeMap, kNodeMap, klay_ready, layoutDone, offsetMap;
+  force.kielerLayout = function(s, options) {
+    var applyLayout, form, graph, kEdgeMap, kNodeMap, klay_ready, layoutDone, offsetMap, top;
+    top = s.top;
     kNodeMap = d3.map();
     kEdgeMap = d3.map();
     offsetMap = d3.map();
-    applyLayout = function(node, kNode) {
-      var child, childMap, e1, e2, kChild, kTr, offset, tr, translate, x0, y0, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+    applyLayout = function(kNode) {
+      var e1, e2, kChild, kTr, node, offset, tr, translate, x0, y0, _i, _j, _len, _len1, _ref, _ref1, _results;
+      node = s.nodeMap.get(kNode.id);
+      if (node.desmTransition) {
+        return;
+      }
       offset = offsetMap.get(kNode.id);
       if (kNode.id !== '__ROOT__') {
         node.w = kNode.width;
@@ -353,26 +358,11 @@
           dst: translate(e2.targetPoint)
         };
       }
-      childMap = d3.map();
-      _ref1 = node.children || [];
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        child = _ref1[_j];
-        if (child.id != null) {
-          childMap.set(child.id, child);
-        }
-      }
-      _ref2 = kNode.children || [];
+      _ref1 = kNode.children || [];
       _results = [];
-      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-        kChild = _ref2[_k];
-        if ((child = childMap.get(kChild.id)) == null) {
-          continue;
-        }
-        if (!kChild.desmTransition) {
-          _results.push(applyLayout(child, kChild, kNode));
-        } else {
-          _results.push(void 0);
-        }
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        kChild = _ref1[_j];
+        _results.push(applyLayout(kChild));
       }
       return _results;
     };
@@ -439,7 +429,7 @@
           return _results;
         };
       })(this));
-      return applyLayout(top, graphLayout);
+      return applyLayout(graphLayout);
     });
   };
 
@@ -549,7 +539,7 @@
                 svg: _this.el,
                 text: "Loading Kieler layout ..."
               });
-              return deferred.resolve(force.kielerLayout(_this.s.top, {
+              return deferred.resolve(force.kielerLayout(_this.s, {
                 algorithm: _this.options.kielerAlgorithm
               }).then(function(treeWithLayout) {
                 loading.destroy();
@@ -590,7 +580,8 @@
     };
 
     Layout.prototype._emptyState = function() {
-      return {
+      var s;
+      s = {
         nodes: [],
         cells: [],
         nodeMap: d3.map(),
@@ -604,6 +595,8 @@
         newNodes: [],
         dom: d3.map()
       };
+      s.nodeMap.set(s.top.id, s.top);
+      return s;
     };
 
     Layout.prototype.loadTree = function(tree) {

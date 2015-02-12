@@ -208,12 +208,16 @@ toKielerFormat = (node) ->
   return rv
 
 
-force.kielerLayout = (top, options) ->
+force.kielerLayout = (s, options) ->
+  top = s.top
   kNodeMap = d3.map()
   kEdgeMap = d3.map()
   offsetMap = d3.map()
 
-  applyLayout = (node, kNode) ->
+  applyLayout = (kNode) ->
+    node = s.nodeMap.get(kNode.id)
+    return if node.desmTransition
+
     offset = offsetMap.get(kNode.id)
     if kNode.id != '__ROOT__'
       node.w = kNode.width
@@ -242,14 +246,8 @@ force.kielerLayout = (top, options) ->
         dst: translate(e2.targetPoint)
       }
 
-    childMap = d3.map()
-    for child in node.children or []
-      if child.id? then childMap.set(child.id, child)
-
     for kChild in kNode.children or []
-      unless (child = childMap.get(kChild.id))? then continue
-      unless kChild.desmTransition
-        applyLayout(child, kChild, kNode)
+      applyLayout(kChild)
 
   graph = toKielerFormat(top)
 
@@ -301,7 +299,7 @@ force.kielerLayout = (top, options) ->
           })
         for kEdge in kNode.edges or []
           kEdgeMap.set(kEdge.id, kEdge)
-      applyLayout(top, graphLayout)
+      applyLayout(graphLayout)
 
 
 class NewNodesAnimation
@@ -380,7 +378,7 @@ class force.Layout
         else
           loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
           deferred.resolve(
-            force.kielerLayout(@s.top, {
+            force.kielerLayout(@s, {
               algorithm: @options.kielerAlgorithm
             })
               .then (treeWithLayout) =>
@@ -414,7 +412,8 @@ class force.Layout
 
     return deferred.promise
 
-  _emptyState: -> {
+  _emptyState: ->
+    s = {
       nodes: []
       cells: []
       nodeMap: d3.map()
@@ -428,6 +427,8 @@ class force.Layout
       newNodes: []
       dom: d3.map()
     }
+    s.nodeMap.set(s.top.id, s.top)
+    return s
 
   loadTree: (tree) ->
     @mergeTree(tree)
