@@ -203,7 +203,7 @@ toKielerFormat = (node) ->
   if (node.children or []).length == 0
     rv.width = node.w
     rv.height = node.h
-  else if node.id?
+  else if node.id != '__ROOT__'
     rv.padding = {top: 15}
   return rv
 
@@ -211,21 +211,19 @@ toKielerFormat = (node) ->
 force.kielerLayout = (top, options) ->
   kNodeMap = d3.map()
   kEdgeMap = d3.map()
+  offsetMap = d3.map()
 
-  applyLayout = (node, kNode, x0 = null, y0 = null) ->
-    node.w = kNode.width
-    node.h = kNode.height
-
-    unless x0? and y0?
-      x0 = -node.w/2
-      y0 = -node.h/2
-
-    padding = _.extend({top: 0, left: 0}, kNode.padding)
-
-    node.x = x0 + (kNode.x or 0) + node.w/2
-    node.y = y0 + (kNode.y or 0) + node.h/2
+  applyLayout = (node, kNode) ->
+    offset = offsetMap.get(kNode.id)
+    if kNode.id != '__ROOT__'
+      node.w = kNode.width
+      node.h = kNode.height
+      node.x = offset.x + (kNode.x or 0) + node.w/2
+      node.y = offset.y + (kNode.y or 0) + node.h/2
 
     for tr in node.transitions or []
+      x0 = offset.x
+      y0 = offset.y
       kTr = kNodeMap.get(tr.id)
       tr.x = x0 + kTr.x + kTr.width/2
       tr.y = y0 + kTr.y + kTr.height/2 - 10
@@ -251,9 +249,7 @@ force.kielerLayout = (top, options) ->
     for kChild in kNode.children or []
       unless (child = childMap.get(kChild.id))? then continue
       unless kChild.desmTransition
-        child_x0 = node.x - node.w/2 + padding.left
-        child_y0 = node.y - node.h/2 + padding.top
-        applyLayout(child, kChild, child_x0, child_y0)
+        applyLayout(child, kChild, kNode)
 
   graph = toKielerFormat(top)
 
@@ -290,8 +286,19 @@ force.kielerLayout = (top, options) ->
 
   return layoutDone
     .then (graphLayout) ->
+      offsetMap.set('__ROOT__', {
+        x: -graphLayout.width / 2
+        y: -graphLayout.height / 2
+      })
       walk graphLayout, (kNode) =>
         kNodeMap.set(kNode.id, kNode)
+        offset = offsetMap.get(kNode.id)
+        padding = _.extend({top: 0, left: 0}, kNode.padding)
+        for kChild in kNode.children or []
+          offsetMap.set(kChild.id, {
+            x: offset.x + (kNode.x or 0) + (padding.left or 0)
+            y: offset.y + (kNode.y or 0) + (padding.top or 0)
+          })
         for kEdge in kNode.edges or []
           kEdgeMap.set(kEdge.id, kEdge)
       applyLayout(top, graphLayout)
@@ -414,6 +421,7 @@ class force.Layout
       links: []
       transitions: []
       top: {
+        id: '__ROOT__'
         children: []
         controls: []
       }
