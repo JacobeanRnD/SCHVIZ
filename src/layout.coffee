@@ -4,7 +4,7 @@ KIELER_URL = 'http://kieler.herokuapp.com/live'
 MARGIN = 5
 ROUND_CORNER = 5
 CELL_MIN = {w: 40, h: 40}
-CELL_PAD = {top: 20, bottom: 5, left: 5, right: 5}
+CELL_PAD = {top: 20, bottom: 10, left: 10, right: 10}
 EXPORT_PAD = {top: 10, bottom: 10, left: 10, right: 10}
 LABEL_SPACE = 400
 CONTROL_SIZE = {w: 25, h: 25}
@@ -173,6 +173,11 @@ envelope = (node, pad={}) ->
     xValues.push(box.x + box.w / 2)
     yValues.push(box.y - box.h / 2)
     yValues.push(box.y + box.h / 2)
+
+  for tr in node.controls
+    for point in [].concat(tr.route.segment1, tr.route.segment2)
+      xValues.push(point[0])
+      yValues.push(point[1])
 
   return [
     d3.min(xValues) - (pad.left or 0)

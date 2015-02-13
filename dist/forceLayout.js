@@ -16,9 +16,9 @@
 
   CELL_PAD = {
     top: 20,
-    bottom: 5,
-    left: 5,
-    right: 5
+    bottom: 10,
+    left: 10,
+    right: 10
   };
 
   EXPORT_PAD = {
@@ -252,7 +252,7 @@
   };
 
   envelope = function(node, pad) {
-    var box, xValues, yValues, _i, _len, _ref;
+    var box, point, tr, xValues, yValues, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
     if (pad == null) {
       pad = {};
     }
@@ -265,6 +265,16 @@
       xValues.push(box.x + box.w / 2);
       yValues.push(box.y - box.h / 2);
       yValues.push(box.y + box.h / 2);
+    }
+    _ref1 = node.controls;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      tr = _ref1[_j];
+      _ref2 = [].concat(tr.route.segment1, tr.route.segment2);
+      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+        point = _ref2[_k];
+        xValues.push(point[0]);
+        yValues.push(point[1]);
+      }
     }
     return [d3.min(xValues) - (pad.left || 0), d3.max(xValues) + (pad.right || 0), d3.min(yValues) - (pad.top || 0), d3.max(yValues) + (pad.bottom || 0)];
   };
