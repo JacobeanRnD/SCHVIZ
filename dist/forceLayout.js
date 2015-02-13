@@ -15,7 +15,7 @@
   };
 
   CELL_PAD = {
-    top: 20,
+    top: 10,
     bottom: 10,
     left: 10,
     right: 10
@@ -276,7 +276,7 @@
         yValues.push(point[1]);
       }
     }
-    return [d3.min(xValues) - (pad.left || 0), d3.max(xValues) + (pad.right || 0), d3.min(yValues) - (pad.top || 0), d3.max(yValues) + (pad.bottom || 0)];
+    return [d3.min(xValues) - (pad.left || 0), d3.max(xValues) + (pad.right || 0), d3.min(yValues) - (pad.top || 0) - (node.topPadding || 0), d3.max(yValues) + (pad.bottom || 0)];
   };
 
   actionSvg = function(options) {
@@ -357,9 +357,9 @@
     if ((node.children || []).length === 0) {
       rv.width = node.w;
       rv.height = node.h;
-    } else if (node.id !== '__ROOT__') {
+    } else if (node.topPadding != null) {
       rv.padding = {
-        top: 15
+        top: node.topPadding
       };
     }
     return rv;
@@ -850,11 +850,15 @@
         return cell.parent.type === 'parallel';
       });
       cell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
-      cell.append('text').text(function(node) {
-        return node.label;
-      }).each(function(node) {
-        node.textWidth = d3.min([$(this).width() + 2 * ROUND_CORNER, LABEL_SPACE]);
-        return node.w = d3.max([node.w, node.textWidth]);
+      cell.each(function(node) {
+        var label, labelWidth;
+        label = d3.select(this).append('text').attr('class', 'cell-label').text(function(node) {
+          return node.label;
+        });
+        labelWidth = $(label[0][0]).width();
+        node.textWidth = d3.min([labelWidth + 2 * ROUND_CORNER, LABEL_SPACE]);
+        node.w = d3.max([node.w, node.textWidth]);
+        return node.topPadding = 10;
       });
       this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
         return function(tr) {
@@ -906,8 +910,8 @@
       });
       this.container.selectAll('.cell').each(function(node) {
         d3.select(this).select('rect').attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
-        return d3.select(this).select('text').attr('y', function(node) {
-          return CELL_PAD.top - node.h / 2 - 5;
+        return d3.select(this).select('.cell-label').attr('y', function(node) {
+          return node.topPadding + 5 - node.h / 2;
         });
       });
       this.container.selectAll('.selfie').remove();

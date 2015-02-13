@@ -4,7 +4,7 @@ KIELER_URL = 'http://kieler.herokuapp.com/live'
 MARGIN = 5
 ROUND_CORNER = 5
 CELL_MIN = {w: 40, h: 40}
-CELL_PAD = {top: 20, bottom: 10, left: 10, right: 10}
+CELL_PAD = {top: 10, bottom: 10, left: 10, right: 10}
 EXPORT_PAD = {top: 10, bottom: 10, left: 10, right: 10}
 LABEL_SPACE = 400
 CONTROL_SIZE = {w: 25, h: 25}
@@ -182,7 +182,7 @@ envelope = (node, pad={}) ->
   return [
     d3.min(xValues) - (pad.left or 0)
     d3.max(xValues) + (pad.right or 0)
-    d3.min(yValues) - (pad.top or 0)
+    d3.min(yValues) - (pad.top or 0) - (node.topPadding or 0)
     d3.max(yValues) + (pad.bottom or 0)
   ]
 
@@ -257,8 +257,8 @@ toKielerFormat = (node) ->
   if (node.children or []).length == 0
     rv.width = node.w
     rv.height = node.h
-  else if node.id != '__ROOT__'
-    rv.padding = {top: 15}
+  else if node.topPadding?
+    rv.padding = {top: node.topPadding}
   return rv
 
 
@@ -655,11 +655,15 @@ class force.Layout
         .attr('rx', ROUND_CORNER)
         .attr('ry', ROUND_CORNER)
 
-    cell.append('text')
-        .text((node) -> node.label)
-        .each (node) ->
-          node.textWidth = d3.min([$(@).width() + 2 * ROUND_CORNER, LABEL_SPACE])
-          node.w = d3.max([node.w, node.textWidth])
+    cell.each (node) ->
+        label = d3.select(@).append('text')
+          .attr('class', 'cell-label')
+          .text((node) -> node.label)
+
+        labelWidth = $(label[0][0]).width()
+        node.textWidth = d3.min([labelWidth + 2 * ROUND_CORNER, LABEL_SPACE])
+        node.w = d3.max([node.w, node.textWidth])
+        node.topPadding = 10
 
     @container.selectAll('.transition')
         .data(@s.transitions)
@@ -731,8 +735,8 @@ class force.Layout
             .attr('width', node.w)
             .attr('height', node.h)
 
-        d3.select(this).select('text')
-            .attr('y', (node) -> CELL_PAD.top - node.h / 2 - 5)
+        d3.select(this).select('.cell-label')
+            .attr('y', (node) -> node.topPadding + 5 - node.h / 2)
 
     @container.selectAll('.selfie').remove()
 
