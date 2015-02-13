@@ -253,12 +253,10 @@ toKielerFormat = (node) ->
     id: node.id
     children: children
     edges: edges
+    padding: {top: node.topPadding or 0}
+    width: node.w
+    height: node.h
   }
-  if (node.children or []).length == 0
-    rv.width = node.w
-    rv.height = node.h
-  else if node.topPadding?
-    rv.padding = {top: node.topPadding}
   return rv
 
 
@@ -656,14 +654,31 @@ class force.Layout
         .attr('ry', ROUND_CORNER)
 
     cell.each (node) ->
-        label = d3.select(@).append('text')
-          .attr('class', 'cell-label')
-          .text((node) -> node.label)
+        header = d3.select(@).append('g')
+          .attr('class', 'cell-header')
 
-        labelWidth = $(label[0][0]).width()
-        node.textWidth = d3.min([labelWidth + 2 * ROUND_CORNER, LABEL_SPACE])
-        node.w = d3.max([node.w, node.textWidth])
-        node.topPadding = 10
+        label = header.append('text')
+          .text((node) -> node.label)
+          .attr('y', 12)
+
+        labelTextWidth = $(label[0][0]).width()
+        wLabel = d3.min([labelTextWidth + 2 * ROUND_CORNER, LABEL_SPACE])
+        node.textWidth = wLabel
+
+        onentry = header.append('g')
+        onexit = header.append('g')
+        [wEntry, hEntry] = actionBlockSvg(node.onentry or [], onentry)
+        [wExit, hExit] = actionBlockSvg(node.onexit or [], onexit)
+        w = wEntry + wLabel + wExit
+        h = d3.max([16, hEntry, hExit])
+
+        label.attr('x', wEntry + wLabel / 2 - w/2)
+        onentry.attr('transform', "translate(#{wEntry/2 - w/2},0)")
+        onexit.attr('transform', "translate(#{w/2 - wExit/2},0)")
+
+        node.w = d3.max([node.w, w]) + 10
+        node.topPadding = h
+        node.h = h + 10
 
     @container.selectAll('.transition')
         .data(@s.transitions)
@@ -735,8 +750,9 @@ class force.Layout
             .attr('width', node.w)
             .attr('height', node.h)
 
-        d3.select(this).select('.cell-label')
-            .attr('y', (node) -> node.topPadding + 5 - node.h / 2)
+        d3.select(this).select('.cell-header')
+            .attr 'transform', (node) ->
+              "translate(0,#{5 - node.h / 2})"
 
     @container.selectAll('.selfie').remove()
 

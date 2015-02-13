@@ -352,16 +352,13 @@
     rv = {
       id: node.id,
       children: children,
-      edges: edges
+      edges: edges,
+      padding: {
+        top: node.topPadding || 0
+      },
+      width: node.w,
+      height: node.h
     };
-    if ((node.children || []).length === 0) {
-      rv.width = node.w;
-      rv.height = node.h;
-    } else if (node.topPadding != null) {
-      rv.padding = {
-        top: node.topPadding
-      };
-    }
     return rv;
   };
 
@@ -851,14 +848,26 @@
       });
       cell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
       cell.each(function(node) {
-        var label, labelWidth;
-        label = d3.select(this).append('text').attr('class', 'cell-label').text(function(node) {
+        var h, hEntry, hExit, header, label, labelTextWidth, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
+        header = d3.select(this).append('g').attr('class', 'cell-header');
+        label = header.append('text').text(function(node) {
           return node.label;
-        });
-        labelWidth = $(label[0][0]).width();
-        node.textWidth = d3.min([labelWidth + 2 * ROUND_CORNER, LABEL_SPACE]);
-        node.w = d3.max([node.w, node.textWidth]);
-        return node.topPadding = 10;
+        }).attr('y', 12);
+        labelTextWidth = $(label[0][0]).width();
+        wLabel = d3.min([labelTextWidth + 2 * ROUND_CORNER, LABEL_SPACE]);
+        node.textWidth = wLabel;
+        onentry = header.append('g');
+        onexit = header.append('g');
+        _ref = actionBlockSvg(node.onentry || [], onentry), wEntry = _ref[0], hEntry = _ref[1];
+        _ref1 = actionBlockSvg(node.onexit || [], onexit), wExit = _ref1[0], hExit = _ref1[1];
+        w = wEntry + wLabel + wExit;
+        h = d3.max([16, hEntry, hExit]);
+        label.attr('x', wEntry + wLabel / 2 - w / 2);
+        onentry.attr('transform', "translate(" + (wEntry / 2 - w / 2) + ",0)");
+        onexit.attr('transform', "translate(" + (w / 2 - wExit / 2) + ",0)");
+        node.w = d3.max([node.w, w]) + 10;
+        node.topPadding = h;
+        return node.h = h + 10;
       });
       this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
         return function(tr) {
@@ -910,8 +919,8 @@
       });
       this.container.selectAll('.cell').each(function(node) {
         d3.select(this).select('rect').attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
-        return d3.select(this).select('.cell-label').attr('y', function(node) {
-          return node.topPadding + 5 - node.h / 2;
+        return d3.select(this).select('.cell-header').attr('transform', function(node) {
+          return "translate(0," + (5 - node.h / 2) + ")";
         });
       });
       this.container.selectAll('.selfie').remove();
