@@ -36,9 +36,13 @@
 .force-layout .collision {
   stroke: red;
 }
-.force-layout .transition-label rect {
+.force-layout .transition-label > g > rect {
   stroke: none;
-  fill: rgba(255, 255, 255, 0.01);
+  fill: rgba(255, 255, 255, 0.3);
+}
+.force-layout .action rect {
+  fill: #99f;
+  fill-opacity: 0.5;
 }
 .force-layout .force {
   pointer-events: none;

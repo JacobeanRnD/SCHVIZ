@@ -58,9 +58,19 @@
     }
 
 
-    .transition-label rect {
-        stroke: none;
-        fill: rgba(255, 255, 255, .01);
+    .transition-label {
+        > g > rect {
+            stroke: none;
+            fill: rgba(255, 255, 255, 0.3);
+        }
+    }
+
+
+    .action {
+        rect {
+            fill: #99f;
+            fill-opacity: 0.5;
+        }
     }
 
 

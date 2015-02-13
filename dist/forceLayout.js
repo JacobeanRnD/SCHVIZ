@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, envelope, findTransition, force, idMaker, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, envelope, findTransition, force, idMaker, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -79,7 +79,7 @@
         child = _ref[_i];
         if (child.tagName) {
           rv.push({
-            xml: '' + child
+            label: "<" + child.tagName + ">"
           });
         }
       }
@@ -279,6 +279,31 @@
     return [d3.min(xValues) - (pad.left || 0), d3.max(xValues) + (pad.right || 0), d3.min(yValues) - (pad.top || 0), d3.max(yValues) + (pad.bottom || 0)];
   };
 
+  actionSvg = function(options) {
+    var actionR, actionT, h, w;
+    actionR = options.g.append('rect');
+    actionT = options.g.append('text').text(options.action.label).attr('y', 12);
+    actionR.attr('height', h = $(actionT[0][0]).height()).attr('width', w = $(actionT[0][0]).width() + 10).attr('x', -w / 2).attr('rx', 10).attr('ry', 10);
+    return [w, h];
+  };
+
+  actionBlockSvg = function(actions, parentG) {
+    var action, actionG, h, maxw, w, y, _i, _len, _ref;
+    y = 0;
+    maxw = 0;
+    for (_i = 0, _len = actions.length; _i < _len; _i++) {
+      action = actions[_i];
+      actionG = parentG.append('g').attr('class', 'action').attr('transform', "translate(0," + y + ")");
+      _ref = actionSvg({
+        action: action,
+        g: actionG
+      }), w = _ref[0], h = _ref[1];
+      y += h;
+      maxw = d3.max([maxw, w]);
+    }
+    return [maxw, y];
+  };
+
   toKielerFormat = function(node) {
     var child, children, edges, rv, transition, _i, _j, _len, _len1, _ref, _ref1;
     children = [];
@@ -294,17 +319,17 @@
       children.push({
         id: transition.id,
         desmTransition: true,
-        width: transition.textWidth,
-        height: 25,
+        width: transition.w,
+        height: transition.h,
         ports: [
           {
             id: "" + transition.id + "#enter",
             x: 0,
-            y: 25
+            y: transition.yPort
           }, {
             id: "" + transition.id + "#exit",
             x: transition.textWidth,
-            y: 25
+            y: transition.yPort
           }
         ],
         properties: {
@@ -846,20 +871,32 @@
           return tr.label;
         });
       } else {
-        transitionLabel.append('text').text(function(tr) {
-          return tr.label;
-        }).each(function(tr) {
-          tr.textWidth = d3.min([$(this).width() + 5, LABEL_SPACE]);
-          return tr.w = d3.max([tr.w, tr.textWidth]);
-        }).attr('dy', '.3em');
-        transitionLabel.append('rect').attr('x', function(tr) {
-          return -tr.w / 2;
-        }).attr('y', function(tr) {
-          return -tr.h / 2;
-        }).attr('width', function(tr) {
-          return tr.w;
-        }).attr('height', function(tr) {
-          return tr.h;
+        transitionLabel.each(function(tr) {
+          var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
+          offsetG = d3.select(this).append('g');
+          transitionRect = offsetG.append('rect');
+          transitionText = offsetG.append('text').attr('y', 16);
+          transitionText.append('tspan').text(tr.label);
+          if (tr.cond != null) {
+            transitionText.append('tspan').text("[" + tr.cond + "]").attr('x', 0).attr('dy', 16);
+            y += 16;
+          }
+          y = $(transitionText[0][0]).height() + 4;
+          tr.yPort = y - 2;
+          actionBlockG = offsetG.append('g').attr('transform', "translate(0," + y + ")");
+          _ref = actionBlockSvg(tr.actions || [], actionBlockG), w = _ref[0], h = _ref[1];
+          y += h;
+          tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE]);
+          tr.w = d3.max([tr.w, tr.textWidth, w]);
+          tr.h = y + 4;
+          offsetG.attr('transform', "translate(0," + (-tr.h / 2) + ")");
+          return transitionRect.attr('x', function(tr) {
+            return -tr.w / 2;
+          }).attr('width', function(tr) {
+            return tr.w;
+          }).attr('height', function(tr) {
+            return tr.h;
+          });
         });
       }
       dom = this.s.dom;

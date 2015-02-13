@@ -36,7 +36,7 @@ treeFromXml = (doc) ->
     rv = []
     for child in container.childNodes
       if child.tagName
-        rv.push(xml: '' + child)
+        rv.push(label: "<#{child.tagName}>")
     return rv
 
   parseChildNodes = (node) ->
@@ -187,6 +187,38 @@ envelope = (node, pad={}) ->
   ]
 
 
+actionSvg = (options) ->
+  actionR = options.g.append('rect')
+
+  actionT = options.g.append('text')
+      .text(options.action.label)
+      .attr('y', 12)
+
+  actionR
+      .attr('height', h = $(actionT[0][0]).height())
+      .attr('width', w = $(actionT[0][0]).width() + 10)
+      .attr('x', -w/2)
+      .attr('rx', 10)
+      .attr('ry', 10)
+
+  return [w, h]
+
+
+actionBlockSvg = (actions, parentG) ->
+  y = 0
+  maxw = 0
+  for action in actions
+    actionG = parentG.append('g')
+        .attr('class', 'action')
+        .attr('transform', "translate(0,#{y})")
+
+    [w, h] = actionSvg(action: action, g: actionG)
+    y += h
+    maxw = d3.max([maxw, w])
+
+  return [maxw, y]
+
+
 toKielerFormat = (node) ->
   children = []
   edges = []
@@ -196,11 +228,11 @@ toKielerFormat = (node) ->
     children.push(
       id: transition.id
       desmTransition: true
-      width: transition.textWidth
-      height: 25
+      width: transition.w
+      height: transition.h
       ports: [
-        {id: "#{transition.id}#enter", x: 0, y: 25}
-        {id: "#{transition.id}#exit", x: transition.textWidth, y: 25}
+        {id: "#{transition.id}#enter", x: 0, y: transition.yPort}
+        {id: "#{transition.id}#exit", x: transition.textWidth, y: transition.yPort}
       ]
       properties:
         portConstraints: 'FIXED_POS'
@@ -650,18 +682,40 @@ class force.Layout
           .text((tr) -> tr.label)
 
     else
-      transitionLabel.append('text')
-        .text((tr) -> tr.label)
-        .each (tr) ->
-          tr.textWidth = d3.min([$(@).width() + 5, LABEL_SPACE])
-          tr.w = d3.max([tr.w, tr.textWidth])
-        .attr('dy', '.3em')
+      transitionLabel.each (tr) ->
+        offsetG = d3.select(@).append('g')
+        transitionRect = offsetG.append('rect')
 
-      transitionLabel.append('rect')
-          .attr('x', (tr) -> -tr.w / 2)
-          .attr('y', (tr) -> -tr.h / 2)
-          .attr('width', (tr) -> tr.w)
-          .attr('height', (tr) -> tr.h)
+        transitionText = offsetG.append('text')
+            .attr('y', 16)
+
+        transitionText.append('tspan')
+            .text(tr.label)
+
+        if tr.cond?
+          transitionText.append('tspan')
+              .text("[#{tr.cond}]")
+              .attr('x', 0)
+              .attr('dy', 16)
+          y += 16
+
+        y = $(transitionText[0][0]).height() + 4
+        tr.yPort = y - 2
+
+        actionBlockG = offsetG.append('g')
+            .attr('transform', "translate(0,#{y})")
+        [w, h] = actionBlockSvg(tr.actions or [], actionBlockG)
+        y += h
+        tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE])
+        tr.w = d3.max([tr.w, tr.textWidth, w])
+        tr.h = y + 4
+
+        offsetG.attr('transform', "translate(0,#{-tr.h/2})")
+
+        transitionRect
+            .attr('x', (tr) -> -tr.w / 2)
+            .attr('width', (tr) -> tr.w)
+            .attr('height', (tr) -> tr.h)
 
     dom = @s.dom
 
