@@ -224,30 +224,30 @@ toKielerFormat = (node) ->
   edges = []
   for child in node.children or []
     children.push(toKielerFormat(child))
-  for transition in node.controls or []
+  for tr in node.controls or []
     children.push(
-      id: transition.id
+      id: tr.id
       desmTransition: true
-      width: transition.w
-      height: transition.h
+      width: tr.w
+      height: tr.h
       ports: [
-        {id: "#{transition.id}#enter", x: 0, y: transition.yPort}
-        {id: "#{transition.id}#exit", x: transition.textWidth, y: transition.yPort}
+        {id: "#{tr.id}#enter", x: 0, y: tr.yPort}
+        {id: "#{tr.id}#exit", x: tr.textWidth, y: tr.yPort}
       ]
       properties:
         portConstraints: 'FIXED_POS'
     )
     edges.push(
-      id: "#{transition.id}#1"
-      source: transition.a.id
-      target: transition.id
-      targetPort: "#{transition.id}#enter"
+      id: "#{tr.id}#1"
+      source: tr.a.id
+      target: tr.id
+      targetPort: "#{tr.id}#enter"
     )
     edges.push(
-      id: "#{transition.id}#2"
-      source: transition.id
-      target: transition.b.id
-      sourcePort: "#{transition.id}#exit"
+      id: "#{tr.id}#2"
+      source: tr.id
+      target: tr.b.id
+      sourcePort: "#{tr.id}#exit"
     )
   rv = {
     id: node.id

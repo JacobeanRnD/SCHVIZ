@@ -305,7 +305,7 @@
   };
 
   toKielerFormat = function(node) {
-    var child, children, edges, rv, transition, _i, _j, _len, _len1, _ref, _ref1;
+    var child, children, edges, rv, tr, _i, _j, _len, _len1, _ref, _ref1;
     children = [];
     edges = [];
     _ref = node.children || [];
@@ -315,21 +315,21 @@
     }
     _ref1 = node.controls || [];
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-      transition = _ref1[_j];
+      tr = _ref1[_j];
       children.push({
-        id: transition.id,
+        id: tr.id,
         desmTransition: true,
-        width: transition.w,
-        height: transition.h,
+        width: tr.w,
+        height: tr.h,
         ports: [
           {
-            id: "" + transition.id + "#enter",
+            id: "" + tr.id + "#enter",
             x: 0,
-            y: transition.yPort
+            y: tr.yPort
           }, {
-            id: "" + transition.id + "#exit",
-            x: transition.textWidth,
-            y: transition.yPort
+            id: "" + tr.id + "#exit",
+            x: tr.textWidth,
+            y: tr.yPort
           }
         ],
         properties: {
@@ -337,16 +337,16 @@
         }
       });
       edges.push({
-        id: "" + transition.id + "#1",
-        source: transition.a.id,
-        target: transition.id,
-        targetPort: "" + transition.id + "#enter"
+        id: "" + tr.id + "#1",
+        source: tr.a.id,
+        target: tr.id,
+        targetPort: "" + tr.id + "#enter"
       });
       edges.push({
-        id: "" + transition.id + "#2",
-        source: transition.id,
-        target: transition.b.id,
-        sourcePort: "" + transition.id + "#exit"
+        id: "" + tr.id + "#2",
+        source: tr.id,
+        target: tr.b.id,
+        sourcePort: "" + tr.id + "#exit"
       });
     }
     rv = {
