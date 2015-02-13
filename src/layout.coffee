@@ -674,48 +674,40 @@ class force.Layout
       .enter().append('g')
         .attr('class', 'transition-label draggable')
 
-    if @options.textOnPath
-      transitionLabel.append('text')
-        .append('textPath')
-          .attr('xlink:href', (tr) => "##{@id}-transition/#{tr.id}")
-          .attr('startOffset', '50%')
-          .text((tr) -> tr.label)
+    transitionLabel.each (tr) ->
+      offsetG = d3.select(@).append('g')
+      transitionRect = offsetG.append('rect')
 
-    else
-      transitionLabel.each (tr) ->
-        offsetG = d3.select(@).append('g')
-        transitionRect = offsetG.append('rect')
+      transitionText = offsetG.append('text')
+          .attr('y', 16)
 
-        transitionText = offsetG.append('text')
-            .attr('y', 16)
+      transitionText.append('tspan')
+          .text(tr.label)
 
+      if tr.cond?
         transitionText.append('tspan')
-            .text(tr.label)
+            .text("[#{tr.cond}]")
+            .attr('x', 0)
+            .attr('dy', 16)
+        y += 16
 
-        if tr.cond?
-          transitionText.append('tspan')
-              .text("[#{tr.cond}]")
-              .attr('x', 0)
-              .attr('dy', 16)
-          y += 16
+      y = $(transitionText[0][0]).height() + 4
+      tr.yPort = y - 2
 
-        y = $(transitionText[0][0]).height() + 4
-        tr.yPort = y - 2
+      actionBlockG = offsetG.append('g')
+          .attr('transform', "translate(0,#{y})")
+      [w, h] = actionBlockSvg(tr.actions or [], actionBlockG)
+      y += h
+      tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE])
+      tr.w = d3.max([tr.w, tr.textWidth, w])
+      tr.h = y + 4
 
-        actionBlockG = offsetG.append('g')
-            .attr('transform', "translate(0,#{y})")
-        [w, h] = actionBlockSvg(tr.actions or [], actionBlockG)
-        y += h
-        tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE])
-        tr.w = d3.max([tr.w, tr.textWidth, w])
-        tr.h = y + 4
+      offsetG.attr('transform', "translate(0,#{-tr.h/2})")
 
-        offsetG.attr('transform', "translate(0,#{-tr.h/2})")
-
-        transitionRect
-            .attr('x', (tr) -> -tr.w / 2)
-            .attr('width', (tr) -> tr.w)
-            .attr('height', (tr) -> tr.h)
+      transitionRect
+          .attr('x', (tr) -> -tr.w / 2)
+          .attr('width', (tr) -> tr.w)
+          .attr('height', (tr) -> tr.h)
 
     dom = @s.dom
 
@@ -755,9 +747,8 @@ class force.Layout
             [tr.route.dst]
           ))
 
-    unless @options.textOnPath
-      @container.selectAll('.transition-label')
-          .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
+    @container.selectAll('.transition-label')
+        .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
   setupD3Layout: ->
     lock = {node: null, drag: false}

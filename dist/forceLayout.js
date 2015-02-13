@@ -862,43 +862,33 @@
         };
       })(this));
       transitionLabel = this.container.selectAll('.transition-label').data(this.s.transitions).enter().append('g').attr('class', 'transition-label draggable');
-      if (this.options.textOnPath) {
-        transitionLabel.append('text').append('textPath').attr('xlink:href', (function(_this) {
-          return function(tr) {
-            return "#" + _this.id + "-transition/" + tr.id;
-          };
-        })(this)).attr('startOffset', '50%').text(function(tr) {
-          return tr.label;
+      transitionLabel.each(function(tr) {
+        var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
+        offsetG = d3.select(this).append('g');
+        transitionRect = offsetG.append('rect');
+        transitionText = offsetG.append('text').attr('y', 16);
+        transitionText.append('tspan').text(tr.label);
+        if (tr.cond != null) {
+          transitionText.append('tspan').text("[" + tr.cond + "]").attr('x', 0).attr('dy', 16);
+          y += 16;
+        }
+        y = $(transitionText[0][0]).height() + 4;
+        tr.yPort = y - 2;
+        actionBlockG = offsetG.append('g').attr('transform', "translate(0," + y + ")");
+        _ref = actionBlockSvg(tr.actions || [], actionBlockG), w = _ref[0], h = _ref[1];
+        y += h;
+        tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE]);
+        tr.w = d3.max([tr.w, tr.textWidth, w]);
+        tr.h = y + 4;
+        offsetG.attr('transform', "translate(0," + (-tr.h / 2) + ")");
+        return transitionRect.attr('x', function(tr) {
+          return -tr.w / 2;
+        }).attr('width', function(tr) {
+          return tr.w;
+        }).attr('height', function(tr) {
+          return tr.h;
         });
-      } else {
-        transitionLabel.each(function(tr) {
-          var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
-          offsetG = d3.select(this).append('g');
-          transitionRect = offsetG.append('rect');
-          transitionText = offsetG.append('text').attr('y', 16);
-          transitionText.append('tspan').text(tr.label);
-          if (tr.cond != null) {
-            transitionText.append('tspan').text("[" + tr.cond + "]").attr('x', 0).attr('dy', 16);
-            y += 16;
-          }
-          y = $(transitionText[0][0]).height() + 4;
-          tr.yPort = y - 2;
-          actionBlockG = offsetG.append('g').attr('transform', "translate(0," + y + ")");
-          _ref = actionBlockSvg(tr.actions || [], actionBlockG), w = _ref[0], h = _ref[1];
-          y += h;
-          tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE]);
-          tr.w = d3.max([tr.w, tr.textWidth, w]);
-          tr.h = y + 4;
-          offsetG.attr('transform', "translate(0," + (-tr.h / 2) + ")");
-          return transitionRect.attr('x', function(tr) {
-            return -tr.w / 2;
-          }).attr('width', function(tr) {
-            return tr.w;
-          }).attr('height', function(tr) {
-            return tr.h;
-          });
-        });
-      }
+      });
       dom = this.s.dom;
       this.container.selectAll('.cell').each(function(node) {
         return dom.set("cell-" + node.id, this);
@@ -924,11 +914,9 @@
       this.container.selectAll('.transition').selectAll('path').attr('d', function(tr) {
         return d3.svg.line()([].concat([tr.route.src], tr.route.segment1, [tr.route.label1], [tr.route.label2], tr.route.segment2, [tr.route.dst]));
       });
-      if (!this.options.textOnPath) {
-        return this.container.selectAll('.transition-label').attr('transform', function(tr) {
-          return "translate(" + tr.x + "," + tr.y + ")";
-        });
-      }
+      return this.container.selectAll('.transition-label').attr('transform', function(tr) {
+        return "translate(" + tr.x + "," + tr.y + ")";
+      });
     };
 
     Layout.prototype.setupD3Layout = function() {
