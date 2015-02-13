@@ -309,6 +309,7 @@ force.kielerLayout = (s, options) ->
       options:
         layoutHierarchy: true
         edgeRouting: 'ORTHOGONAL'
+        feedBackEdges: true
       success: klay_ready.resolve
       error: (err) -> klay_ready.reject(new Error(err.text))
     )
@@ -321,6 +322,7 @@ force.kielerLayout = (s, options) ->
       config: JSON.stringify(
         algorithm: options.algorithm
         edgeRouting: 'ORTHOGONAL'
+        feedBackEdges: true
         layoutHierarchy: true
       )
       iFormat: 'org.json'

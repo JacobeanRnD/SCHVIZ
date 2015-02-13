@@ -411,7 +411,8 @@
         graph: graph,
         options: {
           layoutHierarchy: true,
-          edgeRouting: 'ORTHOGONAL'
+          edgeRouting: 'ORTHOGONAL',
+          feedBackEdges: true
         },
         success: klay_ready.resolve,
         error: function(err) {
@@ -425,6 +426,7 @@
         config: JSON.stringify({
           algorithm: options.algorithm,
           edgeRouting: 'ORTHOGONAL',
+          feedBackEdges: true,
           layoutHierarchy: true
         }),
         iFormat: 'org.json',
