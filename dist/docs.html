@@ -11,7 +11,6 @@ html, body { height: 100%; margin: 0; }
 <link rel="stylesheet" href="forceLayout.css">
 <body>
 <div id="controls">
-  <label>Text-on-path <input type=checkbox name=textOnPath></label>
   <label>Kieler algorithm <select name=algorithm></select></label>
   <label>Example document <select name=document></select></label>
 </div>
@@ -27,7 +26,6 @@ html, body { height: 100%; margin: 0; }
   (function(){'use strict';
     var debug = (window.location.search.indexOf('debug=on') > -1);
     var exBase = 'https://dl.dropboxusercontent.com/u/103063/static/desm-devel/';
-    var $textOnPathCheckbox = $('#controls [name=textOnPath]');
     var $algoSelect = $('#controls [name=algorithm]');
     var $docSelect = $('#controls [name=document]');
     var controls = _.extend({}, Backbone.Events);
@@ -36,19 +34,9 @@ html, body { height: 100%; margin: 0; }
     var exMap = {};
     var config = {
       algo: '__klayjs',
-      cells: [],
-      textOnPath: false
+      cells: []
     };
     try { config = JSON.parse(window.location.hash.slice(1)); } catch(e) {}
-
-    $textOnPathCheckbox.change(function() {
-      config.textOnPath = $textOnPathCheckbox.is(':checked');
-      controls.trigger('textOnPath');
-      saveConfig();
-    });
-    if(config.textOnPath) {
-      $textOnPathCheckbox.attr('checked', true);
-    }
 
     $algoSelect.change(recreateLayout);
 
@@ -119,13 +107,11 @@ html, body { height: 100%; margin: 0; }
 
         createLayout();
         controls.on('recreate', recreate);
-        controls.on('textOnPath', recreate);
 
         $(window).resize(function() { layout.invalidateSize(); });
 
         function close() {
           controls.off('recreate', recreate);
-          controls.off('textOnPath', recreate);
           destroyLayout();
           $container.remove();
           config.cells.splice(config.cells.indexOf(filename), 1);
@@ -142,7 +128,6 @@ html, body { height: 100%; margin: 0; }
               kielerAlgorithm: config.algo,
               parent: $container[0],
               doc: doc,
-              textOnPath: config.textOnPath || false,
               debug: debug
             });
           layout.initialized
