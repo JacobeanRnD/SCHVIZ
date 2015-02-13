@@ -7,7 +7,6 @@ CELL_MIN = {w: 40, h: 40}
 CELL_PAD = {top: 10, bottom: 10, left: 10, right: 10}
 EXPORT_PAD = {top: 10, bottom: 10, left: 10, right: 10}
 LABEL_SPACE = 400
-CONTROL_SIZE = {w: 25, h: 25}
 LINK_STRENGTH = .1
 LINK_DISTANCE = 30
 DEBUG_FORCE_FACTOR = 50
@@ -530,8 +529,8 @@ class force.Layout
             throw Error("missing transition target: #{tr.target}")
           [a, c, b] = path(node, target)
           tr.parent = c or newS.top
-          tr.w = CONTROL_SIZE.w
-          tr.h = CONTROL_SIZE.h
+          tr.w = 0
+          tr.h = 0
           tr.id = tr.id or makeId("_transition/#{node.id}/#{target.id}/")
           newS.nodeMap.set(tr.id, tr)
           tr.parent.controls.push(tr)

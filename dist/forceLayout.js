@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, CONTROL_SIZE, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, envelope, findTransition, force, idMaker, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, envelope, findTransition, force, idMaker, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -29,11 +29,6 @@
   };
 
   LABEL_SPACE = 400;
-
-  CONTROL_SIZE = {
-    w: 25,
-    h: 25
-  };
 
   LINK_STRENGTH = .1;
 
@@ -706,8 +701,8 @@
               }
               _ref1 = path(node, target), a = _ref1[0], c = _ref1[1], b = _ref1[2];
               tr.parent = c || newS.top;
-              tr.w = CONTROL_SIZE.w;
-              tr.h = CONTROL_SIZE.h;
+              tr.w = 0;
+              tr.h = 0;
               tr.id = tr.id || makeId("_transition/" + node.id + "/" + target.id + "/");
               newS.nodeMap.set(tr.id, tr);
               tr.parent.controls.push(tr);
