@@ -295,17 +295,33 @@
         id: transition.id,
         desmTransition: true,
         width: transition.textWidth,
-        height: 25
+        height: 25,
+        ports: [
+          {
+            id: "" + transition.id + "#enter",
+            x: 0,
+            y: 25
+          }, {
+            id: "" + transition.id + "#exit",
+            x: transition.textWidth,
+            y: 25
+          }
+        ],
+        properties: {
+          portConstraints: 'FIXED_POS'
+        }
       });
       edges.push({
         id: "" + transition.id + "#1",
         source: transition.a.id,
-        target: transition.id
+        target: transition.id,
+        targetPort: "" + transition.id + "#enter"
       });
       edges.push({
         id: "" + transition.id + "#2",
         source: transition.id,
-        target: transition.b.id
+        target: transition.b.id,
+        sourcePort: "" + transition.id + "#exit"
       });
     }
     rv = {
@@ -338,7 +354,7 @@
         offset2 = offsetMap.get(tr.id);
         kTr = kNodeMap.get(tr.id);
         tr.x = offset2.x + kTr.x + kTr.width / 2;
-        tr.y = offset2.y + kTr.y + kTr.height / 2 - 10;
+        tr.y = offset2.y + kTr.y + kTr.height / 2;
         e1 = kEdgeMap.get("" + tr.id + "#1");
         e2 = kEdgeMap.get("" + tr.id + "#2");
         translate1 = function(d) {
