@@ -165,12 +165,21 @@ findTransition = (transitions, source, target) ->
 
 
 envelope = (node, pad={}) ->
-  contents = [].concat(node.children, node.controls)
-  xMin = d3.min(contents, (d) -> d.x - d.w / 2) - (pad.left or 0)
-  xMax = d3.max(contents, (d) -> d.x + d.w / 2) + (pad.right or 0)
-  yMin = d3.min(contents, (d) -> d.y - d.h / 2) - (pad.top or 0)
-  yMax = d3.max(contents, (d) -> d.y + d.h / 2) + (pad.bottom or 0)
-  return [xMin, xMax, yMin, yMax]
+  xValues = []
+  yValues = []
+
+  for box in [].concat(node.children, node.controls)
+    xValues.push(box.x - box.w / 2)
+    xValues.push(box.x + box.w / 2)
+    yValues.push(box.y - box.h / 2)
+    yValues.push(box.y + box.h / 2)
+
+  return [
+    d3.min(xValues) - (pad.left or 0)
+    d3.max(xValues) + (pad.right or 0)
+    d3.min(yValues) - (pad.top or 0)
+    d3.max(yValues) + (pad.bottom or 0)
+  ]
 
 
 toKielerFormat = (node) ->

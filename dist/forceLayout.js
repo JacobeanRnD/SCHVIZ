@@ -252,24 +252,21 @@
   };
 
   envelope = function(node, pad) {
-    var contents, xMax, xMin, yMax, yMin;
+    var box, xValues, yValues, _i, _len, _ref;
     if (pad == null) {
       pad = {};
     }
-    contents = [].concat(node.children, node.controls);
-    xMin = d3.min(contents, function(d) {
-      return d.x - d.w / 2;
-    }) - (pad.left || 0);
-    xMax = d3.max(contents, function(d) {
-      return d.x + d.w / 2;
-    }) + (pad.right || 0);
-    yMin = d3.min(contents, function(d) {
-      return d.y - d.h / 2;
-    }) - (pad.top || 0);
-    yMax = d3.max(contents, function(d) {
-      return d.y + d.h / 2;
-    }) + (pad.bottom || 0);
-    return [xMin, xMax, yMin, yMax];
+    xValues = [];
+    yValues = [];
+    _ref = [].concat(node.children, node.controls);
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      box = _ref[_i];
+      xValues.push(box.x - box.w / 2);
+      xValues.push(box.x + box.w / 2);
+      yValues.push(box.y - box.h / 2);
+      yValues.push(box.y + box.h / 2);
+    }
+    return [d3.min(xValues) - (pad.left || 0), d3.max(xValues) + (pad.right || 0), d3.min(yValues) - (pad.top || 0), d3.max(yValues) + (pad.bottom || 0)];
   };
 
   toKielerFormat = function(node) {
