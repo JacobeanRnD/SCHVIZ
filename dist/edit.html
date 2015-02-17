@@ -7,7 +7,6 @@ html, body { height: 100%; margin: 0; }
 <link rel="stylesheet" href="forceLayout.css">
 <body>
 <div id="controls">
-  <label>Kieler algorithm <select name=algorithm></select></label>
 </div>
 <script src="bower_components/d3/d3.min.js"></script>
 <script src="bower_components/jquery/dist/jquery.min.js"></script>
@@ -20,43 +19,14 @@ html, body { height: 100%; margin: 0; }
 <script>
   (function(){'use strict';
     var debug = (window.location.search.indexOf('debug=on') > -1);
-    var $algoSelect = $('#controls [name=algorithm]')
     var controls = _.extend({}, Backbone.Events);
-    var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
-    var algorithm = localStorage.getItem('desm-layout-algorithm') || defaultAlgorithm;
     var layout, createLayout;
 
-    $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
-      var category = {};
-      resp.categories.forEach(function(alg) { category[alg.id] = alg.name });
-      var algorithmList = ([]).concat(
-        resp.layoutAlgorithms.map(function(alg) {
-          alg.name = alg.name + " (" + category[alg.category] + ")";
-          return alg;
-        }),
-        [{id: '__klayjs', name: "KLayJS"}]
-      );
-      $algoSelect.append(
-        algorithmList.map(function(alg) {
-          return $('<option>')
-              .text(alg.name)
-              .attr('title', alg.description)
-              .attr('value', alg.id)
-              .attr('selected', alg.id === algorithm);
-        })
-      );
-      $algoSelect.change(function() {
-        algorithm = $algoSelect.val();
-        localStorage.setItem('desm-layout-algorithm', algorithm);
-        controls.trigger('algorithm', algorithm);
-      });
-      ready();
-    });
+    ready();
 
     function invokeLayout(options) {
       createLayout = function() {
         layout = new forceLayout.Layout(_.extend({
-            kielerAlgorithm: algorithm,
             debug: debug
           }, options));
         layout.initialized
@@ -69,11 +39,6 @@ html, body { height: 100%; margin: 0; }
       }
       createLayout();
     }
-
-    controls.on('algorithm', function() {
-      $(layout.el).remove();
-      createLayout();
-    });
 
 
     function demo(tree) {

@@ -432,7 +432,7 @@ class force.Layout
           loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
           deferred.resolve(
             force.kielerLayout(@s, {
-              algorithm: @options.kielerAlgorithm
+              algorithm: @options.kielerAlgorithm || '__klayjs'
             })
               .then (treeWithLayout) =>
                 loading.destroy()

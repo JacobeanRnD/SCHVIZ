@@ -580,7 +580,7 @@
                 text: "Loading Kieler layout ..."
               });
               return deferred.resolve(force.kielerLayout(_this.s, {
-                algorithm: _this.options.kielerAlgorithm
+                algorithm: _this.options.kielerAlgorithm || '__klayjs'
               }).then(function(treeWithLayout) {
                 loading.destroy();
                 _this.beginSimulation();

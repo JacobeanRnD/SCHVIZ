@@ -11,7 +11,6 @@ html, body { height: 100%; margin: 0; }
 <link rel="stylesheet" href="forceLayout.css">
 <body>
 <div id="controls">
-  <label>Kieler algorithm <select name=algorithm></select></label>
   <label>Example document <select name=document></select></label>
 </div>
 <script src="bower_components/d3/d3.min.js"></script>
@@ -26,19 +25,14 @@ html, body { height: 100%; margin: 0; }
   (function(){'use strict';
     var debug = (window.location.search.indexOf('debug=on') > -1);
     var exBase = 'https://dl.dropboxusercontent.com/u/103063/static/desm-devel/';
-    var $algoSelect = $('#controls [name=algorithm]');
     var $docSelect = $('#controls [name=document]');
     var controls = _.extend({}, Backbone.Events);
-    var defaultAlgorithm = 'de.cau.cs.kieler.klay.layered';
     var doc = null;
     var exMap = {};
     var config = {
-      algo: '__klayjs',
       cells: []
     };
     try { config = JSON.parse(window.location.hash.slice(1)); } catch(e) {}
-
-    $algoSelect.change(recreateLayout);
 
     $docSelect.change(function() {
       var filename = $docSelect.val();
@@ -48,41 +42,21 @@ html, body { height: 100%; margin: 0; }
       saveConfig();
     });
 
-    $.get('http://kieler.herokuapp.com/layout/serviceData', function(resp) {
-      var category = {};
-      resp.categories.forEach(function(alg) { category[alg.id] = alg.name });
-      var algorithmList = ([]).concat(
-        resp.layoutAlgorithms.map(function(alg) {
-          alg.name = alg.name + " (" + category[alg.category] + ")";
-          return alg;
-        }),
-        [{id: '__klayjs', name: "KLayJS"}]
-      );
-      $algoSelect.append(
-        algorithmList.map(function(alg) {
+    $.getJSON(exBase + 'index.json', function(index) {
+      index.examples.forEach(function(alg) {
+        exMap[alg.filename] = alg.name;
+      });
+      $docSelect.append(
+        '<option disabled selected value="__new">create cell with document ...</option>',
+        index.examples.map(function(ex) {
           return $('<option>')
-              .text(alg.name)
-              .attr('title', alg.description)
-              .attr('value', alg.id)
-              .attr('selected', alg.id == config.algo ? true : null)
+              .text(ex.name)
+              .attr('value', ex.filename);
         })
       );
-      $.getJSON(exBase + 'index.json', function(index) {
-        index.examples.forEach(function(alg) {
-          exMap[alg.filename] = alg.name;
-        });
-        $docSelect.append(
-          '<option disabled selected value="__new">create cell with document ...</option>',
-          index.examples.map(function(ex) {
-            return $('<option>')
-                .text(ex.name)
-                .attr('value', ex.filename);
-          })
-        );
-        $('#controls').show();
-        config.cells.forEach(createCell);
-        recreateLayout();
-      });
+      $('#controls').show();
+      config.cells.forEach(createCell);
+      recreateLayout();
     });
 
     function saveConfig() {
@@ -90,7 +64,6 @@ html, body { height: 100%; margin: 0; }
     }
 
     function recreateLayout() {
-      config.algo = $algoSelect.val();
       saveConfig();
       controls.trigger('recreate');
     }
@@ -125,7 +98,6 @@ html, body { height: 100%; margin: 0; }
 
         function createLayout() {
           layout = new forceLayout.Layout({
-              kielerAlgorithm: config.algo,
               parent: $container[0],
               doc: doc,
               debug: debug
