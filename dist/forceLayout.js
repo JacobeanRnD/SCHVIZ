@@ -323,7 +323,7 @@
             y: tr.yPort
           }, {
             id: "" + tr.id + "#exit",
-            x: tr.textWidth,
+            x: tr.w,
             y: tr.yPort
           }
         ],

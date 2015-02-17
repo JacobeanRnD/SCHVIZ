@@ -231,7 +231,7 @@ toKielerFormat = (node) ->
       height: tr.h
       ports: [
         {id: "#{tr.id}#enter", x: 0, y: tr.yPort}
-        {id: "#{tr.id}#exit", x: tr.textWidth, y: tr.yPort}
+        {id: "#{tr.id}#exit", x: tr.w, y: tr.yPort}
       ]
       properties:
         portConstraints: 'FIXED_POS'
