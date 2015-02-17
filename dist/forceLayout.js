@@ -15,10 +15,10 @@
   };
 
   CELL_PAD = {
-    top: 10,
-    bottom: 10,
-    left: 10,
-    right: 10
+    top: 12,
+    bottom: 12,
+    left: 12,
+    right: 12
   };
 
   EXPORT_PAD = {
