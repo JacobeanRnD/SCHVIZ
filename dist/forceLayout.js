@@ -1130,6 +1130,16 @@
       })(this));
     };
 
+    Layout.prototype.fit = function() {
+      var h, scale, w, xMax, xMin, yMax, yMin, _ref, _ref1;
+      _ref = envelope(this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
+      _ref1 = this.zoomBehavior.size(), w = _ref1[0], h = _ref1[1];
+      scale = d3.min([w / (xMax - xMin), h / (yMax - yMin)]);
+      this.zoomBehavior.translate([w / 2 - (xMax + xMin) * scale / 2, h / 2 - (yMax + yMin) * scale / 2]);
+      this.zoomBehavior.scale(scale);
+      return this.zoomBehavior.event(this.zoomNode);
+    };
+
     Layout.prototype.exportSvg = function(options) {
       var div, svg, xMax, xMin, yMax, yMin, _ref;
       _ref = envelope(this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];

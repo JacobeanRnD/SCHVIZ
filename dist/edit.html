@@ -65,8 +65,9 @@ html, body { height: 100%; margin: 0; }
       var $saveGeom = $('<button>').text('save geometry').click(saveGeom);
       var $loadGeom = $('<button>').text('load geometry').click(loadGeom);
       var $clearGeom = $('<button>').text('clear geometry').click(clearGeom);
+      var $fit = $('<button>').text('fit').click(fit);
       var $exportSvg = $('<button>').text('export SVG').click(exportSvg);
-      $('body').append(parent, $src, '<br>', $update, $reset, $saveGeom, $loadGeom, $clearGeom, $exportSvg);
+      $('body').append(parent, $src, '<br>', $update, $reset, $saveGeom, $loadGeom, $clearGeom, $fit, $exportSvg);
       invokeLayout({parent: parent, doc: parse()});
 
       function parse() {
@@ -103,6 +104,10 @@ html, body { height: 100%; margin: 0; }
 
       var css;
       $.get('forceLayout.css', function(resp) { css = resp; });
+
+      function fit() {
+        layout.fit();
+      }
 
       function exportSvg() {
         var svg = layout.exportSvg({css: css});

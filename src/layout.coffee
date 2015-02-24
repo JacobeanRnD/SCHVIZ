@@ -909,6 +909,17 @@ class force.Layout
             .classed('highlight', highlight)
       cb()
 
+  fit: ->
+    [xMin, xMax, yMin, yMax] = envelope(@s.top, EXPORT_PAD)
+    [w, h] = @zoomBehavior.size()
+    scale = d3.min([w / (xMax - xMin), h / (yMax - yMin)])
+    @zoomBehavior.translate([
+      w / 2 - (xMax + xMin) * scale / 2
+      h / 2 - (yMax + yMin) * scale / 2
+    ])
+    @zoomBehavior.scale(scale)
+    @zoomBehavior.event(@zoomNode)
+
   exportSvg: (options) ->
     [xMin, xMax, yMin, yMax] = envelope(@s.top, EXPORT_PAD)
     div = $('<div style="positoin:relative">')[0]
