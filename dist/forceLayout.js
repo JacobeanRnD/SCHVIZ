@@ -351,8 +351,8 @@
       padding: {
         top: node.topPadding || 0
       },
-      width: node.w,
-      height: node.h
+      width: (node.min || CELL_MIN).w,
+      height: (node.min || CELL_MIN).h
     };
     return rv;
   };
@@ -858,6 +858,10 @@
         label.attr('x', wEntry + wLabel / 2 - w / 2);
         onentry.attr('transform', "translate(" + (wEntry / 2 - w / 2) + ",0)");
         onexit.attr('transform', "translate(" + (w / 2 - wExit / 2) + ",0)");
+        node.min = {
+          w: w + 10,
+          h: h + 10
+        };
         node.w = d3.max([node.w, w]) + 10;
         node.topPadding = h;
         return node.h = h + 10;

@@ -253,8 +253,8 @@ toKielerFormat = (node) ->
     children: children
     edges: edges
     padding: {top: node.topPadding or 0}
-    width: node.w
-    height: node.h
+    width: (node.min or CELL_MIN).w
+    height: (node.min or CELL_MIN).h
   }
   return rv
 
@@ -670,6 +670,7 @@ class force.Layout
         onentry.attr('transform', "translate(#{wEntry/2 - w/2},0)")
         onexit.attr('transform', "translate(#{w/2 - wExit/2},0)")
 
+        node.min = {w: w + 10, h: h + 10}
         node.w = d3.max([node.w, w]) + 10
         node.topPadding = h
         node.h = h + 10
