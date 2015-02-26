@@ -625,7 +625,7 @@
           }).then(function() {
             return _this.svgUpdate();
           })["catch"](function(e) {
-            return console.error(e);
+            return console.error(e.stack);
           })["finally"](function() {
             return cb();
           }));

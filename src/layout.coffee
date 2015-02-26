@@ -464,7 +464,7 @@ class force.Layout
         .then =>
           @svgUpdate()
         .catch (e) =>
-          console.error e
+          console.error e.stack
         .finally =>
           cb()
       )
