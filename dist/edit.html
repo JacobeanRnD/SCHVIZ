@@ -18,6 +18,7 @@ html, body { height: 100%; margin: 0; }
 <script src="forceLayout.js"></script>
 <script>
   (function(){'use strict';
+    Q.longStackSupport = true;
     var debug = (window.location.search.indexOf('debug=on') > -1);
     var controls = _.extend({}, Backbone.Events);
     var layout, createLayout;
@@ -32,6 +33,7 @@ html, body { height: 100%; margin: 0; }
         layout.initialized
           .catch(function(err) {
             console.log(err);
+            console.log(err.stack);
             $(layout.el).replaceWith("Error: " + err.message);
           })
           .done();
