@@ -572,7 +572,7 @@
             _this.loadTree(tree);
             if (_this.options.geometry != null) {
               _this.applyGeometry(_this.options.geometry);
-              _this.beginSimulation();
+              _this.svgUpdate();
               cb();
               return deferred.resolve();
             } else {
@@ -582,9 +582,9 @@
               });
               return deferred.resolve(force.kielerLayout(_this.s, {
                 algorithm: _this.options.kielerAlgorithm
-              }).then(function(treeWithLayout) {
+              }).then(function() {
                 loading.destroy();
-                _this.beginSimulation();
+                _this.svgUpdate();
                 return cb();
               }));
             }
@@ -607,8 +607,8 @@
             return force.kielerLayout(_this.s, {
               algorithm: _this.options.kielerAlgorithm
             });
-          }).then(function(treeWithLayout) {
-            return _this.beginSimulation();
+          }).then(function() {
+            return _this.svgUpdate();
           })["catch"](function(e) {
             return console.error(e);
           })["finally"](function() {
@@ -641,12 +641,8 @@
 
     Layout.prototype.loadTree = function(tree) {
       this.mergeTree(tree);
-      return this.svgNodes();
-    };
-
-    Layout.prototype.beginSimulation = function() {
-      this.setupD3Layout();
-      return this.svgUpdate();
+      this.svgNodes();
+      return this.registerMouseHandlers();
     };
 
     Layout.prototype.mergeTree = function(tree) {
@@ -929,7 +925,7 @@
       });
     };
 
-    Layout.prototype.setupD3Layout = function() {
+    Layout.prototype.registerMouseHandlers = function() {
       var drag, lock;
       lock = {
         node: null,

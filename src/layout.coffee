@@ -425,7 +425,7 @@ class force.Layout
 
         if @options.geometry?
           @applyGeometry(@options.geometry)
-          @beginSimulation()
+          @svgUpdate()
           cb()
           deferred.resolve()
 
@@ -433,9 +433,9 @@ class force.Layout
           loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
           deferred.resolve(
             force.kielerLayout(@s, algorithm: @options.kielerAlgorithm)
-              .then (treeWithLayout) =>
+              .then =>
                 loading.destroy()
-                @beginSimulation()
+                @svgUpdate()
                 cb()
           )
 
@@ -451,8 +451,8 @@ class force.Layout
         .then =>
           @loadTree(treeFromXml(doc).sc)
           force.kielerLayout(@s, algorithm: @options.kielerAlgorithm)
-        .then (treeWithLayout) =>
-          @beginSimulation()
+        .then =>
+          @svgUpdate()
         .catch (e) =>
           console.error e
         .finally =>
@@ -482,10 +482,7 @@ class force.Layout
   loadTree: (tree) ->
     @mergeTree(tree)
     @svgNodes()
-
-  beginSimulation: ->
-    @setupD3Layout()
-    @svgUpdate()
+    @registerMouseHandlers()
 
   mergeTree: (tree) ->
     oldS = @s
@@ -767,7 +764,7 @@ class force.Layout
     @container.selectAll('.transition-label')
         .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
-  setupD3Layout: ->
+  registerMouseHandlers: ->
     lock = {node: null, drag: false}
 
     drag = d3.behavior.drag()
