@@ -358,8 +358,6 @@ kielerLayout = (s, options) ->
         return JSON.parse(resp)[0]
 
   return layoutDone
-    .then (graphLayout) ->
-      applyKielerLayout(s, graphLayout)
 
 
 class NewNodesAnimation
@@ -439,6 +437,8 @@ class force.Layout
           loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
           deferred.resolve(
             kielerLayout(@s, algorithm: @options.kielerAlgorithm)
+              .then (graphLayout) =>
+                applyKielerLayout(@s, graphLayout)
               .then =>
                 loading.destroy()
                 @svgUpdate()
@@ -457,6 +457,8 @@ class force.Layout
         .then =>
           @loadTree(treeFromXml(doc).sc)
           kielerLayout(@s, algorithm: @options.kielerAlgorithm)
+        .then (graphLayout) =>
+          applyKielerLayout(@s, graphLayout)
         .then =>
           @svgUpdate()
         .catch (e) =>

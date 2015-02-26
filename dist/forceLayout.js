@@ -474,9 +474,7 @@
         return JSON.parse(resp)[0];
       });
     }
-    return layoutDone.then(function(graphLayout) {
-      return applyKielerLayout(s, graphLayout);
-    });
+    return layoutDone;
   };
 
   NewNodesAnimation = (function() {
@@ -587,6 +585,8 @@
               });
               return deferred.resolve(kielerLayout(_this.s, {
                 algorithm: _this.options.kielerAlgorithm
+              }).then(function(graphLayout) {
+                return applyKielerLayout(_this.s, graphLayout);
               }).then(function() {
                 loading.destroy();
                 _this.svgUpdate();
@@ -612,6 +612,8 @@
             return kielerLayout(_this.s, {
               algorithm: _this.options.kielerAlgorithm
             });
+          }).then(function(graphLayout) {
+            return applyKielerLayout(_this.s, graphLayout);
           }).then(function() {
             return _this.svgUpdate();
           })["catch"](function(e) {
