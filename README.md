@@ -13,6 +13,9 @@ var layout = new forceLayout.Layout({
 layout.initalized
   .done(null, function(e) { console.log('error!', e); });
 
+// zoom to fit chart in parent bounding box
+layout.fit();
+
 // add/remove state highlight
 layout.highlightState('state-id', true);
 layout.highlightState('state-id', false);
