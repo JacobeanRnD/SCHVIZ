@@ -852,10 +852,11 @@
     };
 
     Layout.prototype.svgNodes = function() {
-      var cell, dom;
-      cell = this.container.selectAll('.cell').data(this.s.cells, function(d) {
+      var cell, cellUpdate, dom, transitionLabelUpdate, transitionUpdate;
+      cellUpdate = this.container.selectAll('.cell').data(this.s.cells, function(d) {
         return d.id;
-      }).enter().append('g').attr('class', function(cell) {
+      });
+      cell = cellUpdate.enter().append('g').attr('class', function(cell) {
         return "cell cell-" + (cell.type || 'state') + " draggable";
       }).classed('parallel-child', function(cell) {
         return cell.parent.type === 'parallel';
@@ -884,16 +885,20 @@
           h: h
         };
       });
-      this.container.selectAll('.transition').data(this.s.transitions, function(d) {
+      cellUpdate.exit().remove();
+      transitionUpdate = this.container.selectAll('.transition').data(this.s.transitions, function(d) {
         return d.id;
-      }).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
+      });
+      transitionUpdate.enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
         return function(tr) {
           return "" + _this.id + "-transition/" + tr.id;
         };
       })(this));
-      this.container.selectAll('.transition-label').data(this.s.transitions, function(d) {
+      transitionUpdate.exit().remove();
+      transitionLabelUpdate = this.container.selectAll('.transition-label').data(this.s.transitions, function(d) {
         return d.id;
-      }).enter().append('g').attr('class', 'transition-label draggable').each(function(tr) {
+      });
+      transitionLabelUpdate.enter().append('g').attr('class', 'transition-label draggable').each(function(tr) {
         var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
         offsetG = d3.select(this).append('g');
         transitionRect = offsetG.append('rect');
@@ -920,6 +925,7 @@
           return tr.h;
         });
       });
+      transitionLabelUpdate.exit().remove();
       dom = this.s.dom;
       this.container.selectAll('.cell').each(function(node) {
         return dom.set("cell-" + node.id, this);

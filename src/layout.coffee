@@ -646,9 +646,10 @@ class force.Layout
     @zoomBehavior.event(@zoomNode)
 
   svgNodes: ->
-    cell = @container.selectAll('.cell')
+    cellUpdate = @container.selectAll('.cell')
         .data(@s.cells, (d) -> d.id)
-      .enter().append('g')
+
+    cell = cellUpdate.enter().append('g')
         .attr('class', (cell) -> "cell cell-#{cell.type or 'state'} draggable")
         .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
 
@@ -681,17 +682,25 @@ class force.Layout
         onexit.attr('transform', "translate(#{w/2 - wExit/2},0)")
         node.header = {w: w, h: h}
 
-    @container.selectAll('.transition')
+    cellUpdate.exit().remove()
+
+    transitionUpdate = @container.selectAll('.transition')
         .data(@s.transitions, (d) -> d.id)
-      .enter().append('g')
+
+    transitionUpdate.enter()
+      .append('g')
         .attr('class', 'transition')
       .append('path')
         .attr('style', "marker-end: url(##{@id}-arrow)")
         .attr('id', (tr) => "#{@id}-transition/#{tr.id}")
 
-    @container.selectAll('.transition-label')
+    transitionUpdate.exit().remove()
+
+    transitionLabelUpdate = @container.selectAll('.transition-label')
         .data(@s.transitions, (d) -> d.id)
-      .enter().append('g')
+
+    transitionLabelUpdate.enter()
+      .append('g')
         .attr('class', 'transition-label draggable')
       .each (tr) ->
         offsetG = d3.select(@).append('g')
@@ -727,6 +736,8 @@ class force.Layout
             .attr('x', (tr) -> -tr.w / 2)
             .attr('width', (tr) -> tr.w)
             .attr('height', (tr) -> tr.h)
+
+    transitionLabelUpdate.exit().remove()
 
     dom = @s.dom
 
