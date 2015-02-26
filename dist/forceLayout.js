@@ -10,8 +10,8 @@
   ROUND_CORNER = 5;
 
   CELL_MIN = {
-    w: 40,
-    h: 40
+    w: 20,
+    h: 20
   };
 
   CELL_PAD = {

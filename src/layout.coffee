@@ -3,7 +3,7 @@ force = window.forceLayout = {}
 KIELER_URL = 'http://kieler.herokuapp.com/live'
 MARGIN = 5
 ROUND_CORNER = 5
-CELL_MIN = {w: 40, h: 40}
+CELL_MIN = {w: 20, h: 20}
 CELL_PAD = {top: 12, bottom: 12, left: 12, right: 12}
 EXPORT_PAD = {top: 10, bottom: 10, left: 10, right: 10}
 LABEL_SPACE = 400
