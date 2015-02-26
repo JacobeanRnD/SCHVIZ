@@ -624,7 +624,9 @@
               graph: graph
             });
           }).then(function() {
-            return _this.svgUpdate();
+            return _this.svgUpdate({
+              animate: true
+            });
           })["catch"](function(e) {
             return console.error(e.stack);
           })["finally"](function() {
@@ -927,22 +929,27 @@
       });
     };
 
-    Layout.prototype.svgUpdate = function() {
-      this.container.selectAll('.cell').attr('transform', function(node) {
-        return "translate(" + node.x + "," + node.y + ")";
-      }).classed('fixed', function(node) {
+    Layout.prototype.svgUpdate = function(options) {
+      var duration;
+      options = _.extend({
+        animate: false
+      }, options);
+      duration = options.animate ? 250 : 0;
+      this.container.selectAll('.cell').classed('fixed', function(node) {
         return node.fixed;
+      }).transition().duration(duration).attr('transform', function(node) {
+        return "translate(" + node.x + "," + node.y + ")";
       });
       this.container.selectAll('.cell').each(function(node) {
-        d3.select(this).select('rect').attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
-        return d3.select(this).select('.cell-header').attr('transform', function(node) {
+        d3.select(this).select('rect').transition().duration(duration).attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
+        return d3.select(this).select('.cell-header').transition().duration(duration).attr('transform', function(node) {
           return "translate(0," + (5 - node.h / 2) + ")";
         });
       });
-      this.container.selectAll('.transition').select('path').attr('d', function(tr) {
+      this.container.selectAll('.transition').select('path').transition().duration(duration).attr('d', function(tr) {
         return d3.svg.line()([].concat([tr.route.src], tr.route.segment1, [tr.route.label1], [tr.route.label2], tr.route.segment2, [tr.route.dst]));
       });
-      return this.container.selectAll('.transition-label').attr('transform', function(tr) {
+      return this.container.selectAll('.transition-label').transition().duration(duration).attr('transform', function(tr) {
         return "translate(" + tr.x + "," + tr.y + ")";
       });
     };

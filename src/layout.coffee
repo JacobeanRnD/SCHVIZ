@@ -463,7 +463,7 @@ class force.Layout
         .then (graph) =>
           applyKielerLayout(s: @s, graph: graph)
         .then =>
-          @svgUpdate()
+          @svgUpdate(animate: true)
         .catch (e) =>
           console.error e.stack
         .finally =>
@@ -738,23 +738,30 @@ class force.Layout
         .each (node) ->
           dom.set("transition-#{node.id}", @)
 
-  svgUpdate: ->
+  svgUpdate: (options) ->
+    options = _.extend({animate: false}, options)
+    duration = if options.animate then 250 else 0
+
     @container.selectAll('.cell')
-        .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
         .classed('fixed', (node) -> node.fixed)
+      .transition().duration(duration)
+        .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
 
     @container.selectAll('.cell').each (node) ->
         d3.select(this).select('rect')
+          .transition().duration(duration)
             .attr('x', - node.w / 2)
             .attr('y', - node.h / 2)
             .attr('width', node.w)
             .attr('height', node.h)
 
         d3.select(this).select('.cell-header')
+          .transition().duration(duration)
             .attr 'transform', (node) ->
               "translate(0,#{5 - node.h / 2})"
 
     @container.selectAll('.transition').select('path')
+      .transition().duration(duration)
         .attr 'd', (tr) ->
           d3.svg.line()([].concat(
             [tr.route.src]
@@ -766,6 +773,7 @@ class force.Layout
           ))
 
     @container.selectAll('.transition-label')
+      .transition().duration(duration)
         .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
   registerMouseHandlers: ->
