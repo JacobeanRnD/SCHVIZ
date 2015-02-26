@@ -451,12 +451,11 @@ class force.Layout
         Q()
         .then =>
           @loadTree(treeFromXml(doc).sc)
-        .then =>
+          force.kielerLayout(@s, {
+            algorithm: @options.kielerAlgorithm || '__klayjs'
+          })
+        .then (treeWithLayout) =>
           @beginSimulation()
-          @s.newNodes = []
-        .then =>
-          @animation = new NewNodesAnimation(@s.newNodes)
-          return @animation.promise
         .catch (e) =>
           console.error e
         .finally =>

@@ -602,13 +602,12 @@
       this.queue.push((function(_this) {
         return function(cb) {
           return deferred.resolve(Q().then(function() {
-            return _this.loadTree(treeFromXml(doc).sc);
-          }).then(function() {
-            _this.beginSimulation();
-            return _this.s.newNodes = [];
-          }).then(function() {
-            _this.animation = new NewNodesAnimation(_this.s.newNodes);
-            return _this.animation.promise;
+            _this.loadTree(treeFromXml(doc).sc);
+            return force.kielerLayout(_this.s, {
+              algorithm: _this.options.kielerAlgorithm || '__klayjs'
+            });
+          }).then(function(treeWithLayout) {
+            return _this.beginSimulation();
           })["catch"](function(e) {
             return console.error(e);
           })["finally"](function() {
