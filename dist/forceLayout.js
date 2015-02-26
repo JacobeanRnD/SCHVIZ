@@ -10,8 +10,8 @@
   ROUND_CORNER = 5;
 
   CELL_MIN = {
-    w: 20,
-    h: 20
+    w: 15,
+    h: 15
   };
 
   CELL_PAD = {
@@ -300,7 +300,7 @@
   };
 
   toKielerFormat = function(node) {
-    var child, children, edges, rv, tr, _i, _j, _len, _len1, _ref, _ref1;
+    var child, children, edges, node_header, rv, tr, _i, _j, _len, _len1, _ref, _ref1;
     children = [];
     edges = [];
     _ref = node.children || [];
@@ -344,15 +344,16 @@
         sourcePort: "" + tr.id + "#exit"
       });
     }
+    node_header = node.header || CELL_MIN;
     rv = {
       id: node.id,
       children: children,
       edges: edges,
       padding: {
-        top: node.topPadding || 0
+        top: node_header.h || 0
       },
-      width: (node.min || CELL_MIN).w,
-      height: (node.min || CELL_MIN).h
+      width: node_header.w + 10,
+      height: node_header.h + 10
     };
     return rv;
   };
@@ -682,11 +683,8 @@
             if ((oldNode = oldS.nodeMap.get(node.id)) != null) {
               node.x = oldNode.x;
               node.y = oldNode.y;
-              node.w = oldNode.w;
-              node.h = oldNode.h;
+              node.header = oldNode.header;
             } else {
-              node.w = CELL_MIN.w;
-              node.h = CELL_MIN.h;
               if (parent != null) {
                 node.x = parent.x;
                 node.y = parent.y;
@@ -714,9 +712,16 @@
               }
               _ref1 = path(node, target), a = _ref1[0], c = _ref1[1], b = _ref1[2];
               tr.parent = c || newS.top;
-              tr.w = 0;
-              tr.h = 0;
               tr.id = tr.id || makeId("_transition/" + node.id + "/" + target.id + "/");
+              if ((oldTr = oldS.nodeMap.get(tr.id)) != null) {
+                tr.w = oldTr.w;
+                tr.h = oldTr.h;
+                tr.yPort = oldTr.yPort;
+              } else {
+                tr.w = 0;
+                tr.h = 0;
+                tr.yPort = 0;
+              }
               newS.nodeMap.set(tr.id, tr);
               tr.parent.controls.push(tr);
               newS.nodes.push(tr);
@@ -845,11 +850,10 @@
     };
 
     Layout.prototype.svgNodes = function() {
-      var cell, dom, transitionLabel;
-      this.container.selectAll('.cell').remove();
-      this.container.selectAll('.transition').remove();
-      this.container.selectAll('.transition-label').remove();
-      cell = this.container.selectAll('.cell').data(this.s.cells).enter().append('g').attr('class', function(cell) {
+      var cell, dom;
+      cell = this.container.selectAll('.cell').data(this.s.cells, function(d) {
+        return d.id;
+      }).enter().append('g').attr('class', function(cell) {
         return "cell cell-" + (cell.type || 'state') + " draggable";
       }).classed('parallel-child', function(cell) {
         return cell.parent.type === 'parallel';
@@ -873,21 +877,21 @@
         label.attr('x', wEntry + wLabel / 2 - w / 2);
         onentry.attr('transform', "translate(" + (wEntry / 2 - w / 2) + ",0)");
         onexit.attr('transform', "translate(" + (w / 2 - wExit / 2) + ",0)");
-        node.min = {
-          w: w + 10,
-          h: h + 10
+        return node.header = {
+          w: w,
+          h: h
         };
-        node.w = d3.max([node.w, w]) + 10;
-        node.topPadding = h;
-        return node.h = h + 10;
       });
-      this.container.selectAll('.transition').data(this.s.transitions).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
+      this.container.selectAll('.transition').data(this.s.transitions, function(d) {
+        return d.id;
+      }).enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
         return function(tr) {
           return "" + _this.id + "-transition/" + tr.id;
         };
       })(this));
-      transitionLabel = this.container.selectAll('.transition-label').data(this.s.transitions).enter().append('g').attr('class', 'transition-label draggable');
-      transitionLabel.each(function(tr) {
+      this.container.selectAll('.transition-label').data(this.s.transitions, function(d) {
+        return d.id;
+      }).enter().append('g').attr('class', 'transition-label draggable').each(function(tr) {
         var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
         offsetG = d3.select(this).append('g');
         transitionRect = offsetG.append('rect');
@@ -935,8 +939,7 @@
           return "translate(0," + (5 - node.h / 2) + ")";
         });
       });
-      this.container.selectAll('.selfie').remove();
-      this.container.selectAll('.transition').selectAll('path').attr('d', function(tr) {
+      this.container.selectAll('.transition').select('path').attr('d', function(tr) {
         return d3.svg.line()([].concat([tr.route.src], tr.route.segment1, [tr.route.label1], [tr.route.label2], tr.route.segment2, [tr.route.dst]));
       });
       return this.container.selectAll('.transition-label').attr('transform', function(tr) {

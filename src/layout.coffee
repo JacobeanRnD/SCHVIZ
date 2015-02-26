@@ -3,7 +3,7 @@ force = window.forceLayout = {}
 KIELER_URL = 'http://kieler.herokuapp.com/live'
 MARGIN = 5
 ROUND_CORNER = 5
-CELL_MIN = {w: 20, h: 20}
+CELL_MIN = {w: 15, h: 15}
 CELL_PAD = {top: 12, bottom: 12, left: 12, right: 12}
 EXPORT_PAD = {top: 10, bottom: 10, left: 10, right: 10}
 LABEL_SPACE = 400
@@ -248,13 +248,14 @@ toKielerFormat = (node) ->
       target: tr.b.id
       sourcePort: "#{tr.id}#exit"
     )
+  node_header = node.header or CELL_MIN
   rv = {
     id: node.id
     children: children
     edges: edges
-    padding: {top: node.topPadding or 0}
-    width: (node.min or CELL_MIN).w
-    height: (node.min or CELL_MIN).h
+    padding: {top: node_header.h or 0}
+    width: node_header.w + 10
+    height: node_header.h + 10
   }
   return rv
 
@@ -513,11 +514,8 @@ class force.Layout
         if (oldNode = oldS.nodeMap.get(node.id))?
           node.x = oldNode.x
           node.y = oldNode.y
-          node.w = oldNode.w
-          node.h = oldNode.h
+          node.header = oldNode.header
         else
-          node.w = CELL_MIN.w
-          node.h = CELL_MIN.h
           if parent?
             node.x = parent.x
             node.y = parent.y
@@ -534,9 +532,15 @@ class force.Layout
             throw Error("missing transition target: #{tr.target}")
           [a, c, b] = path(node, target)
           tr.parent = c or newS.top
-          tr.w = 0
-          tr.h = 0
           tr.id = tr.id or makeId("_transition/#{node.id}/#{target.id}/")
+          if (oldTr = oldS.nodeMap.get(tr.id))?
+            tr.w = oldTr.w
+            tr.h = oldTr.h
+            tr.yPort = oldTr.yPort
+          else
+            tr.w = 0
+            tr.h = 0
+            tr.yPort = 0
           newS.nodeMap.set(tr.id, tr)
           tr.parent.controls.push(tr)
           newS.nodes.push(tr)
@@ -642,12 +646,8 @@ class force.Layout
     @zoomBehavior.event(@zoomNode)
 
   svgNodes: ->
-    @container.selectAll('.cell').remove()
-    @container.selectAll('.transition').remove()
-    @container.selectAll('.transition-label').remove()
-
     cell = @container.selectAll('.cell')
-        .data(@s.cells)
+        .data(@s.cells, (d) -> d.id)
       .enter().append('g')
         .attr('class', (cell) -> "cell cell-#{cell.type or 'state'} draggable")
         .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
@@ -679,59 +679,54 @@ class force.Layout
         label.attr('x', wEntry + wLabel / 2 - w/2)
         onentry.attr('transform', "translate(#{wEntry/2 - w/2},0)")
         onexit.attr('transform', "translate(#{w/2 - wExit/2},0)")
-
-        node.min = {w: w + 10, h: h + 10}
-        node.w = d3.max([node.w, w]) + 10
-        node.topPadding = h
-        node.h = h + 10
+        node.header = {w: w, h: h}
 
     @container.selectAll('.transition')
-        .data(@s.transitions)
+        .data(@s.transitions, (d) -> d.id)
       .enter().append('g')
         .attr('class', 'transition')
       .append('path')
         .attr('style', "marker-end: url(##{@id}-arrow)")
         .attr('id', (tr) => "#{@id}-transition/#{tr.id}")
 
-    transitionLabel = @container.selectAll('.transition-label')
-        .data(@s.transitions)
+    @container.selectAll('.transition-label')
+        .data(@s.transitions, (d) -> d.id)
       .enter().append('g')
         .attr('class', 'transition-label draggable')
+      .each (tr) ->
+        offsetG = d3.select(@).append('g')
+        transitionRect = offsetG.append('rect')
 
-    transitionLabel.each (tr) ->
-      offsetG = d3.select(@).append('g')
-      transitionRect = offsetG.append('rect')
+        transitionText = offsetG.append('text')
+            .attr('y', 16)
 
-      transitionText = offsetG.append('text')
-          .attr('y', 16)
-
-      transitionText.append('tspan')
-          .text(tr.label)
-
-      if tr.cond?
         transitionText.append('tspan')
-            .text("[#{tr.cond}]")
-            .attr('x', 0)
-            .attr('dy', 16)
-        y += 16
+            .text(tr.label)
 
-      y = $(transitionText[0][0]).height() + 4
-      tr.yPort = y - 2
+        if tr.cond?
+          transitionText.append('tspan')
+              .text("[#{tr.cond}]")
+              .attr('x', 0)
+              .attr('dy', 16)
+          y += 16
 
-      actionBlockG = offsetG.append('g')
-          .attr('transform', "translate(0,#{y})")
-      [w, h] = actionBlockSvg(tr.actions or [], actionBlockG)
-      y += h
-      tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE])
-      tr.w = d3.max([tr.w, tr.textWidth, w])
-      tr.h = y + 4
+        y = $(transitionText[0][0]).height() + 4
+        tr.yPort = y - 2
 
-      offsetG.attr('transform', "translate(0,#{-tr.h/2})")
+        actionBlockG = offsetG.append('g')
+            .attr('transform', "translate(0,#{y})")
+        [w, h] = actionBlockSvg(tr.actions or [], actionBlockG)
+        y += h
+        tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE])
+        tr.w = d3.max([tr.w, tr.textWidth, w])
+        tr.h = y + 4
 
-      transitionRect
-          .attr('x', (tr) -> -tr.w / 2)
-          .attr('width', (tr) -> tr.w)
-          .attr('height', (tr) -> tr.h)
+        offsetG.attr('transform', "translate(0,#{-tr.h/2})")
+
+        transitionRect
+            .attr('x', (tr) -> -tr.w / 2)
+            .attr('width', (tr) -> tr.w)
+            .attr('height', (tr) -> tr.h)
 
     dom = @s.dom
 
@@ -759,9 +754,7 @@ class force.Layout
             .attr 'transform', (node) ->
               "translate(0,#{5 - node.h / 2})"
 
-    @container.selectAll('.selfie').remove()
-
-    @container.selectAll('.transition').selectAll('path')
+    @container.selectAll('.transition').select('path')
         .attr 'd', (tr) ->
           d3.svg.line()([].concat(
             [tr.route.src]
