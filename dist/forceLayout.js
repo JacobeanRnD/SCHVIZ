@@ -357,8 +357,10 @@
     return rv;
   };
 
-  applyKielerLayout = function(s, graph) {
-    var kEdgeMap, kNodeMap, offsetMap, traverse;
+  applyKielerLayout = function(options) {
+    var graph, kEdgeMap, kNodeMap, offsetMap, s, traverse;
+    s = options.s;
+    graph = options.graph;
     kNodeMap = d3.map();
     kEdgeMap = d3.map();
     offsetMap = d3.map();
@@ -586,7 +588,10 @@
               return deferred.resolve(kielerLayout(_this.s, {
                 algorithm: _this.options.kielerAlgorithm
               }).then(function(graph) {
-                return applyKielerLayout(_this.s, graph);
+                return applyKielerLayout({
+                  s: _this.s,
+                  graph: graph
+                });
               }).then(function() {
                 loading.destroy();
                 _this.svgUpdate();
@@ -613,7 +618,10 @@
               algorithm: _this.options.kielerAlgorithm
             });
           }).then(function(graph) {
-            return applyKielerLayout(_this.s, graph);
+            return applyKielerLayout({
+              s: _this.s,
+              graph: graph
+            });
           }).then(function() {
             return _this.svgUpdate();
           })["catch"](function(e) {

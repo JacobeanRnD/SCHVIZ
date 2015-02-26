@@ -259,7 +259,9 @@ toKielerFormat = (node) ->
   return rv
 
 
-applyKielerLayout = (s, graph) ->
+applyKielerLayout = (options) ->
+  s = options.s
+  graph = options.graph
   kNodeMap = d3.map()
   kEdgeMap = d3.map()
   offsetMap = d3.map()
@@ -438,7 +440,7 @@ class force.Layout
           deferred.resolve(
             kielerLayout(@s, algorithm: @options.kielerAlgorithm)
               .then (graph) =>
-                applyKielerLayout(@s, graph)
+                applyKielerLayout(s: @s, graph: graph)
               .then =>
                 loading.destroy()
                 @svgUpdate()
@@ -458,7 +460,7 @@ class force.Layout
           @loadTree(treeFromXml(doc).sc)
           kielerLayout(@s, algorithm: @options.kielerAlgorithm)
         .then (graph) =>
-          applyKielerLayout(@s, graph)
+          applyKielerLayout(s: @s, graph: graph)
         .then =>
           @svgUpdate()
         .catch (e) =>
