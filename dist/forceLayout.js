@@ -357,16 +357,16 @@
     return rv;
   };
 
-  applyKielerLayout = function(s, graphLayout) {
+  applyKielerLayout = function(s, graph) {
     var kEdgeMap, kNodeMap, offsetMap, traverse;
     kNodeMap = d3.map();
     kEdgeMap = d3.map();
     offsetMap = d3.map();
     offsetMap.set('__ROOT__', {
-      x: -graphLayout.width / 2,
-      y: -graphLayout.height / 2
+      x: -graph.width / 2,
+      y: -graph.height / 2
     });
-    walk(graphLayout, (function(_this) {
+    walk(graph, (function(_this) {
       return function(kNode) {
         var kChild, kEdge, offset, padding, _i, _j, _len, _len1, _ref, _ref1, _results;
         kNodeMap.set(kNode.id, kNode);
@@ -433,7 +433,7 @@
       }
       return _results;
     };
-    return traverse(graphLayout);
+    return traverse(graph);
   };
 
   kielerLayout = function(s, options) {
@@ -585,8 +585,8 @@
               });
               return deferred.resolve(kielerLayout(_this.s, {
                 algorithm: _this.options.kielerAlgorithm
-              }).then(function(graphLayout) {
-                return applyKielerLayout(_this.s, graphLayout);
+              }).then(function(graph) {
+                return applyKielerLayout(_this.s, graph);
               }).then(function() {
                 loading.destroy();
                 _this.svgUpdate();
@@ -612,8 +612,8 @@
             return kielerLayout(_this.s, {
               algorithm: _this.options.kielerAlgorithm
             });
-          }).then(function(graphLayout) {
-            return applyKielerLayout(_this.s, graphLayout);
+          }).then(function(graph) {
+            return applyKielerLayout(_this.s, graph);
           }).then(function() {
             return _this.svgUpdate();
           })["catch"](function(e) {
