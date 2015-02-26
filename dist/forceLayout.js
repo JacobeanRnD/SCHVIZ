@@ -358,7 +358,8 @@
   };
 
   force.kielerLayout = function(s, options) {
-    var applyLayout, form, graph, kEdgeMap, kNodeMap, klay_ready, layoutDone, offsetMap, top;
+    var algorithm, applyLayout, form, graph, kEdgeMap, kNodeMap, klay_ready, layoutDone, offsetMap, top;
+    algorithm = options.algorithm || '__klayjs';
     top = s.top;
     kNodeMap = d3.map();
     kEdgeMap = d3.map();
@@ -405,7 +406,7 @@
       return _results;
     };
     graph = toKielerFormat(top);
-    if (options.algorithm === '__klayjs') {
+    if (algorithm === '__klayjs') {
       klay_ready = Q.defer();
       $klay.layout({
         graph: graph,
@@ -424,7 +425,7 @@
       form = {
         graph: JSON.stringify(graph),
         config: JSON.stringify({
-          algorithm: options.algorithm,
+          algorithm: algorithm,
           edgeRouting: 'ORTHOGONAL',
           feedBackEdges: true,
           layoutHierarchy: true
@@ -580,7 +581,7 @@
                 text: "Loading Kieler layout ..."
               });
               return deferred.resolve(force.kielerLayout(_this.s, {
-                algorithm: _this.options.kielerAlgorithm || '__klayjs'
+                algorithm: _this.options.kielerAlgorithm
               }).then(function(treeWithLayout) {
                 loading.destroy();
                 _this.beginSimulation();
@@ -604,7 +605,7 @@
           return deferred.resolve(Q().then(function() {
             _this.loadTree(treeFromXml(doc).sc);
             return force.kielerLayout(_this.s, {
-              algorithm: _this.options.kielerAlgorithm || '__klayjs'
+              algorithm: _this.options.kielerAlgorithm
             });
           }).then(function(treeWithLayout) {
             return _this.beginSimulation();
