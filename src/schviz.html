@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+html, body { height: 100%; margin: 0; }
+</style>
+<link rel="stylesheet" href="forceLayout.css">
+<body>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/q/q.js"></script>
+<script src="bower_components/lodash/dist/lodash.js"></script>
+<script src="bower_components/backbone/backbone.js"></script>
+<script src="bower_components/async/lib/async.js"></script>
+<script src="bower_components/klayjs/klay.js"></script>
+<script src="forceLayout.js"></script>
+<script>
+
+function show(src) {
+  window.layout = new forceLayout.Layout({
+    parent: document.querySelector('body'),
+    doc: new window.DOMParser().parseFromString(src, 'text/xml')
+  });
+  $(window).resize(function() { layout.invalidateSize(); });
+}
+
+//CALL
+
+</script>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+#vis { height: 400px; }
+</style>
+
+<body>
+<div id="vis"></div>
+
+<script src="schviz.js"></script>
+
+<script>
+
+var src = '<?xml version="1.0" encoding="UTF-8"?><scxml xmlns="http://www.w3.org/2005/07/scxml"><state id="a"><transition target="b" event="e1"/></state><state id="b"/></scxml>';
+schviz.visualize(document.getElementById('vis'), src);
+
+</script>
