@@ -259,14 +259,28 @@ toKielerFormat = (node) ->
   return rv
 
 
-force.kielerLayout = (s, options) ->
-  algorithm = options.algorithm or '__klayjs'
-  top = s.top
+applyKielerLayout = (s, graphLayout) ->
   kNodeMap = d3.map()
   kEdgeMap = d3.map()
   offsetMap = d3.map()
 
-  applyLayout = (kNode) ->
+  offsetMap.set('__ROOT__', {
+    x: -graphLayout.width / 2
+    y: -graphLayout.height / 2
+  })
+  walk graphLayout, (kNode) =>
+    kNodeMap.set(kNode.id, kNode)
+    offset = offsetMap.get(kNode.id)
+    padding = _.extend({top: 0, left: 0}, kNode.padding)
+    for kChild in kNode.children or []
+      offsetMap.set(kChild.id, {
+        x: offset.x + (kNode.x or 0) + (padding.left or 0)
+        y: offset.y + (kNode.y or 0) + (padding.top or 0)
+      })
+    for kEdge in kNode.edges or []
+      kEdgeMap.set(kEdge.id, kEdge)
+
+  traverse = (kNode) ->
     if kNode.desmTransition
       tr = s.nodeMap.get(kNode.id)
       offset1 = offsetMap.get(tr.a.id)
@@ -299,7 +313,14 @@ force.kielerLayout = (s, options) ->
       node.y = offset.y + (kNode.y or 0) + node.h/2
 
     for kChild in kNode.children or []
-      applyLayout(kChild)
+      traverse(kChild)
+
+  traverse(graphLayout)
+
+
+kielerLayout = (s, options) ->
+  algorithm = options.algorithm or '__klayjs'
+  top = s.top
 
   graph = toKielerFormat(top)
 
@@ -338,22 +359,7 @@ force.kielerLayout = (s, options) ->
 
   return layoutDone
     .then (graphLayout) ->
-      offsetMap.set('__ROOT__', {
-        x: -graphLayout.width / 2
-        y: -graphLayout.height / 2
-      })
-      walk graphLayout, (kNode) =>
-        kNodeMap.set(kNode.id, kNode)
-        offset = offsetMap.get(kNode.id)
-        padding = _.extend({top: 0, left: 0}, kNode.padding)
-        for kChild in kNode.children or []
-          offsetMap.set(kChild.id, {
-            x: offset.x + (kNode.x or 0) + (padding.left or 0)
-            y: offset.y + (kNode.y or 0) + (padding.top or 0)
-          })
-        for kEdge in kNode.edges or []
-          kEdgeMap.set(kEdge.id, kEdge)
-      applyLayout(graphLayout)
+      applyKielerLayout(s, graphLayout)
 
 
 class NewNodesAnimation
@@ -432,7 +438,7 @@ class force.Layout
         else
           loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
           deferred.resolve(
-            force.kielerLayout(@s, algorithm: @options.kielerAlgorithm)
+            kielerLayout(@s, algorithm: @options.kielerAlgorithm)
               .then =>
                 loading.destroy()
                 @svgUpdate()
@@ -450,7 +456,7 @@ class force.Layout
         Q()
         .then =>
           @loadTree(treeFromXml(doc).sc)
-          force.kielerLayout(@s, algorithm: @options.kielerAlgorithm)
+          kielerLayout(@s, algorithm: @options.kielerAlgorithm)
         .then =>
           @svgUpdate()
         .catch (e) =>

@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, envelope, findTransition, force, idMaker, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, applyKielerLayout, envelope, findTransition, force, idMaker, kielerLayout, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -357,14 +357,42 @@
     return rv;
   };
 
-  force.kielerLayout = function(s, options) {
-    var algorithm, applyLayout, form, graph, kEdgeMap, kNodeMap, klay_ready, layoutDone, offsetMap, top;
-    algorithm = options.algorithm || '__klayjs';
-    top = s.top;
+  applyKielerLayout = function(s, graphLayout) {
+    var kEdgeMap, kNodeMap, offsetMap, traverse;
     kNodeMap = d3.map();
     kEdgeMap = d3.map();
     offsetMap = d3.map();
-    applyLayout = function(kNode) {
+    offsetMap.set('__ROOT__', {
+      x: -graphLayout.width / 2,
+      y: -graphLayout.height / 2
+    });
+    walk(graphLayout, (function(_this) {
+      return function(kNode) {
+        var kChild, kEdge, offset, padding, _i, _j, _len, _len1, _ref, _ref1, _results;
+        kNodeMap.set(kNode.id, kNode);
+        offset = offsetMap.get(kNode.id);
+        padding = _.extend({
+          top: 0,
+          left: 0
+        }, kNode.padding);
+        _ref = kNode.children || [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          kChild = _ref[_i];
+          offsetMap.set(kChild.id, {
+            x: offset.x + (kNode.x || 0) + (padding.left || 0),
+            y: offset.y + (kNode.y || 0) + (padding.top || 0)
+          });
+        }
+        _ref1 = kNode.edges || [];
+        _results = [];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          kEdge = _ref1[_j];
+          _results.push(kEdgeMap.set(kEdge.id, kEdge));
+        }
+        return _results;
+      };
+    })(this));
+    traverse = function(kNode) {
       var e1, e2, kChild, kTr, node, offset, offset1, offset2, tr, translate1, translate2, _i, _len, _ref, _results;
       if (kNode.desmTransition) {
         tr = s.nodeMap.get(kNode.id);
@@ -401,10 +429,17 @@
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         kChild = _ref[_i];
-        _results.push(applyLayout(kChild));
+        _results.push(traverse(kChild));
       }
       return _results;
     };
+    return traverse(graphLayout);
+  };
+
+  kielerLayout = function(s, options) {
+    var algorithm, form, graph, klay_ready, layoutDone, top;
+    algorithm = options.algorithm || '__klayjs';
+    top = s.top;
     graph = toKielerFormat(top);
     if (algorithm === '__klayjs') {
       klay_ready = Q.defer();
@@ -440,37 +475,7 @@
       });
     }
     return layoutDone.then(function(graphLayout) {
-      offsetMap.set('__ROOT__', {
-        x: -graphLayout.width / 2,
-        y: -graphLayout.height / 2
-      });
-      walk(graphLayout, (function(_this) {
-        return function(kNode) {
-          var kChild, kEdge, offset, padding, _i, _j, _len, _len1, _ref, _ref1, _results;
-          kNodeMap.set(kNode.id, kNode);
-          offset = offsetMap.get(kNode.id);
-          padding = _.extend({
-            top: 0,
-            left: 0
-          }, kNode.padding);
-          _ref = kNode.children || [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            kChild = _ref[_i];
-            offsetMap.set(kChild.id, {
-              x: offset.x + (kNode.x || 0) + (padding.left || 0),
-              y: offset.y + (kNode.y || 0) + (padding.top || 0)
-            });
-          }
-          _ref1 = kNode.edges || [];
-          _results = [];
-          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-            kEdge = _ref1[_j];
-            _results.push(kEdgeMap.set(kEdge.id, kEdge));
-          }
-          return _results;
-        };
-      })(this));
-      return applyLayout(graphLayout);
+      return applyKielerLayout(s, graphLayout);
     });
   };
 
@@ -580,7 +585,7 @@
                 svg: _this.el,
                 text: "Loading Kieler layout ..."
               });
-              return deferred.resolve(force.kielerLayout(_this.s, {
+              return deferred.resolve(kielerLayout(_this.s, {
                 algorithm: _this.options.kielerAlgorithm
               }).then(function() {
                 loading.destroy();
@@ -604,7 +609,7 @@
         return function(cb) {
           return deferred.resolve(Q().then(function() {
             _this.loadTree(treeFromXml(doc).sc);
-            return force.kielerLayout(_this.s, {
+            return kielerLayout(_this.s, {
               algorithm: _this.options.kielerAlgorithm
             });
           }).then(function() {
