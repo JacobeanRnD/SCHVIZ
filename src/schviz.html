@@ -20,7 +20,11 @@ function show(src) {
     parent: document.querySelector('body'),
     doc: new window.DOMParser().parseFromString(src, 'text/xml')
   });
-  $(window).resize(function() { layout.invalidateSize(); });
+  window.layout.fit();
+  $(window).resize(function() {
+    layout.invalidateSize();
+    layout.fit();
+  });
 }
 
 //CALL
