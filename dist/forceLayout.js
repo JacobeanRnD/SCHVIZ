@@ -1162,13 +1162,18 @@
     };
 
     Layout.prototype.fit = function() {
-      var h, scale, w, xMax, xMin, yMax, yMin, _ref, _ref1;
-      _ref = envelope(this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
-      _ref1 = this.zoomBehavior.size(), w = _ref1[0], h = _ref1[1];
-      scale = d3.min([w / (xMax - xMin), h / (yMax - yMin)]);
-      this.zoomBehavior.translate([w / 2 - (xMax + xMin) * scale / 2, h / 2 - (yMax + yMin) * scale / 2]);
-      this.zoomBehavior.scale(scale);
-      return this.zoomBehavior.event(this.zoomNode);
+      return this.queue.push((function(_this) {
+        return function(cb) {
+          var h, scale, w, xMax, xMin, yMax, yMin, _ref, _ref1;
+          _ref = envelope(_this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
+          _ref1 = _this.zoomBehavior.size(), w = _ref1[0], h = _ref1[1];
+          scale = d3.min([w / (xMax - xMin), h / (yMax - yMin)]);
+          _this.zoomBehavior.translate([w / 2 - (xMax + xMin) * scale / 2, h / 2 - (yMax + yMin) * scale / 2]);
+          _this.zoomBehavior.scale(scale);
+          _this.zoomBehavior.event(_this.zoomNode);
+          return cb();
+        };
+      })(this));
     };
 
     Layout.prototype.exportSvg = function(options) {
