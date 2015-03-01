@@ -852,19 +852,21 @@
     };
 
     Layout.prototype.svgNodes = function() {
-      var cell, cellUpdate, dom, transitionLabelUpdate, transitionUpdate;
+      var cellUpdate, dom, newCell, transitionLabelUpdate, transitionUpdate;
       cellUpdate = this.container.selectAll('.cell').data(this.s.cells, function(d) {
         return d.id;
       });
-      cell = cellUpdate.enter().append('g').attr('class', function(cell) {
+      newCell = cellUpdate.enter().append('g').attr('class', function(cell) {
         return "cell cell-" + (cell.type || 'state') + " draggable";
       }).classed('parallel-child', function(cell) {
         return cell.parent.type === 'parallel';
       });
-      cell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
-      cell.each(function(node) {
+      newCell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
+      newCell.append('g').attr('class', 'cell-header');
+      cellUpdate.each(function(node) {
         var h, hEntry, hExit, header, label, labelTextWidth, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
-        header = d3.select(this).append('g').attr('class', 'cell-header');
+        header = d3.select(this).select('.cell-header');
+        header.selectAll('*').remove();
         label = header.append('text').text(function(node) {
           return node.label;
         }).attr('y', 12);
@@ -898,9 +900,11 @@
       transitionLabelUpdate = this.container.selectAll('.transition-label').data(this.s.transitions, function(d) {
         return d.id;
       });
-      transitionLabelUpdate.enter().append('g').attr('class', 'transition-label draggable').each(function(tr) {
+      transitionLabelUpdate.enter().append('g').attr('class', 'transition-label draggable').append('g').attr('class', 'transition-label-offset');
+      transitionLabelUpdate.each(function(tr) {
         var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
-        offsetG = d3.select(this).append('g');
+        offsetG = d3.select(this).select('.transition-label-offset');
+        offsetG.selectAll('*').remove();
         transitionRect = offsetG.append('rect');
         transitionText = offsetG.append('text').attr('y', 16);
         transitionText.append('tspan').text(tr.label);

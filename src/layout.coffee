@@ -649,18 +649,21 @@ class force.Layout
     cellUpdate = @container.selectAll('.cell')
         .data(@s.cells, (d) -> d.id)
 
-    cell = cellUpdate.enter().append('g')
+    newCell = cellUpdate.enter().append('g')
         .attr('class', (cell) -> "cell cell-#{cell.type or 'state'} draggable")
         .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
 
-    cell.append('rect')
+    newCell.append('rect')
         .attr('class', 'border')
         .attr('rx', ROUND_CORNER)
         .attr('ry', ROUND_CORNER)
 
-    cell.each (node) ->
-        header = d3.select(@).append('g')
-          .attr('class', 'cell-header')
+    newCell.append('g')
+        .attr('class', 'cell-header')
+
+    cellUpdate.each (node) ->
+        header = d3.select(@).select('.cell-header')
+        header.selectAll('*').remove()
 
         label = header.append('text')
           .text((node) -> node.label)
@@ -702,8 +705,13 @@ class force.Layout
     transitionLabelUpdate.enter()
       .append('g')
         .attr('class', 'transition-label draggable')
-      .each (tr) ->
-        offsetG = d3.select(@).append('g')
+      .append('g')
+        .attr('class', 'transition-label-offset')
+
+    transitionLabelUpdate.each (tr) ->
+        offsetG = d3.select(@).select('.transition-label-offset')
+        offsetG.selectAll('*').remove()
+
         transitionRect = offsetG.append('rect')
 
         transitionText = offsetG.append('text')
