@@ -21,6 +21,7 @@ layout.fit();
 // add/remove state highlight
 layout.highlightState('state-id', true);
 layout.highlightState('state-id', false);
+layout.unhighlightAllStates();
 
 // add/remove transition highlight
 layout.highlightTransition('src', 'dst', true);

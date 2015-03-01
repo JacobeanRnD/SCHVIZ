@@ -1150,6 +1150,15 @@
       })(this));
     };
 
+    Layout.prototype.unhighlightAllStates = function() {
+      return this.queue.push((function(_this) {
+        return function(cb) {
+          d3.select(_this.el).selectAll('.cell.highlight').classed('highlight', false);
+          return cb();
+        };
+      })(this));
+    };
+
     Layout.prototype.highlightTransition = function(source, target, highlight) {
       if (highlight == null) {
         highlight = true;

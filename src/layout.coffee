@@ -926,6 +926,12 @@ class force.Layout
           .classed('highlight', highlight)
       cb()
 
+  unhighlightAllStates: ->
+    @queue.push (cb) =>
+      d3.select(@el).selectAll('.cell.highlight')
+          .classed('highlight', false)
+      cb()
+
   highlightTransition: (source, target, highlight=true) ->
     @queue.push (cb) =>
       if (tr = findTransition(@s.transitions, source, target))?
