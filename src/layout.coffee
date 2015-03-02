@@ -957,15 +957,18 @@ class force.Layout
     div = $('<div style="positoin:relative">')[0]
     svg = d3.select(div).append('svg')
         .attr('xmlns', 'http://www.w3.org/2000/svg')
-        .attr('viewBox', "#{xMin} #{yMin} #{xMax - xMin} #{yMax - yMin}")
         .classed('force-layout', true)
-    svg.append('defs')
-        .html(d3.select(@el).select('defs').html())
-        .append('style')
-          .html(options.css)
-    svg.append('g')
-        .html(@container.html())
+    defs = d3.select(@el).select('defs')[0][0].cloneNode(true)
+    svg[0][0].appendChild(defs)
+    d3.select(defs).append('style').text(options.css)
+    container = @container[0][0].cloneNode(true)
+    d3.select(container).attr('transform', null)
+    svg[0][0].appendChild(container)
     $(div).find('.zoomRect').remove()
+    $('body').append(div)
+    bbox = container.getBBox()
+    $(div).remove()
+    svg.attr('viewBox', "#{bbox.x} #{bbox.y} #{bbox.width} #{bbox.height}")
     return div.innerHTML
 
 force.render = (options) ->
