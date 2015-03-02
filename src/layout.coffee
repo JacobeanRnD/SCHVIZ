@@ -759,28 +759,30 @@ class force.Layout
 
   svgUpdate: (options) ->
     options = _.extend({animate: false}, options)
-    duration = if options.animate then 250 else 0
+
+    if options.animate
+      animate = (sel) -> sel.transition()
+    else
+      animate = (sel) -> sel
 
     @container.selectAll('.cell')
         .classed('fixed', (node) -> node.fixed)
-      .transition().duration(duration)
+
+    animate(@container.selectAll('.cell'))
         .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
 
     @container.selectAll('.cell').each (node) ->
-        d3.select(this).select('rect')
-          .transition().duration(duration)
+        animate(d3.select(this).select('rect'))
             .attr('x', - node.w / 2)
             .attr('y', - node.h / 2)
             .attr('width', node.w)
             .attr('height', node.h)
 
-        d3.select(this).select('.cell-header')
-          .transition().duration(duration)
+        animate(d3.select(this).select('.cell-header'))
             .attr 'transform', (node) ->
               "translate(0,#{5 - node.h / 2})"
 
-    @container.selectAll('.transition').select('path')
-      .transition().duration(duration)
+    animate(@container.selectAll('.transition').select('path'))
         .attr 'd', (tr) ->
           d3.svg.line()([].concat(
             [tr.route.src]
@@ -791,8 +793,7 @@ class force.Layout
             [tr.route.dst]
           ))
 
-    @container.selectAll('.transition-label')
-      .transition().duration(duration)
+    animate(@container.selectAll('.transition-label'))
         .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
   registerMouseHandlers: ->
