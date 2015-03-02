@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+html, body { height: 100%; margin: 0; }
+</style>
+<link rel="stylesheet" href="forceLayout.css">
+<body>
+<script src="../bower_components/d3/d3.min.js"></script>
+<script src="../bower_components/jquery/dist/jquery.min.js"></script>
+<script src="../bower_components/q/q.js"></script>
+<script src="../bower_components/lodash/dist/lodash.js"></script>
+<script src="../bower_components/backbone/backbone.js"></script>
+<script src="../bower_components/async/lib/async.js"></script>
+<script src="../bower_components/klayjs/klay.js"></script>
+<script src="../dist/forceLayout.js"></script>
+<script>
+
+function renderToSvg(src, css) {
+  var layout = window.layout = new forceLayout.Layout({
+    parent: document.querySelector('body'),
+    doc: new window.DOMParser().parseFromString(src, 'text/xml')
+  });
+  layout.initialized.then(function() {
+    var svg = layout.exportSvg({css: css});
+    callPhantom('result', svg);
+    callPhantom('exit');
+  });
+}
+
+</script>
