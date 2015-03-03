@@ -45,6 +45,8 @@ var svg = layout.exportSvg({
 
 ### Embedding
 
+#### JavaScript API
+
 ```html
 <!DOCTYPE html>
 <meta charset="utf-8">
@@ -54,4 +56,10 @@ var svg = layout.exportSvg({
 var src = '<?xml version="1.0" encoding="UTF-8"?><scxml xmlns="http://www.w3.org/2005/07/scxml"><state id="a"><transition target="b" event="e1"/></state><state id="b"/></scxml>';
 schviz.visualize(document.querySelector('body'), src);
 </script>
+```
+
+#### Image API
+
+```html
+<img src="http://desm-visualization.herokuapp.com/render?scxml=https://dl.dropboxusercontent.com/u/103063/static/desm-devel/archive.xml">
 ```
