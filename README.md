@@ -61,5 +61,5 @@ schviz.visualize(document.querySelector('body'), src);
 #### Image API
 
 ```html
-<img src="http://desm-visualization.herokuapp.com/render?scxml=https://dl.dropboxusercontent.com/u/103063/static/desm-devel/archive.xml">
+<img src="http://desm-visualization.herokuapp.com/render?scxml=https://dl.dropboxusercontent.com/u/103063/static/desm-devel/archive.xml" style="max-width: 600px">
 ```
