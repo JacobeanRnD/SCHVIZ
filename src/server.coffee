@@ -59,11 +59,18 @@ server.serve = (host, port) ->
       if url.match(pattern)
         return res.status(400).send("Invalid URL")
 
-    request url, (err, _res, src) ->
+    request url, (err, urlRes, src) ->
       if err?
+        if err.code == 'ENOTFOUND'
+          return res.status(400).send("Failed to retrieve URL")
+
         console.error err
         res.sendStatus(500)
+
       else
+        if urlRes.statusCode != 200
+          return res.status(400).send("Failed to retrieve URL")
+
         render src, (err, png) ->
           if err?
             console.error err
