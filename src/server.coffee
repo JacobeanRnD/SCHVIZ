@@ -7,6 +7,11 @@ request = require('request')
 
 module.exports = server = {}
 
+INVALID_URL = [
+  /^http[s]?:\/\/unix:/
+  /^file:/
+]
+
 
 render = (src, callback) ->
   child = child_process.exec(
@@ -48,7 +53,11 @@ server.serve = (host, port) ->
 
   app.get '/render', (req, res) ->
     unless (url = req.query.scxml)?
-      res.sendStatus(400)
+      return res.status(400).send("Missing 'url' parameter")
+
+    for pattern in INVALID_URL
+      if url.match(pattern)
+        return res.status(400).send("Invalid URL")
 
     request url, (err, _res, src) ->
       if err?
