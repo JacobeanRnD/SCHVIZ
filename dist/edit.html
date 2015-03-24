@@ -78,7 +78,9 @@ html, body { height: 100%; margin: 0; }
       }
 
       function update() {
-        layout.update(parse());
+        layout.update(parse()).catch(function(e) {
+          console.log(e.stack);
+        });
       }
 
       function reset() {

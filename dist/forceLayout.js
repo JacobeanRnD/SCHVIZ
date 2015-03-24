@@ -627,8 +627,6 @@
             return _this.svgUpdate({
               animate: true
             });
-          })["catch"](function(e) {
-            return console.error(e.stack);
           })["finally"](function() {
             return cb();
           }));

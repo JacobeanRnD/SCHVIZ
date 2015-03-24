@@ -464,8 +464,6 @@ class force.Layout
           applyKielerLayout(s: @s, graph: graph)
         .then =>
           @svgUpdate(animate: true)
-        .catch (e) =>
-          console.error e.stack
         .finally =>
           cb()
       )
