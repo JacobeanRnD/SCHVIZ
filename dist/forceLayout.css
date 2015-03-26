@@ -48,10 +48,9 @@
   pointer-events: none;
 }
 .force-layout .zoomRect {
-  fill: #fff;
+  fill: none;
   stroke-width: 1px;
   pointer-events: all;
-  stroke: black;
 }
 .force-layout .loadingOverlay rect {
   fill: white;

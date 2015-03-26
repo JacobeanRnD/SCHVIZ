@@ -823,14 +823,14 @@
     };
 
     Layout.prototype.svgCreate = function(parent) {
-      var defs, svg;
+      var defs;
       this.zoomBehavior = d3.behavior.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]);
-      svg = d3.select(parent).append('svg').attr('xmlns:xmlns:xlink', 'http://www.w3.org/1999/xlink').classed('force-layout', true).classed('debug', this.debug);
-      this.el = svg[0][0];
-      defs = svg.append('defs');
-      this.zoomNode = svg.append('g').call(this.zoomBehavior);
-      this.container = this.zoomNode.append('g');
-      this.container.append('rect').attr('class', 'zoomRect');
+      this.svg = d3.select(parent).append('svg').attr('xmlns:xmlns:xlink', 'http://www.w3.org/1999/xlink').classed('force-layout', true).classed('debug', this.debug);
+      this.el = this.svg[0][0];
+      defs = this.svg.append('defs');
+      this.svg.call(this.zoomBehavior);
+      this.container = this.svg.append('g');
+      this.svg.append('rect').attr('class', 'zoomRect').attr('width', '100%').attr('height', '100%');
       this.zoomBehavior.on('zoom', (function(_this) {
         return function() {
           var e;
@@ -848,9 +848,8 @@
       width = $parent.width() - 5;
       height = $parent.height() - 5;
       d3.select(this.el).attr('width', width).attr('height', height);
-      this.container.select('.zoomRect').attr('width', width / MIN_ZOOM).attr('height', height / MIN_ZOOM).attr('x', -width / 2 / MIN_ZOOM).attr('y', -height / 2 / MIN_ZOOM);
       this.zoomBehavior.size([width, height]).translate([width / 2, height / 2]);
-      return this.zoomBehavior.event(this.zoomNode);
+      return this.zoomBehavior.event(this.svg);
     };
 
     Layout.prototype.svgNodes = function() {
@@ -1197,7 +1196,7 @@
           scale = d3.min([w / (xMax - xMin), h / (yMax - yMin)]);
           _this.zoomBehavior.translate([w / 2 - (xMax + xMin) * scale / 2, h / 2 - (yMax + yMin) * scale / 2]);
           _this.zoomBehavior.scale(scale);
-          _this.zoomBehavior.event(_this.zoomNode);
+          _this.zoomBehavior.event(_this.svg);
           return cb();
         };
       })(this));

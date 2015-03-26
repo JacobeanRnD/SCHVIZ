@@ -597,17 +597,19 @@ class force.Layout
     @zoomBehavior = d3.behavior.zoom()
         .scaleExtent([MIN_ZOOM, MAX_ZOOM])
 
-    svg = d3.select(parent).append('svg')
+    @svg = d3.select(parent).append('svg')
         .attr('xmlns:xmlns:xlink', 'http://www.w3.org/1999/xlink')
         .classed('force-layout', true)
         .classed('debug', @debug)
-    @el = svg[0][0]
-    defs = svg.append('defs')
-    @zoomNode = svg.append('g').call(@zoomBehavior)
-    @container = @zoomNode.append('g')
+    @el = @svg[0][0]
+    defs = @svg.append('defs')
+    @svg.call(@zoomBehavior)
+    @container = @svg.append('g')
 
-    @container.append('rect')
+    @svg.append('rect')
         .attr('class', 'zoomRect')
+        .attr('width', '100%')
+        .attr('height', '100%')
 
     @zoomBehavior.on 'zoom', =>
         e = d3.event
@@ -635,17 +637,11 @@ class force.Layout
         .attr('width', width)
         .attr('height', height)
 
-    @container.select('.zoomRect')
-        .attr('width', width / MIN_ZOOM)
-        .attr('height', height / MIN_ZOOM)
-        .attr('x', - width / 2 / MIN_ZOOM)
-        .attr('y', - height / 2 / MIN_ZOOM)
-
     @zoomBehavior
         .size([width, height])
         .translate([width / 2, height / 2])
 
-    @zoomBehavior.event(@zoomNode)
+    @zoomBehavior.event(@svg)
 
   svgNodes: ->
     cellUpdate = @container.selectAll('.cell')
@@ -955,7 +951,7 @@ class force.Layout
         h / 2 - (yMax + yMin) * scale / 2
       ])
       @zoomBehavior.scale(scale)
-      @zoomBehavior.event(@zoomNode)
+      @zoomBehavior.event(@svg)
       cb()
 
   exportSvg: (options) ->
