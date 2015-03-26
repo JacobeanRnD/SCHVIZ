@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, applyKielerLayout, envelope, findTransition, force, idMaker, kielerLayout, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
+  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, applyKielerLayout, envelope, findTransition, force, idMaker, idPath, kielerLayout, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -213,6 +213,10 @@
     } else {
       return [];
     }
+  };
+
+  idPath = function(node) {
+    return parents(node).join('/');
   };
 
   path = function(node1, node2) {
@@ -861,6 +865,9 @@
       });
       newCell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
       newCell.append('g').attr('class', 'cell-header');
+      this.container.selectAll('.cell').sort(function(a, b) {
+        return d3.ascending(idPath(a), idPath(b));
+      });
       cellUpdate.each(function(node) {
         var h, hEntry, hExit, header, label, labelTextWidth, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
         header = d3.select(this).select('.cell-header');

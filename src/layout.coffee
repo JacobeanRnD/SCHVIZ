@@ -141,6 +141,10 @@ parents = (node) ->
   if node.parent then parents(node.parent).concat([node.parent]) else []
 
 
+idPath = (node) ->
+  parents(node).join('/')
+
+
 path = (node1, node2) ->
   parents1 = parents(node1)
   parents2 = parents(node2)
@@ -658,6 +662,9 @@ class force.Layout
 
     newCell.append('g')
         .attr('class', 'cell-header')
+
+    @container.selectAll('.cell').sort (a, b) ->
+        d3.ascending(idPath(a), idPath(b))
 
     cellUpdate.each (node) ->
         header = d3.select(@).select('.cell-header')
