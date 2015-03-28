@@ -260,6 +260,10 @@ toKielerFormat = (node) ->
     padding: {top: node_header.h or 0}
     width: node_header.w + 10
     height: node_header.h + 10
+    properties:
+      minWidth: node_header.w + 10
+      minHeight: node_header.h + 10
+      sizeConstraint: 'MINIMUM_SIZE'
   }
   return rv
 
