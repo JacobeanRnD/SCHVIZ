@@ -866,18 +866,12 @@
       cellUpdate = this.container.selectAll('.cell').data(this.s.cells, function(d) {
         return d.id;
       });
-      newCell = cellUpdate.enter().append('g').attr('class', function(cell) {
-        return "cell cell-" + (cell.type || 'state') + " draggable";
-      }).classed('parallel-child', function(cell) {
-        return cell.parent.type === 'parallel';
-      });
+      newCell = cellUpdate.enter().append('g');
       newCell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
       newCell.append('g').attr('class', 'cell-header');
-      this.container.selectAll('.cell').sort(function(a, b) {
-        return d3.ascending(idPath(a), idPath(b));
-      });
       cellUpdate.each(function(node) {
         var h, hEntry, hExit, header, label, labelTextWidth, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
+        d3.select(this).attr('class', "cell cell-" + (node.type || 'state') + " draggable").classed('parallel-child', node.parent.type === 'parallel');
         if (node.type === 'initial') {
           node.minSize = {
             w: 10,
@@ -912,6 +906,9 @@
         };
       });
       cellUpdate.exit().remove();
+      this.container.selectAll('.cell').sort(function(a, b) {
+        return d3.ascending(idPath(a), idPath(b));
+      });
       transitionUpdate = this.container.selectAll('.transition').data(this.s.transitions, function(d) {
         return d.id;
       });

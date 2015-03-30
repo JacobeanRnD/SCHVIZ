@@ -653,8 +653,6 @@ class force.Layout
         .data(@s.cells, (d) -> d.id)
 
     newCell = cellUpdate.enter().append('g')
-        .attr('class', (cell) -> "cell cell-#{cell.type or 'state'} draggable")
-        .classed('parallel-child', (cell) -> cell.parent.type == 'parallel')
 
     newCell.append('rect')
         .attr('class', 'border')
@@ -664,10 +662,11 @@ class force.Layout
     newCell.append('g')
         .attr('class', 'cell-header')
 
-    @container.selectAll('.cell').sort (a, b) ->
-        d3.ascending(idPath(a), idPath(b))
-
     cellUpdate.each (node) ->
+        d3.select(@)
+            .attr('class', "cell cell-#{node.type or 'state'} draggable")
+            .classed('parallel-child', node.parent.type == 'parallel')
+
         if node.type == 'initial'
           node.minSize = {w: 10, h: 10}
           return
@@ -697,6 +696,9 @@ class force.Layout
         node.minSize = {w: w + 10, h: h + 10}
 
     cellUpdate.exit().remove()
+
+    @container.selectAll('.cell').sort (a, b) ->
+        d3.ascending(idPath(a), idPath(b))
 
     transitionUpdate = @container.selectAll('.transition')
         .data(@s.transitions, (d) -> d.id)
