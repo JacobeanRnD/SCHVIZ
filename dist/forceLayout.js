@@ -304,7 +304,7 @@
   };
 
   toKielerFormat = function(node) {
-    var child, children, edges, node_header, rv, tr, _i, _j, _len, _len1, _ref, _ref1;
+    var child, children, edges, node_header, node_min_size, rv, tr, _i, _j, _len, _len1, _ref, _ref1;
     children = [];
     edges = [];
     _ref = node.children || [];
@@ -349,6 +349,10 @@
       });
     }
     node_header = node.header || CELL_MIN;
+    node_min_size = node.minSize || {
+      w: 0,
+      h: 0
+    };
     rv = {
       id: node.id,
       children: children,
@@ -356,11 +360,11 @@
       padding: {
         top: node_header.h || 0
       },
-      width: node_header.w + 10,
-      height: node_header.h + 10,
+      width: node_min_size.w,
+      height: node_min_size.h,
       properties: {
-        minWidth: node_header.w + 10,
-        minHeight: node_header.h + 10,
+        minWidth: node_min_size.w,
+        minHeight: node_min_size.h,
         sizeConstraint: 'MINIMUM_SIZE'
       }
     };
@@ -874,6 +878,13 @@
       });
       cellUpdate.each(function(node) {
         var h, hEntry, hExit, header, label, labelTextWidth, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
+        if (node.type === 'initial') {
+          node.minSize = {
+            w: 10,
+            h: 10
+          };
+          return;
+        }
         header = d3.select(this).select('.cell-header');
         header.selectAll('*').remove();
         label = header.append('text').text(function(node) {
@@ -891,9 +902,13 @@
         label.attr('x', wEntry + wLabel / 2 - w / 2);
         onentry.attr('transform', "translate(" + (wEntry / 2 - w / 2) + ",0)");
         onexit.attr('transform', "translate(" + (w / 2 - wExit / 2) + ",0)");
-        return node.header = {
+        node.header = {
           w: w,
           h: h
+        };
+        return node.minSize = {
+          w: w + 10,
+          h: h + 10
         };
       });
       cellUpdate.exit().remove();

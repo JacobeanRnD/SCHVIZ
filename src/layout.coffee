@@ -253,16 +253,17 @@ toKielerFormat = (node) ->
       sourcePort: "#{tr.id}#exit"
     )
   node_header = node.header or CELL_MIN
+  node_min_size = node.minSize or {w: 0, h: 0}
   rv = {
     id: node.id
     children: children
     edges: edges
     padding: {top: node_header.h or 0}
-    width: node_header.w + 10
-    height: node_header.h + 10
+    width: node_min_size.w
+    height: node_min_size.h
     properties:
-      minWidth: node_header.w + 10
-      minHeight: node_header.h + 10
+      minWidth: node_min_size.w
+      minHeight: node_min_size.h
       sizeConstraint: 'MINIMUM_SIZE'
   }
   return rv
@@ -667,6 +668,10 @@ class force.Layout
         d3.ascending(idPath(a), idPath(b))
 
     cellUpdate.each (node) ->
+        if node.type == 'initial'
+          node.minSize = {w: 10, h: 10}
+          return
+
         header = d3.select(@).select('.cell-header')
         header.selectAll('*').remove()
 
@@ -689,6 +694,7 @@ class force.Layout
         onentry.attr('transform', "translate(#{wEntry/2 - w/2},0)")
         onexit.attr('transform', "translate(#{w/2 - wExit/2},0)")
         node.header = {w: w, h: h}
+        node.minSize = {w: w + 10, h: h + 10}
 
     cellUpdate.exit().remove()
 

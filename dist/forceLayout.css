@@ -12,6 +12,11 @@
 .force-layout .cell.parallel-child .border {
   stroke-dasharray: 10,5;
 }
+.force-layout .cell-initial .border {
+  stroke-width: 0;
+  fill: black;
+  fill-opacity: 1;
+}
 .force-layout .transition path {
   stroke: #555;
   stroke-opacity: .6;
