@@ -1,4 +1,5 @@
-.force-layout .cell .border {
+.force-layout .cell .border,
+.force-layout .cell .border-inset {
   fill: white;
   fill-opacity: 0.5;
   stroke: steelblue;
@@ -6,13 +7,19 @@
   cursor: pointer;
   transition: stroke 400ms;
 }
-.force-layout .cell.highlight .border {
+.force-layout .cell .border-inset {
+  fill: none;
+}
+.force-layout .cell.highlight .border,
+.force-layout .cell.highlight .border-inset {
   stroke: red;
 }
-.force-layout .cell.parallel-child .border {
+.force-layout .cell.parallel-child .border,
+.force-layout .cell.parallel-child .border-inset {
   stroke-dasharray: 10,5;
 }
-.force-layout .cell-initial .border {
+.force-layout .cell-initial .border,
+.force-layout .cell-initial .border-inset {
   stroke-width: 0;
   fill: black;
   fill-opacity: 1;

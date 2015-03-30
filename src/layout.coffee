@@ -14,6 +14,7 @@ MIN_ZOOM = 1/6
 MAX_ZOOM = 6
 ANIMATION_SPEED = 2
 GEOMETRY_VERSION = 2
+BORDER_INSET = 3
 
 
 strip = (obj) ->
@@ -671,6 +672,14 @@ class force.Layout
           node.minSize = {w: 10, h: 10}
           return
 
+        if node.type == 'final'
+          d3.select(@).selectAll('.border-inset').remove()
+
+          d3.select(@).append('rect')
+            .attr('class', 'border-inset')
+            .attr('rx', ROUND_CORNER)
+            .attr('ry', ROUND_CORNER)
+
         header = d3.select(@).select('.cell-header')
         header.selectAll('*').remove()
 
@@ -785,11 +794,17 @@ class force.Layout
         .attr('transform', (node) -> "translate(#{node.x},#{node.y})")
 
     @container.selectAll('.cell').each (node) ->
-        animate(d3.select(this).select('rect'))
+        animate(d3.select(this).select('.border'))
             .attr('x', - node.w / 2)
             .attr('y', - node.h / 2)
             .attr('width', node.w)
             .attr('height', node.h)
+
+        animate(d3.select(this).select('.border-inset'))
+            .attr('x', - node.w / 2 + BORDER_INSET)
+            .attr('y', - node.h / 2 + BORDER_INSET)
+            .attr('width', node.w - 2 * BORDER_INSET)
+            .attr('height', node.h - 2 * BORDER_INSET)
 
         animate(d3.select(this).select('.cell-header'))
             .attr 'transform', (node) ->

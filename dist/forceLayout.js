@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, applyKielerLayout, envelope, findTransition, force, idMaker, idPath, kielerLayout, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
+  var ANIMATION_SPEED, BORDER_INSET, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, applyKielerLayout, envelope, findTransition, force, idMaker, idPath, kielerLayout, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -43,6 +43,8 @@
   ANIMATION_SPEED = 2;
 
   GEOMETRY_VERSION = 2;
+
+  BORDER_INSET = 3;
 
   strip = function(obj) {
     var key, value;
@@ -879,6 +881,10 @@
           };
           return;
         }
+        if (node.type === 'final') {
+          d3.select(this).selectAll('.border-inset').remove();
+          d3.select(this).append('rect').attr('class', 'border-inset').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
+        }
         header = d3.select(this).select('.cell-header');
         header.selectAll('*').remove();
         label = header.append('text').text(function(node) {
@@ -981,7 +987,8 @@
         return "translate(" + node.x + "," + node.y + ")";
       });
       this.container.selectAll('.cell').each(function(node) {
-        animate(d3.select(this).select('rect')).attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
+        animate(d3.select(this).select('.border')).attr('x', -node.w / 2).attr('y', -node.h / 2).attr('width', node.w).attr('height', node.h);
+        animate(d3.select(this).select('.border-inset')).attr('x', -node.w / 2 + BORDER_INSET).attr('y', -node.h / 2 + BORDER_INSET).attr('width', node.w - 2 * BORDER_INSET).attr('height', node.h - 2 * BORDER_INSET);
         return animate(d3.select(this).select('.cell-header')).attr('transform', function(node) {
           return "translate(0," + (5 - node.h / 2) + ")";
         });

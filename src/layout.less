@@ -1,7 +1,7 @@
 .force-layout {
 
     .cell {
-        .border {
+        .border, .border-inset {
             fill: white;
             fill-opacity: 0.5;
             stroke: steelblue;
@@ -10,17 +10,25 @@
             transition: stroke 400ms;
         }
 
-        &.highlight .border {
-            stroke: red;
+        .border-inset {
+            fill: none;
+        }
+
+        &.highlight {
+            .border, .border-inset {
+                stroke: red;
+            }
         }
     }
 
-    .cell.parallel-child .border {
-        stroke-dasharray: 10,5;
+    .cell.parallel-child {
+        .border, .border-inset {
+            stroke-dasharray: 10,5;
+        }
     }
 
     .cell-initial {
-        .border {
+        .border, .border-inset {
             stroke-width: 0;
             fill: black;
             fill-opacity: 1;
