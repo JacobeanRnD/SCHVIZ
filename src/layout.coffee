@@ -657,8 +657,6 @@ class force.Layout
 
     newCell.append('rect')
         .attr('class', 'border')
-        .attr('rx', ROUND_CORNER)
-        .attr('ry', ROUND_CORNER)
 
     newCell.append('g')
         .attr('class', 'cell-header')
@@ -667,6 +665,9 @@ class force.Layout
         d3.select(@)
             .attr('class', "cell cell-#{node.type or 'state'} draggable")
             .classed('parallel-child', node.parent.type == 'parallel')
+
+        header = d3.select(@).select('.cell-header')
+        header.selectAll('*').remove()
 
         if node.type == 'initial'
           node.minSize = {w: 10, h: 10}
@@ -680,11 +681,19 @@ class force.Layout
             .attr('rx', ROUND_CORNER)
             .attr('ry', ROUND_CORNER)
 
-        header = d3.select(@).select('.cell-header')
-        header.selectAll('*').remove()
+        if node.type == 'history'
+          label_text = 'H'
+          corner_radius = 100
+        else
+          label_text = node.label
+          corner_radius = ROUND_CORNER
+
+        d3.select(@).select('.border')
+            .attr('rx', corner_radius)
+            .attr('ry', corner_radius)
 
         label = header.append('text')
-          .text((node) -> node.label)
+          .text(label_text)
           .attr('y', 12)
 
         labelTextWidth = $(label[0][0]).width()
@@ -695,8 +704,11 @@ class force.Layout
         onexit = header.append('g')
         [wEntry, hEntry] = actionBlockSvg(node.onentry or [], onentry)
         [wExit, hExit] = actionBlockSvg(node.onexit or [], onexit)
+
         w = wEntry + wLabel + wExit
         h = d3.max([16, hEntry, hExit])
+        if node.type == 'history'
+          h = w
 
         label.attr('x', wEntry + wLabel / 2 - w/2)
         onentry.attr('transform', "translate(#{wEntry/2 - w/2},0)")

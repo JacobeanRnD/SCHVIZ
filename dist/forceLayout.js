@@ -869,11 +869,13 @@
         return d.id;
       });
       newCell = cellUpdate.enter().append('g');
-      newCell.append('rect').attr('class', 'border').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
+      newCell.append('rect').attr('class', 'border');
       newCell.append('g').attr('class', 'cell-header');
       cellUpdate.each(function(node) {
-        var h, hEntry, hExit, header, label, labelTextWidth, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
+        var corner_radius, h, hEntry, hExit, header, label, labelTextWidth, label_text, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
         d3.select(this).attr('class', "cell cell-" + (node.type || 'state') + " draggable").classed('parallel-child', node.parent.type === 'parallel');
+        header = d3.select(this).select('.cell-header');
+        header.selectAll('*').remove();
         if (node.type === 'initial') {
           node.minSize = {
             w: 10,
@@ -885,11 +887,15 @@
           d3.select(this).selectAll('.border-inset').remove();
           d3.select(this).append('rect').attr('class', 'border-inset').attr('rx', ROUND_CORNER).attr('ry', ROUND_CORNER);
         }
-        header = d3.select(this).select('.cell-header');
-        header.selectAll('*').remove();
-        label = header.append('text').text(function(node) {
-          return node.label;
-        }).attr('y', 12);
+        if (node.type === 'history') {
+          label_text = 'H';
+          corner_radius = 100;
+        } else {
+          label_text = node.label;
+          corner_radius = ROUND_CORNER;
+        }
+        d3.select(this).select('.border').attr('rx', corner_radius).attr('ry', corner_radius);
+        label = header.append('text').text(label_text).attr('y', 12);
         labelTextWidth = $(label[0][0]).width();
         wLabel = d3.min([labelTextWidth + 2 * ROUND_CORNER, LABEL_SPACE]);
         node.textWidth = wLabel;
@@ -899,6 +905,9 @@
         _ref1 = actionBlockSvg(node.onexit || [], onexit), wExit = _ref1[0], hExit = _ref1[1];
         w = wEntry + wLabel + wExit;
         h = d3.max([16, hEntry, hExit]);
+        if (node.type === 'history') {
+          h = w;
+        }
         label.attr('x', wEntry + wLabel / 2 - w / 2);
         onentry.attr('transform', "translate(" + (wEntry / 2 - w / 2) + ",0)");
         onexit.attr('transform', "translate(" + (w / 2 - wExit / 2) + ",0)");

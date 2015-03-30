@@ -24,6 +24,13 @@
   fill: black;
   fill-opacity: 1;
 }
+.force-layout .cell-history .border {
+  stroke: #888;
+  fill: #888;
+  fill-opacity: 1;
+  rx: 100 !important;
+  ry: 100 !important;
+}
 .force-layout .transition path {
   stroke: #555;
   stroke-opacity: .6;
