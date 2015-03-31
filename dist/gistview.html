@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+  html, body { height: 100%; margin: 0; }
+  #layoutBox { margin: 20px; height: 50%; border: 1px solid red; }
+  #preview { margin: 20px; }
+  #preview pre { white-space: pre-wrap; }
+</style>
+
+<link rel="stylesheet" href="forceLayout.css">
+
+<body>
+<div id="layoutBox"></div>
+<div id="preview"></div>
+
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/q/q.js"></script>
+<script src="bower_components/lodash/dist/lodash.js"></script>
+<script src="bower_components/async/lib/async.js"></script>
+<script src="bower_components/klayjs/klay.js"></script>
+<script src="forceLayout.js"></script>
+
+<script>
+  (function(){'use strict';
+    Q.longStackSupport = true;
+    var gistId = window.location.href.match(/\?gist=(.*)/)[1];
+
+    $.ajax({
+      url: 'https://api.github.com/gists/' + gistId,
+      dataType: 'jsonp',
+      success: function(resp) {
+        var files = resp.data.files;
+        Object.keys(files).forEach(function(filename) {
+          var file = files[filename];
+          if(file.type == 'application/xml') {
+            show(file.content);
+          }
+        });
+      }
+    });
+
+    function show(content) {
+      $('#preview').append($('<code>').append($('<pre>').text(content)));
+
+      var parser = new window.DOMParser();
+      var doc = parser.parseFromString(content, 'text/xml');
+      var layout = new forceLayout.Layout({
+        parent: $('#layoutBox')[0],
+        doc: doc
+      });
+
+      layout.initialized
+        .then(function() {
+          layout.fit();
+        })
+        .catch(function(err) {
+          console.log(err);
+          console.log(err.stack);
+          $(layout.el).replaceWith("Error: " + err.message);
+        })
+        .done();
+
+      $(window).resize(function() {
+        layout.invalidateSize();
+        layout.fit();
+      });
+
+      window.layout = layout;
+    }
+  })();
+</script>
