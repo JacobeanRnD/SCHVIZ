@@ -1,18 +1,28 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 
-<style>
-  html, body { height: 100%; margin: 0; }
-  #layoutBox { margin: 20px; height: 50%; border: 1px solid red; }
-  #preview { margin: 20px; }
-  #preview pre { white-space: pre-wrap; }
-</style>
-
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css">
 <link rel="stylesheet" href="forceLayout.css">
 
+<style>
+  html, body { height: 100%; }
+  #layoutContainer { height: 60%; margin-bottom: 20px; }
+  #layoutBox { height: 100%; }
+  #layoutBox > svg { background: white; }
+</style>
+
 <body>
-<div id="layoutBox"></div>
-<div id="preview"></div>
+<div class="container">
+  <h1></h1>
+</div>
+
+<div class="container" id="layoutContainer">
+  <div id="layoutBox" class="well"></div>
+</div>
+
+<div class="container">
+  <pre><code id="preview"></code></pre>
+</div>
 
 <script src="bower_components/d3/d3.min.js"></script>
 <script src="bower_components/jquery/dist/jquery.min.js"></script>
@@ -21,6 +31,7 @@
 <script src="bower_components/async/lib/async.js"></script>
 <script src="bower_components/klayjs/klay.js"></script>
 <script src="forceLayout.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
 <script>
   (function(){'use strict';
@@ -31,6 +42,7 @@
       url: 'https://api.github.com/gists/' + gistId,
       dataType: 'jsonp',
       success: function(resp) {
+        $('h1').text(resp.data.description);
         var files = resp.data.files;
         Object.keys(files).forEach(function(filename) {
           var file = files[filename];
@@ -42,7 +54,7 @@
     });
 
     function show(content) {
-      $('#preview').append($('<code>').append($('<pre>').text(content)));
+      $('#preview').text(content);
 
       var parser = new window.DOMParser();
       var doc = parser.parseFromString(content, 'text/xml');
