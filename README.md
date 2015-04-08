@@ -1,4 +1,4 @@
-## deus-ex-state-machine-visualization
+## SCHVIZ
 
 ### API
 
