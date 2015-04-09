@@ -5,10 +5,7 @@
 ```javascript
 var layout = new forceLayout.Layout({
     parent: document.getElementById('visualization'),
-    doc: xmlDocument,
-    kielerAlgorithm: 'de.cau.cs.kieler.klay.layered',
-    debug: false,
-    geometry: null
+    doc: xmlDocument
 });
 
 // see if the simulation initialized correctly using the `initialized` promise
