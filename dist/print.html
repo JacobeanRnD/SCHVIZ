@@ -16,7 +16,7 @@ body { position: relative; }
 }
 
 @media print {
-  #paper {
+  #controls {
     display: none;
   }
 }
@@ -24,12 +24,16 @@ body { position: relative; }
 
 <body class="paper-a4">
 
-<select id="paper">
-  <option value="paper-a4-landscape">A4 landscape</option>
-  <option value="paper-a4-portrait">A4 portrait</option>
-  <option value="paper-letter-landscape">Letter landscape</option>
-  <option value="paper-letter-portrait">Letter portrait</option>
-</select>
+<div id="controls">
+  <select id="paper">
+    <option value="paper-a4-landscape">A4 landscape</option>
+    <option value="paper-a4-portrait">A4 portrait</option>
+    <option value="paper-letter-landscape">Letter landscape</option>
+    <option value="paper-letter-portrait">Letter portrait</option>
+  </select>
+  Also choose portrait/landscape from the print dialog.
+  <button onclick="window.print()">print</button>
+</div>
 
 <div id="layoutBox"></div>
 
@@ -89,9 +93,9 @@ function show(content) {
 
 function updatePaper() {
   $('body').attr('class', $('#paper').val());
-  if(layout) {
-    layout.invalidateSize();
-    layout.fit();
+  if(window.layout) {
+    window.layout.invalidateSize();
+    window.layout.fit();
   }
 }
 
