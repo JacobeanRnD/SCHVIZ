@@ -514,9 +514,12 @@ class force.Layout
       walk topNode, (node, parent) =>
         if node.id
           node.label = node.id
+          node.autoId = false
         else
           node.id = makeId("_node_")
+          node.autoId = true
           node.label = "<#{node.type}>"
+        node.isInitial = false
         node.controls = []
         node.children = node.children or []
         if (oldNode = oldS.nodeMap.get(node.id))?
@@ -567,6 +570,22 @@ class force.Layout
             _.extend(tr, {x: oldTr.x, y: oldTr.y})
           else
             _.extend(tr, midpoint(tr.a, tr.b))
+
+    walk {children: tree}, (node) =>
+      return unless node.children.length
+
+      for child in node.children
+        if child.type == 'initial'
+          child.isInitial = true
+          return
+
+        if child.id == '@initial' and not child.children.length
+          child.isInitial = true
+          return
+
+      first = node.children[0]
+      if first.autoId and first.children.length == 0
+        first.isInitial = true
 
     @s = newS
 
@@ -663,13 +682,16 @@ class force.Layout
 
     cellUpdate.each (node) ->
         d3.select(@)
-            .attr('class', "cell cell-#{node.type or 'state'} draggable")
+            .attr('class',
+              "cell cell-#{node.type or 'state'}
+               #{if node.isInitial then 'cell-isInitial' else ''}
+               draggable")
             .classed('parallel-child', node.parent.type == 'parallel')
 
         header = d3.select(@).select('.cell-header')
         header.selectAll('*').remove()
 
-        if node.type == 'initial'
+        if node.isInitial
           node.minSize = {w: 10, h: 10}
           return
 

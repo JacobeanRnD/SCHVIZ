@@ -689,10 +689,13 @@
             var oldNode;
             if (node.id) {
               node.label = node.id;
+              node.autoId = false;
             } else {
               node.id = makeId("_node_");
+              node.autoId = true;
               node.label = "<" + node.type + ">";
             }
+            node.isInitial = false;
             node.controls = [];
             node.children = node.children || [];
             if ((oldNode = oldS.nodeMap.get(node.id)) != null) {
@@ -767,6 +770,32 @@
           };
         })(this));
       }
+      walk({
+        children: tree
+      }, (function(_this) {
+        return function(node) {
+          var child, first, _k, _len2, _ref;
+          if (!node.children.length) {
+            return;
+          }
+          _ref = node.children;
+          for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
+            child = _ref[_k];
+            if (child.type === 'initial') {
+              child.isInitial = true;
+              return;
+            }
+            if (child.id === '@initial' && !child.children.length) {
+              child.isInitial = true;
+              return;
+            }
+          }
+          first = node.children[0];
+          if (first.autoId && first.children.length === 0) {
+            return first.isInitial = true;
+          }
+        };
+      })(this));
       return this.s = newS;
     };
 
@@ -873,10 +902,10 @@
       newCell.append('g').attr('class', 'cell-header');
       cellUpdate.each(function(node) {
         var corner_radius, h, hEntry, hExit, header, label, labelTextWidth, label_text, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
-        d3.select(this).attr('class', "cell cell-" + (node.type || 'state') + " draggable").classed('parallel-child', node.parent.type === 'parallel');
+        d3.select(this).attr('class', "cell cell-" + (node.type || 'state') + " " + (node.isInitial ? 'cell-isInitial' : '') + " draggable").classed('parallel-child', node.parent.type === 'parallel');
         header = d3.select(this).select('.cell-header');
         header.selectAll('*').remove();
-        if (node.type === 'initial') {
+        if (node.isInitial) {
           node.minSize = {
             w: 10,
             h: 10
