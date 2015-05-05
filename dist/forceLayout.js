@@ -1,5 +1,5 @@
 (function() {
-  var ANIMATION_SPEED, BORDER_INSET, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, actionBlockSvg, actionSvg, applyKielerLayout, envelope, findTransition, force, idMaker, idPath, kielerLayout, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
+  var ANIMATION_SPEED, BORDER_INSET, CELL_MIN, CELL_PAD, DEBUG_FORCE_FACTOR, EXPORT_PAD, GEOMETRY_VERSION, KIELER_URL, LABEL_SPACE, LINK_DISTANCE, LINK_STRENGTH, LoadingOverlay, MARGIN, MAX_ZOOM, MIN_ZOOM, NewNodesAnimation, ROUND_CORNER, SRC_PREVIEW_LIMIT, actionBlockSvg, actionSvg, applyKielerLayout, envelope, findTransition, force, idMaker, idPath, kielerLayout, midpoint, nextId, parents, path, strip, toKielerFormat, treeFromXml, walk;
 
   force = window.forceLayout = {};
 
@@ -46,6 +46,8 @@
 
   BORDER_INSET = 3;
 
+  SRC_PREVIEW_LIMIT = 40;
+
   strip = function(obj) {
     var key, value;
     for (key in obj) {
@@ -69,15 +71,22 @@
   treeFromXml = function(doc) {
     var parseActions, parseChildNodes, parseStates;
     parseActions = function(container) {
-      var child, rv, _i, _len, _ref;
+      var action, child, firstLine, rv, _i, _len, _ref;
       rv = [];
       _ref = container.childNodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
         if (child.tagName) {
-          rv.push({
+          rv.push(action = {
             label: "<" + child.tagName + ">"
           });
+          if (child.tagName === 'script') {
+            firstLine = $(child).text().trim().split(/\n/)[0];
+            if (firstLine.length > SRC_PREVIEW_LIMIT) {
+              firstLine = firstLine.slice(0, SRC_PREVIEW_LIMIT - 4) + ' ...';
+            }
+            action.preview = firstLine;
+          }
         }
       }
       return rv;
@@ -283,7 +292,11 @@
   actionSvg = function(options) {
     var actionR, actionT, h, w;
     actionR = options.g.append('rect');
-    actionT = options.g.append('text').text(options.action.label).attr('y', 12);
+    actionT = options.g.append('text').attr('y', 12);
+    actionT.append('tspan').text(options.action.label);
+    if (options.action.preview) {
+      actionT.append('tspan').attr('x', 0).attr('dy', 16).text(options.action.preview);
+    }
     actionR.attr('height', h = $(actionT[0][0]).height()).attr('width', w = $(actionT[0][0]).width() + 10).attr('x', -w / 2).attr('rx', 10).attr('ry', 10);
     return [w, h];
   };

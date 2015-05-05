@@ -15,6 +15,7 @@ MAX_ZOOM = 6
 ANIMATION_SPEED = 2
 GEOMETRY_VERSION = 2
 BORDER_INSET = 3
+SRC_PREVIEW_LIMIT = 40
 
 
 strip = (obj) ->
@@ -36,7 +37,12 @@ treeFromXml = (doc) ->
     rv = []
     for child in container.childNodes
       if child.tagName
-        rv.push(label: "<#{child.tagName}>")
+        rv.push(action = {label: "<#{child.tagName}>"})
+        if child.tagName == 'script'
+          firstLine = $(child).text().trim().split(/\n/)[0]
+          if firstLine.length > SRC_PREVIEW_LIMIT
+            firstLine = firstLine.slice(0, SRC_PREVIEW_LIMIT - 4) + ' ...'
+          action.preview = firstLine
     return rv
 
   parseChildNodes = (node) ->
@@ -195,8 +201,16 @@ actionSvg = (options) ->
   actionR = options.g.append('rect')
 
   actionT = options.g.append('text')
-      .text(options.action.label)
       .attr('y', 12)
+
+  actionT.append('tspan')
+      .text(options.action.label)
+
+  if options.action.preview
+      actionT.append('tspan')
+          .attr('x', 0)
+          .attr('dy', 16)
+          .text(options.action.preview)
 
   actionR
       .attr('height', h = $(actionT[0][0]).height())
