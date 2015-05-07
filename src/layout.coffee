@@ -15,6 +15,7 @@ MAX_ZOOM = 6
 ANIMATION_SPEED = 2
 GEOMETRY_VERSION = 2
 BORDER_INSET = 3
+SRC_PREVIEW_LIMIT = 40
 
 
 strip = (obj) ->
@@ -36,7 +37,12 @@ treeFromXml = (doc) ->
     rv = []
     for child in container.childNodes
       if child.tagName
-        rv.push(label: "<#{child.tagName}>")
+        rv.push(action = {label: "<#{child.tagName}>"})
+        if child.tagName == 'script'
+          firstLine = $(child).text().trim().split(/\n/)[0]
+          if firstLine.length > SRC_PREVIEW_LIMIT
+            firstLine = firstLine.slice(0, SRC_PREVIEW_LIMIT - 4) + ' ...'
+          action.preview = firstLine
     return rv
 
   parseChildNodes = (node) ->
@@ -195,8 +201,16 @@ actionSvg = (options) ->
   actionR = options.g.append('rect')
 
   actionT = options.g.append('text')
-      .text(options.action.label)
       .attr('y', 12)
+
+  actionT.append('tspan')
+      .text(options.action.label)
+
+  if options.action.preview
+      actionT.append('tspan')
+          .attr('x', 0)
+          .attr('dy', 16)
+          .text(options.action.preview)
 
   actionR
       .attr('height', h = $(actionT[0][0]).height())
@@ -514,9 +528,12 @@ class force.Layout
       walk topNode, (node, parent) =>
         if node.id
           node.label = node.id
+          node.autoId = false
         else
           node.id = makeId("_node_")
+          node.autoId = true
           node.label = "<#{node.type}>"
+        node.isInitial = false
         node.controls = []
         node.children = node.children or []
         if (oldNode = oldS.nodeMap.get(node.id))?
@@ -567,6 +584,22 @@ class force.Layout
             _.extend(tr, {x: oldTr.x, y: oldTr.y})
           else
             _.extend(tr, midpoint(tr.a, tr.b))
+
+    walk {children: tree}, (node) =>
+      return unless node.children.length
+
+      for child in node.children
+        if child.type == 'initial'
+          child.isInitial = true
+          return
+
+        if child.id == '@initial' and not child.children.length
+          child.isInitial = true
+          return
+
+      first = node.children[0]
+      if first.autoId and first.children.length == 0
+        first.isInitial = true
 
     @s = newS
 
@@ -663,13 +696,16 @@ class force.Layout
 
     cellUpdate.each (node) ->
         d3.select(@)
-            .attr('class', "cell cell-#{node.type or 'state'} draggable")
+            .attr('class',
+              "cell cell-#{node.type or 'state'}
+               #{if node.isInitial then 'cell-isInitial' else ''}
+               draggable")
             .classed('parallel-child', node.parent.type == 'parallel')
 
         header = d3.select(@).select('.cell-header')
         header.selectAll('*').remove()
 
-        if node.type == 'initial'
+        if node.isInitial
           node.minSize = {w: 10, h: 10}
           return
 

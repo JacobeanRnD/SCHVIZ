@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="forceLayout.css">
+
+<style>
+body { position: relative; }
+.paper-a4-portrait      { width: 210mm; height: 297mm; }
+.paper-a4-landscape     { width: 297mm; height: 210mm; }
+.paper-letter-portrait  { width: 216mm; height: 279mm; }
+.paper-letter-landscape { width: 279mm; height: 216mm; }
+
+#layoutBox {
+  position: absolute;
+  top: 3cm; bottom: 3cm; left: 3cm; right: 3cm;
+}
+
+@media print {
+  #controls {
+    display: none;
+  }
+}
+</style>
+
+<body class="paper-a4">
+
+<div id="controls">
+  <select id="paper">
+    <option value="paper-a4-landscape">A4 landscape</option>
+    <option value="paper-a4-portrait">A4 portrait</option>
+    <option value="paper-letter-landscape">Letter landscape</option>
+    <option value="paper-letter-portrait">Letter portrait</option>
+  </select>
+  Also choose portrait/landscape from the print dialog.
+  <button onclick="window.print()">print</button>
+</div>
+
+<div id="layoutBox"></div>
+
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/q/q.js"></script>
+<script src="bower_components/lodash/dist/lodash.js"></script>
+<script src="bower_components/async/lib/async.js"></script>
+<script src="bower_components/klayjs/klay.js"></script>
+<script src="forceLayout.js"></script>
+
+<script>
+'use strict';
+
+Q.longStackSupport = true;
+var gistId = window.location.href.match(/\?gist=(.*)/)[1];
+
+$.ajax({
+  url: 'https://api.github.com/gists/' + gistId,
+  dataType: 'jsonp',
+  success: function(resp) {
+    $('h1').text(resp.data.description);
+    var files = resp.data.files;
+    Object.keys(files).forEach(function(filename) {
+      var file = files[filename];
+      if(file.type == 'application/xml') {
+        show(file.content);
+      }
+    });
+  }
+});
+
+function show(content) {
+  var parser = new window.DOMParser();
+  var doc = parser.parseFromString(content, 'text/xml');
+  var layout = window.layout = new forceLayout.Layout({
+    parent: $('#layoutBox')[0],
+    doc: doc
+  });
+
+  layout.initialized
+    .then(function() {
+      layout.fit();
+    })
+    .catch(function(err) {
+      console.log(err);
+      console.log(err.stack);
+      $(layout.el).replaceWith("Error: " + err.message);
+    })
+    .done();
+
+  $(window).resize(function() {
+    layout.invalidateSize();
+    layout.fit();
+  });
+}
+
+function updatePaper() {
+  $('body').attr('class', $('#paper').val());
+  if(window.layout) {
+    window.layout.invalidateSize();
+    window.layout.fit();
+  }
+}
+
+$('#paper').change(updatePaper);
+updatePaper();
+
+</script>

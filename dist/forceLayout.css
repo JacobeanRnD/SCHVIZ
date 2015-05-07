@@ -18,8 +18,8 @@
 .force-layout .cell.parallel-child .border-inset {
   stroke-dasharray: 10,5;
 }
-.force-layout .cell-initial .border,
-.force-layout .cell-initial .border-inset {
+.force-layout .cell-isInitial .border,
+.force-layout .cell-isInitial .border-inset {
   stroke-width: 0;
   fill: black;
   fill-opacity: 1;
