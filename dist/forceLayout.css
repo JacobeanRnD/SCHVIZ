@@ -4,7 +4,6 @@
   fill-opacity: 0.5;
   stroke: steelblue;
   stroke-width: 2px;
-  cursor: pointer;
   transition: stroke 400ms;
 }
 .force-layout .cell .border-inset {
@@ -47,7 +46,7 @@
 }
 .force-layout text {
   text-anchor: middle;
-  cursor: pointer;
+  cursor: default;
 }
 .force-layout .gravity {
   stroke: green;

@@ -515,7 +515,6 @@ class force.Layout
   loadTree: (tree) ->
     @mergeTree(tree)
     @svgNodes()
-    @registerMouseHandlers()
 
   mergeTree: (tree) ->
     oldS = @s
@@ -645,11 +644,6 @@ class force.Layout
     @svg.call(@zoomBehavior)
     @container = @svg.append('g')
 
-    @svg.append('rect')
-        .attr('class', 'zoomRect')
-        .attr('width', '100%')
-        .attr('height', '100%')
-
     @zoomBehavior.on 'zoom', =>
         e = d3.event
         @container.attr('transform', "translate(#{e.translate}),scale(#{e.scale})")
@@ -698,8 +692,7 @@ class force.Layout
         d3.select(@)
             .attr('class',
               "cell cell-#{node.type or 'state'}
-               #{if node.isInitial then 'cell-isInitial' else ''}
-               draggable")
+               #{if node.isInitial then 'cell-isInitial' else ''}")
             .classed('parallel-child', node.parent.type == 'parallel')
 
         header = d3.select(@).select('.cell-header')
@@ -774,7 +767,7 @@ class force.Layout
 
     transitionLabelUpdate.enter()
       .append('g')
-        .attr('class', 'transition-label draggable')
+        .attr('class', 'transition-label')
       .append('g')
         .attr('class', 'transition-label-offset')
 
@@ -871,39 +864,6 @@ class force.Layout
 
     animate(@container.selectAll('.transition-label'))
         .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
-
-  registerMouseHandlers: ->
-    lock = {node: null, drag: false}
-
-    drag = d3.behavior.drag()
-        .origin((node) -> node)
-        .on 'dragstart', (node) =>
-          d3.event.sourceEvent.stopPropagation()
-          (lock.node = node).fixed = true
-          lock.drag = true
-        .on 'drag', (node) =>
-          d3.event.sourceEvent.stopPropagation()
-          @moveNode(node, d3.event.dx, d3.event.dy)
-          @adjustLayout()
-          @svgUpdate()
-        .on 'dragend', (node) =>
-          d3.event.sourceEvent.stopPropagation()
-          lock.drag = false
-          lock.node = null
-          node.fixed = false
-
-    @container.selectAll('.draggable')
-        .on 'mouseover', (node) =>
-          if lock.drag then return
-          if lock.node then lock.node.fixed = false
-          (lock.node = node).fixed = true
-          @svgUpdate()
-        .on 'mouseout', (node) =>
-          if lock.drag then return
-          lock.node = null
-          node.fixed = false
-          @svgUpdate()
-        .call(drag)
 
   moveNode: (node, dx, dy) ->
     node.x += dx
@@ -1041,7 +1001,6 @@ class force.Layout
     container = @container[0][0].cloneNode(true)
     d3.select(container).attr('transform', null)
     svg[0][0].appendChild(container)
-    $(div).find('.zoomRect').remove()
     $('body').append(div)
     bbox = container.getBBox()
     $(div).remove()

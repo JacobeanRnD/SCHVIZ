@@ -685,8 +685,7 @@
 
     Layout.prototype.loadTree = function(tree) {
       this.mergeTree(tree);
-      this.svgNodes();
-      return this.registerMouseHandlers();
+      return this.svgNodes();
     };
 
     Layout.prototype.mergeTree = function(tree) {
@@ -883,7 +882,6 @@
       defs = this.svg.append('defs');
       this.svg.call(this.zoomBehavior);
       this.container = this.svg.append('g');
-      this.svg.append('rect').attr('class', 'zoomRect').attr('width', '100%').attr('height', '100%');
       this.zoomBehavior.on('zoom', (function(_this) {
         return function() {
           var e;
@@ -915,7 +913,7 @@
       newCell.append('g').attr('class', 'cell-header');
       cellUpdate.each(function(node) {
         var corner_radius, h, hEntry, hExit, header, label, labelTextWidth, label_text, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
-        d3.select(this).attr('class', "cell cell-" + (node.type || 'state') + " " + (node.isInitial ? 'cell-isInitial' : '') + " draggable").classed('parallel-child', node.parent.type === 'parallel');
+        d3.select(this).attr('class', "cell cell-" + (node.type || 'state') + " " + (node.isInitial ? 'cell-isInitial' : '')).classed('parallel-child', node.parent.type === 'parallel');
         header = d3.select(this).select('.cell-header');
         header.selectAll('*').remove();
         if (node.isInitial) {
@@ -978,7 +976,7 @@
       transitionLabelUpdate = this.container.selectAll('.transition-label').data(this.s.transitions, function(d) {
         return d.id;
       });
-      transitionLabelUpdate.enter().append('g').attr('class', 'transition-label draggable').append('g').attr('class', 'transition-label-offset');
+      transitionLabelUpdate.enter().append('g').attr('class', 'transition-label').append('g').attr('class', 'transition-label-offset');
       transitionLabelUpdate.each(function(tr) {
         var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
         offsetG = d3.select(this).select('.transition-label-offset');
@@ -1050,58 +1048,6 @@
       return animate(this.container.selectAll('.transition-label')).attr('transform', function(tr) {
         return "translate(" + tr.x + "," + tr.y + ")";
       });
-    };
-
-    Layout.prototype.registerMouseHandlers = function() {
-      var drag, lock;
-      lock = {
-        node: null,
-        drag: false
-      };
-      drag = d3.behavior.drag().origin(function(node) {
-        return node;
-      }).on('dragstart', (function(_this) {
-        return function(node) {
-          d3.event.sourceEvent.stopPropagation();
-          (lock.node = node).fixed = true;
-          return lock.drag = true;
-        };
-      })(this)).on('drag', (function(_this) {
-        return function(node) {
-          d3.event.sourceEvent.stopPropagation();
-          _this.moveNode(node, d3.event.dx, d3.event.dy);
-          _this.adjustLayout();
-          return _this.svgUpdate();
-        };
-      })(this)).on('dragend', (function(_this) {
-        return function(node) {
-          d3.event.sourceEvent.stopPropagation();
-          lock.drag = false;
-          lock.node = null;
-          return node.fixed = false;
-        };
-      })(this));
-      return this.container.selectAll('.draggable').on('mouseover', (function(_this) {
-        return function(node) {
-          if (lock.drag) {
-            return;
-          }
-          if (lock.node) {
-            lock.node.fixed = false;
-          }
-          (lock.node = node).fixed = true;
-          return _this.svgUpdate();
-        };
-      })(this)).on('mouseout', (function(_this) {
-        return function(node) {
-          if (lock.drag) {
-            return;
-          }
-          lock.node = null;
-          node.fixed = false;
-          return _this.svgUpdate();
-        };
-      })(this)).call(drag);
     };
 
     Layout.prototype.moveNode = function(node, dx, dy) {
@@ -1288,7 +1234,6 @@
       container = this.container[0][0].cloneNode(true);
       d3.select(container).attr('transform', null);
       svg[0][0].appendChild(container);
-      $(div).find('.zoomRect').remove();
       $('body').append(div);
       bbox = container.getBBox();
       $(div).remove();
