@@ -463,18 +463,22 @@ class force.Layout
         else
           loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
           deferred.resolve(
-            kielerLayout(@s, algorithm: @options.kielerAlgorithm)
-              .then (graph) =>
-                applyKielerLayout(s: @s, graph: graph)
-              .then =>
-                loading.destroy()
-                @svgUpdate()
-                cb()
+            @_kielerLayout()
+            .then =>
+              loading.destroy()
+              cb()
           )
 
       catch e
         deferred.reject(e)
         cb()
+
+  _kielerLayout: (options={}) ->
+    kielerLayout(@s, algorithm: @options.kielerAlgorithm)
+      .then (graph) =>
+        applyKielerLayout(s: @s, graph: graph)
+      .then =>
+        @svgUpdate(animate: options.animate)
 
   update: (doc) ->
     deferred = Q.defer()
@@ -483,11 +487,7 @@ class force.Layout
         Q()
         .then =>
           @loadTree(treeFromXml(doc).sc)
-          kielerLayout(@s, algorithm: @options.kielerAlgorithm)
-        .then (graph) =>
-          applyKielerLayout(s: @s, graph: graph)
-        .then =>
-          @svgUpdate(animate: true)
+          @_kielerLayout(animate: true)
         .finally =>
           cb()
       )

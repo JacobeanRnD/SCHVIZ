@@ -614,16 +614,8 @@
                 svg: _this.el,
                 text: "Loading Kieler layout ..."
               });
-              return deferred.resolve(kielerLayout(_this.s, {
-                algorithm: _this.options.kielerAlgorithm
-              }).then(function(graph) {
-                return applyKielerLayout({
-                  s: _this.s,
-                  graph: graph
-                });
-              }).then(function() {
+              return deferred.resolve(_this._kielerLayout().then(function() {
                 loading.destroy();
-                _this.svgUpdate();
                 return cb();
               }));
             }
@@ -636,6 +628,28 @@
       })(this));
     };
 
+    Layout.prototype._kielerLayout = function(options) {
+      if (options == null) {
+        options = {};
+      }
+      return kielerLayout(this.s, {
+        algorithm: this.options.kielerAlgorithm
+      }).then((function(_this) {
+        return function(graph) {
+          return applyKielerLayout({
+            s: _this.s,
+            graph: graph
+          });
+        };
+      })(this)).then((function(_this) {
+        return function() {
+          return _this.svgUpdate({
+            animate: options.animate
+          });
+        };
+      })(this));
+    };
+
     Layout.prototype.update = function(doc) {
       var deferred;
       deferred = Q.defer();
@@ -643,16 +657,7 @@
         return function(cb) {
           return deferred.resolve(Q().then(function() {
             _this.loadTree(treeFromXml(doc).sc);
-            return kielerLayout(_this.s, {
-              algorithm: _this.options.kielerAlgorithm
-            });
-          }).then(function(graph) {
-            return applyKielerLayout({
-              s: _this.s,
-              graph: graph
-            });
-          }).then(function() {
-            return _this.svgUpdate({
+            return _this._kielerLayout({
               animate: true
             });
           })["finally"](function() {
