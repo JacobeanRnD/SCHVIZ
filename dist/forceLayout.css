@@ -30,14 +30,24 @@
   rx: 100 !important;
   ry: 100 !important;
 }
-.force-layout .transition path {
+.force-layout .transition .transitionMask {
+  stroke: #fff;
+  stroke-width: 5;
+  stroke-opacity: .6;
+  fill: none;
+}
+.force-layout .transition .transitionLine {
   stroke: #555;
   stroke-opacity: .6;
   fill: none;
+}
+.force-layout .transition.highlight .transitionLine {
+  stroke: red;
+  stroke-opacity: 1;
   transition: stroke 400ms;
 }
-.force-layout .transition.highlight path {
-  stroke: red;
+.force-layout .transition:hover .transitionLine {
+  stroke: black;
   stroke-opacity: 1;
 }
 .force-layout .arrow {

@@ -45,16 +45,29 @@
     }
 
     .transition {
-        path {
+        .transitionMask {
+            stroke: #fff;
+            stroke-width: 5;
+            stroke-opacity: .6;
+            fill: none;
+        }
+
+        .transitionLine {
             stroke: #555;
             stroke-opacity: .6;
             fill: none;
-            transition: stroke 400ms;
-
         }
 
-        &.highlight path {
+        &.highlight .transitionLine {
             stroke: red;
+            stroke-opacity: 1;
+            transition: stroke 400ms;
+        }
+    }
+
+    .transition:hover {
+        .transitionLine {
+            stroke: black;
             stroke-opacity: 1;
         }
     }

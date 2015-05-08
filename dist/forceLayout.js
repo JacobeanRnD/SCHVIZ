@@ -909,7 +909,7 @@
     };
 
     Layout.prototype.svgNodes = function() {
-      var cellUpdate, dom, newCell, transitionLabelUpdate, transitionUpdate;
+      var cellUpdate, dom, newCell, transitionG, transitionLabelUpdate, transitionUpdate;
       cellUpdate = this.container.selectAll('.cell').data(this.s.cells, function(d) {
         return d.id;
       });
@@ -972,7 +972,9 @@
       transitionUpdate = this.container.selectAll('.transition').data(this.s.transitions, function(d) {
         return d.id;
       });
-      transitionUpdate.enter().append('g').attr('class', 'transition').append('path').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
+      transitionG = transitionUpdate.enter().append('g').attr('class', 'transition');
+      transitionG.append('path').attr('class', 'transitionMask');
+      transitionG.append('path').attr('class', 'transitionLine').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
         return function(tr) {
           return "" + _this.id + "-transition/" + tr.id;
         };
@@ -1047,7 +1049,7 @@
           return "translate(0," + (5 - node.h / 2) + ")";
         });
       });
-      animate(this.container.selectAll('.transition').select('path')).attr('d', function(tr) {
+      animate(this.container.selectAll('.transition').selectAll('path')).attr('d', function(tr) {
         return d3.svg.line()([].concat([tr.route.src], tr.route.segment1, [tr.route.label1], [tr.route.label2], tr.route.segment2, [tr.route.dst]));
       });
       return animate(this.container.selectAll('.transition-label')).attr('transform', function(tr) {

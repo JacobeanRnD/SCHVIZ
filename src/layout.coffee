@@ -753,10 +753,17 @@ class force.Layout
     transitionUpdate = @container.selectAll('.transition')
         .data(@s.transitions, (d) -> d.id)
 
-    transitionUpdate.enter()
+    transitionG = transitionUpdate.enter()
       .append('g')
         .attr('class', 'transition')
+
+    transitionG
       .append('path')
+        .attr('class', 'transitionMask')
+
+    transitionG
+      .append('path')
+        .attr('class', 'transitionLine')
         .attr('style', "marker-end: url(##{@id}-arrow)")
         .attr('id', (tr) => "#{@id}-transition/#{tr.id}")
 
@@ -851,7 +858,7 @@ class force.Layout
             .attr 'transform', (node) ->
               "translate(0,#{5 - node.h / 2})"
 
-    animate(@container.selectAll('.transition').select('path'))
+    animate(@container.selectAll('.transition').selectAll('path'))
         .attr 'd', (tr) ->
           d3.svg.line()([].concat(
             [tr.route.src]
