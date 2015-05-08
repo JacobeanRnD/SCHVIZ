@@ -909,7 +909,7 @@
     };
 
     Layout.prototype.svgNodes = function() {
-      var cellUpdate, dom, newCell, transitionG, transitionLabelUpdate, transitionUpdate;
+      var cellUpdate, dom, newCell, transitionG, transitionUpdate;
       cellUpdate = this.container.selectAll('.cell').data(this.s.cells, function(d) {
         return d.id;
       });
@@ -979,12 +979,9 @@
           return "" + _this.id + "-transition/" + tr.id;
         };
       })(this));
+      transitionG.append('g').attr('class', 'transition-label').append('g').attr('class', 'transition-label-offset');
       transitionUpdate.exit().remove();
-      transitionLabelUpdate = this.container.selectAll('.transition-label').data(this.s.transitions, function(d) {
-        return d.id;
-      });
-      transitionLabelUpdate.enter().append('g').attr('class', 'transition-label').append('g').attr('class', 'transition-label-offset');
-      transitionLabelUpdate.each(function(tr) {
+      transitionUpdate.each(function(tr) {
         var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
         offsetG = d3.select(this).select('.transition-label-offset');
         offsetG.selectAll('*').remove();
@@ -1012,7 +1009,6 @@
           return tr.h;
         });
       });
-      transitionLabelUpdate.exit().remove();
       dom = this.s.dom;
       this.container.selectAll('.cell').each(function(node) {
         return dom.set("cell-" + node.id, this);

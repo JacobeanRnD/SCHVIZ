@@ -767,18 +767,15 @@ class force.Layout
         .attr('style', "marker-end: url(##{@id}-arrow)")
         .attr('id', (tr) => "#{@id}-transition/#{tr.id}")
 
-    transitionUpdate.exit().remove()
-
-    transitionLabelUpdate = @container.selectAll('.transition-label')
-        .data(@s.transitions, (d) -> d.id)
-
-    transitionLabelUpdate.enter()
+    transitionG
       .append('g')
         .attr('class', 'transition-label')
       .append('g')
         .attr('class', 'transition-label-offset')
 
-    transitionLabelUpdate.each (tr) ->
+    transitionUpdate.exit().remove()
+
+    transitionUpdate.each (tr) ->
         offsetG = d3.select(@).select('.transition-label-offset')
         offsetG.selectAll('*').remove()
 
@@ -814,8 +811,6 @@ class force.Layout
             .attr('x', (tr) -> -tr.w / 2)
             .attr('width', (tr) -> tr.w)
             .attr('height', (tr) -> tr.h)
-
-    transitionLabelUpdate.exit().remove()
 
     dom = @s.dom
 
