@@ -853,18 +853,23 @@ class force.Layout
             .attr 'transform', (node) ->
               "translate(0,#{5 - node.h / 2})"
 
-    animate(@container.selectAll('.transition').selectAll('path'))
-        .attr 'd', (tr) ->
-          d3.svg.line()([].concat(
-            [tr.route.src]
-            tr.route.segment1
-            [tr.route.label1]
-            [tr.route.label2]
-            tr.route.segment2
-            [tr.route.dst]
-          ))
+    trPath = (tr) ->
+      d3.svg.line()([].concat(
+        [tr.route.src]
+        tr.route.segment1
+        [tr.route.label1]
+        [tr.route.label2]
+        tr.route.segment2
+        [tr.route.dst]
+      ))
 
-    animate(@container.selectAll('.transition-label'))
+    animate(@container.selectAll('.transition').select('.transitionMask'))
+        .attr('d', trPath)
+
+    animate(@container.selectAll('.transition').select('.transitionLine'))
+        .attr('d', trPath)
+
+    animate(@container.selectAll('.transition').select('.transition-label'))
         .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
 
   moveNode: (node, dx, dy) ->

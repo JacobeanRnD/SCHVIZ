@@ -1019,7 +1019,7 @@
     };
 
     Layout.prototype.svgUpdate = function(options) {
-      var animate;
+      var animate, trPath;
       options = _.extend({
         animate: false
       }, options);
@@ -1045,10 +1045,12 @@
           return "translate(0," + (5 - node.h / 2) + ")";
         });
       });
-      animate(this.container.selectAll('.transition').selectAll('path')).attr('d', function(tr) {
+      trPath = function(tr) {
         return d3.svg.line()([].concat([tr.route.src], tr.route.segment1, [tr.route.label1], [tr.route.label2], tr.route.segment2, [tr.route.dst]));
-      });
-      return animate(this.container.selectAll('.transition-label')).attr('transform', function(tr) {
+      };
+      animate(this.container.selectAll('.transition').select('.transitionMask')).attr('d', trPath);
+      animate(this.container.selectAll('.transition').select('.transitionLine')).attr('d', trPath);
+      return animate(this.container.selectAll('.transition').select('.transition-label')).attr('transform', function(tr) {
         return "translate(" + tr.x + "," + tr.y + ")";
       });
     };
