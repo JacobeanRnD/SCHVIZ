@@ -4,7 +4,6 @@
   fill-opacity: 0.5;
   stroke: steelblue;
   stroke-width: 2px;
-  transition: stroke 400ms;
 }
 .force-layout .cell .border-inset {
   fill: none;
@@ -44,7 +43,6 @@
 .force-layout .transition.highlight .transitionLine {
   stroke: red;
   stroke-opacity: 1;
-  transition: stroke 400ms;
 }
 .force-layout .transition:hover .transitionLine {
   stroke: black;
