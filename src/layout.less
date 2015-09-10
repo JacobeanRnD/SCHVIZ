@@ -6,8 +6,6 @@
             fill-opacity: 0.5;
             stroke: steelblue;
             stroke-width: 2px;
-            cursor: pointer;
-            transition: stroke 400ms;
         }
 
         .border-inset {
@@ -46,16 +44,28 @@
     }
 
     .transition {
-        path {
+        .transitionMask {
+            stroke: #fff;
+            stroke-width: 5;
+            stroke-opacity: .6;
+            fill: none;
+        }
+
+        .transitionLine {
             stroke: #555;
             stroke-opacity: .6;
             fill: none;
-            transition: stroke 400ms;
-
         }
 
-        &.highlight path {
+        &.highlight .transitionLine {
             stroke: red;
+            stroke-opacity: 1;
+        }
+    }
+
+    .transition:hover {
+        .transitionLine {
+            stroke: black;
             stroke-opacity: 1;
         }
     }
@@ -69,7 +79,7 @@
 
     text {
         text-anchor: middle;
-        cursor: pointer;
+        cursor: default;
     }
 
 
@@ -86,7 +96,8 @@
     .transition-label {
         > g > rect {
             stroke: none;
-            fill: rgba(255, 255, 255, 0.3);
+            fill: none;
+            pointer-events: all;
         }
     }
 

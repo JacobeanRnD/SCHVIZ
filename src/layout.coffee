@@ -463,18 +463,22 @@ class force.Layout
         else
           loading = new LoadingOverlay(svg: @el, text: "Loading Kieler layout ...")
           deferred.resolve(
-            kielerLayout(@s, algorithm: @options.kielerAlgorithm)
-              .then (graph) =>
-                applyKielerLayout(s: @s, graph: graph)
-              .then =>
-                loading.destroy()
-                @svgUpdate()
-                cb()
+            @_kielerLayout()
+            .then =>
+              loading.destroy()
+              cb()
           )
 
       catch e
         deferred.reject(e)
         cb()
+
+  _kielerLayout: (options={}) ->
+    kielerLayout(@s, algorithm: @options.kielerAlgorithm)
+      .then (graph) =>
+        applyKielerLayout(s: @s, graph: graph)
+      .then =>
+        @svgUpdate(animate: options.animate)
 
   update: (doc) ->
     deferred = Q.defer()
@@ -483,11 +487,7 @@ class force.Layout
         Q()
         .then =>
           @loadTree(treeFromXml(doc).sc)
-          kielerLayout(@s, algorithm: @options.kielerAlgorithm)
-        .then (graph) =>
-          applyKielerLayout(s: @s, graph: graph)
-        .then =>
-          @svgUpdate(animate: true)
+          @_kielerLayout(animate: true)
         .finally =>
           cb()
       )
@@ -515,7 +515,6 @@ class force.Layout
   loadTree: (tree) ->
     @mergeTree(tree)
     @svgNodes()
-    @registerMouseHandlers()
 
   mergeTree: (tree) ->
     oldS = @s
@@ -645,11 +644,6 @@ class force.Layout
     @svg.call(@zoomBehavior)
     @container = @svg.append('g')
 
-    @svg.append('rect')
-        .attr('class', 'zoomRect')
-        .attr('width', '100%')
-        .attr('height', '100%')
-
     @zoomBehavior.on 'zoom', =>
         e = d3.event
         @container.attr('transform', "translate(#{e.translate}),scale(#{e.scale})")
@@ -698,8 +692,7 @@ class force.Layout
         d3.select(@)
             .attr('class',
               "cell cell-#{node.type or 'state'}
-               #{if node.isInitial then 'cell-isInitial' else ''}
-               draggable")
+               #{if node.isInitial then 'cell-isInitial' else ''}")
             .classed('parallel-child', node.parent.type == 'parallel')
 
         header = d3.select(@).select('.cell-header')
@@ -760,25 +753,29 @@ class force.Layout
     transitionUpdate = @container.selectAll('.transition')
         .data(@s.transitions, (d) -> d.id)
 
-    transitionUpdate.enter()
+    transitionG = transitionUpdate.enter()
       .append('g')
         .attr('class', 'transition')
+
+    transitionG
       .append('path')
+        .attr('class', 'transitionMask')
+
+    transitionG
+      .append('path')
+        .attr('class', 'transitionLine')
         .attr('style', "marker-end: url(##{@id}-arrow)")
         .attr('id', (tr) => "#{@id}-transition/#{tr.id}")
 
-    transitionUpdate.exit().remove()
-
-    transitionLabelUpdate = @container.selectAll('.transition-label')
-        .data(@s.transitions, (d) -> d.id)
-
-    transitionLabelUpdate.enter()
+    transitionG
       .append('g')
-        .attr('class', 'transition-label draggable')
+        .attr('class', 'transition-label')
       .append('g')
         .attr('class', 'transition-label-offset')
 
-    transitionLabelUpdate.each (tr) ->
+    transitionUpdate.exit().remove()
+
+    transitionUpdate.each (tr) ->
         offsetG = d3.select(@).select('.transition-label-offset')
         offsetG.selectAll('*').remove()
 
@@ -814,8 +811,6 @@ class force.Layout
             .attr('x', (tr) -> -tr.w / 2)
             .attr('width', (tr) -> tr.w)
             .attr('height', (tr) -> tr.h)
-
-    transitionLabelUpdate.exit().remove()
 
     dom = @s.dom
 
@@ -858,52 +853,24 @@ class force.Layout
             .attr 'transform', (node) ->
               "translate(0,#{5 - node.h / 2})"
 
-    animate(@container.selectAll('.transition').select('path'))
-        .attr 'd', (tr) ->
-          d3.svg.line()([].concat(
-            [tr.route.src]
-            tr.route.segment1
-            [tr.route.label1]
-            [tr.route.label2]
-            tr.route.segment2
-            [tr.route.dst]
-          ))
+    trPath = (tr) ->
+      d3.svg.line()([].concat(
+        [tr.route.src]
+        tr.route.segment1
+        [tr.route.label1]
+        [tr.route.label2]
+        tr.route.segment2
+        [tr.route.dst]
+      ))
 
-    animate(@container.selectAll('.transition-label'))
+    animate(@container.selectAll('.transition').select('.transitionMask'))
+        .attr('d', trPath)
+
+    animate(@container.selectAll('.transition').select('.transitionLine'))
+        .attr('d', trPath)
+
+    animate(@container.selectAll('.transition').select('.transition-label'))
         .attr('transform', (tr) -> "translate(#{tr.x},#{tr.y})")
-
-  registerMouseHandlers: ->
-    lock = {node: null, drag: false}
-
-    drag = d3.behavior.drag()
-        .origin((node) -> node)
-        .on 'dragstart', (node) =>
-          d3.event.sourceEvent.stopPropagation()
-          (lock.node = node).fixed = true
-          lock.drag = true
-        .on 'drag', (node) =>
-          d3.event.sourceEvent.stopPropagation()
-          @moveNode(node, d3.event.dx, d3.event.dy)
-          @adjustLayout()
-          @svgUpdate()
-        .on 'dragend', (node) =>
-          d3.event.sourceEvent.stopPropagation()
-          lock.drag = false
-          lock.node = null
-          node.fixed = false
-
-    @container.selectAll('.draggable')
-        .on 'mouseover', (node) =>
-          if lock.drag then return
-          if lock.node then lock.node.fixed = false
-          (lock.node = node).fixed = true
-          @svgUpdate()
-        .on 'mouseout', (node) =>
-          if lock.drag then return
-          lock.node = null
-          node.fixed = false
-          @svgUpdate()
-        .call(drag)
 
   moveNode: (node, dx, dy) ->
     node.x += dx
@@ -1041,7 +1008,6 @@ class force.Layout
     container = @container[0][0].cloneNode(true)
     d3.select(container).attr('transform', null)
     svg[0][0].appendChild(container)
-    $(div).find('.zoomRect').remove()
     $('body').append(div)
     bbox = container.getBBox()
     $(div).remove()
