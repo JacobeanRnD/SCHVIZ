@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+    html, body { height: 100%; margin: 0; }
+    </style>
+    <link rel="stylesheet" href="../dist/forceLayout.css">
+    <script src="../bower_components/d3/d3.min.js"></script>
+    <script src="../bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="../bower_components/q/q.js"></script>
+    <script src="../bower_components/lodash/dist/lodash.js"></script>
+    <script src="../bower_components/backbone/backbone.js"></script>
+    <script src="../bower_components/async/lib/async.js"></script>
+    <script src="../bower_components/klayjs/klay.js"></script>
+    <script src="../dist/forceLayout.js"></script>
+  </head>
+  <body>
+    <div style="width:49%; float:left">
+      <form id="myform" style="width:100%;">
+        <p>
+          <textarea id="code" form="myform"  style="width:100%;  height: 500px;">
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml xmlns="http://www.w3.org/2005/07/scxml" name="helloworld" datamodel="ecmascript" version="1.0">
+  <state id="a">
+    <transition target="b" event="t"/>
+  </state>
+  <state id="b">
+    <transition target="c" event="t"/>
+  </state>
+  <state id="c">
+    <transition target="a" event="t"/>
+  </state>
+</scxml>
+          </textarea>
+        </p>
+        <p><input type="submit" value="Run Layout"></input></p>
+      </form>
+    </div>
+    <div style="width:49%; height:500px; float:right; border: black 1px solid; " id="layout"></div>
+    <script>
+      var form = document.getElementById('myform');
+      var scxmlInput = document.getElementById('code');
+      var layoutElement = document.getElementById('layout');
+
+      var layoutRunOnce = false, layout;
+
+      function runLayout(doc){
+        var layout = new forceLayout.Layout({
+          parent: layoutElement,
+          doc: doc 
+        });
+        return layout;
+      }
+
+      function onSubmit(e){
+        e.preventDefault();
+        console.log(scxmlInput.value);
+
+        var doc = new window.DOMParser().parseFromString(scxmlInput.value, 'text/xml');
+        console.log('doc ',doc );
+        var e = doc.querySelector('parsererror');
+        if(e){
+          alert(e.textContent);
+          return;
+        }
+        layout = runLayout(doc);
+
+        // see if the simulation initialized correctly using the `initialized` promise
+        //layout.initalized
+         // .done(null, function(e) { console.log('error!', e); });
+
+        // zoom to fit chart in parent bounding box
+        layout.fit();
+
+        layoutRunOnce = true;
+      }
+
+      form.addEventListener('submit',onSubmit)
+
+      onSubmit({preventDefault : function(){}});
+
+      
+      //add/remove event listener
+      //TODO: debounce
+      scxmlInput.addEventListener('keyup',function(e){
+
+        if(!layoutRunOnce) return;
+
+        console.log('Running update');
+        var doc = new window.DOMParser().parseFromString(scxmlInput.value, 'text/xml');
+        var e = doc.querySelector('parsererror');
+        if(e){
+          console.info('parser error',e.value);
+        }else{
+          layout.update(doc)
+            .done(null, function(e) { console.log('update failed!', e) });
+        }
+      });
+
+      /*
+      // doesn't work - can't re-run layout
+      $(window).resize(function(){
+        if(layout) 
+          setTimeout(function(){
+            console.log('Run layout');
+            layout.fit(); 
+          },1000);
+      });
+      */
+      
+    </script>
+  </body>
+</html>
