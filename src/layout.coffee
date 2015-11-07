@@ -212,9 +212,12 @@ actionSvg = (options) ->
           .attr('dy', 16)
           .text(options.action.preview)
 
+  bbox = actionT[0][0].getBBox()
+  h = bbox.height
+  w = bbox.width + 10
   actionR
-      .attr('height', h = $(actionT[0][0]).height())
-      .attr('width', w = $(actionT[0][0]).width() + 10)
+      .attr('height', h)
+      .attr('width', w)
       .attr('x', -w/2)
       .attr('rx', 10)
       .attr('ry', 10)
@@ -350,6 +353,7 @@ kielerLayout = (s, options) ->
   top = s.top
 
   graph = toKielerFormat(top)
+  //console.log('graph ',graph )
 
   if algorithm == '__klayjs'
     klay_ready = Q.defer()
@@ -725,7 +729,7 @@ class force.Layout
           .text(label_text)
           .attr('y', 12)
 
-        labelTextWidth = $(label[0][0]).width()
+        labelTextWidth = label[0][0].getBBox().width
         wLabel = d3.min([labelTextWidth + 2 * ROUND_CORNER, LABEL_SPACE])
         node.textWidth = wLabel
 
@@ -801,7 +805,7 @@ class force.Layout
             .attr('transform', "translate(0,#{y})")
         [w, h] = actionBlockSvg(tr.actions or [], actionBlockG)
         y += h
-        tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE])
+        tr.textWidth = d3.min([transitionText[0][0].getBBox().width + 5, LABEL_SPACE])
         tr.w = d3.max([tr.w, tr.textWidth, w])
         tr.h = y + 4
 

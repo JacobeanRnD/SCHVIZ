@@ -71,11 +71,11 @@
   treeFromXml = function(doc) {
     var parseActions, parseChildNodes, parseStates;
     parseActions = function(container) {
-      var action, child, firstLine, rv, _i, _len, _ref;
+      var action, child, firstLine, i, len, ref, rv;
       rv = [];
-      _ref = container.childNodes;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        child = _ref[_i];
+      ref = container.childNodes;
+      for (i = 0, len = ref.length; i < len; i++) {
+        child = ref[i];
         if (child.tagName) {
           rv.push(action = {
             label: "<" + child.tagName + ">"
@@ -92,13 +92,13 @@
       return rv;
     };
     parseChildNodes = function(node) {
-      var child, onentry, onexit, target, transitions, _i, _len, _ref;
+      var child, i, len, onentry, onexit, ref, target, transitions;
       transitions = [];
       onentry = [];
       onexit = [];
-      _ref = node.childNodes;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        child = _ref[_i];
+      ref = node.childNodes;
+      for (i = 0, len = ref.length; i < len; i++) {
+        child = ref[i];
         switch (child.tagName) {
           case 'transition':
             target = child.getAttribute('target');
@@ -129,11 +129,11 @@
       };
     };
     parseStates = function(node) {
-      var state, stateList, _i, _len, _ref;
+      var i, len, ref, state, stateList;
       stateList = [];
-      _ref = node.childNodes;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        node = _ref[_i];
+      ref = node.childNodes;
+      for (i = 0, len = ref.length; i < len; i++) {
+        node = ref[i];
         state = (function() {
           switch (node.tagName) {
             case 'initial':
@@ -198,7 +198,7 @@
   nextId = idMaker();
 
   walk = function(node, callback, parent, postorder) {
-    var child, _i, _len, _ref;
+    var child, i, len, ref;
     if (parent == null) {
       parent = null;
     }
@@ -208,9 +208,9 @@
     if (!postorder) {
       callback(node, parent);
     }
-    _ref = node.children || [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      child = _ref[_i];
+    ref = node.children || [];
+    for (i = 0, len = ref.length; i < len; i++) {
+      child = ref[i];
       walk(child, callback, node, postorder);
     }
     if (postorder) {
@@ -231,11 +231,11 @@
   };
 
   path = function(node1, node2) {
-    var eq, n, parents1, parents2, _i, _ref;
+    var eq, i, n, parents1, parents2, ref;
     parents1 = parents(node1);
     parents2 = parents(node2);
     eq = 0;
-    for (n = _i = 0, _ref = d3.min([parents1.length, parents2.length]) - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; n = 0 <= _ref ? ++_i : --_i) {
+    for (n = i = 0, ref = d3.min([parents1.length, parents2.length]) - 1; 0 <= ref ? i <= ref : i >= ref; n = 0 <= ref ? ++i : --i) {
       if (parents1[n] !== parents2[n]) {
         break;
       }
@@ -252,9 +252,9 @@
   };
 
   findTransition = function(transitions, source, target) {
-    var tr, _i, _len;
-    for (_i = 0, _len = transitions.length; _i < _len; _i++) {
-      tr = transitions[_i];
+    var i, len, tr;
+    for (i = 0, len = transitions.length; i < len; i++) {
+      tr = transitions[i];
       if (tr.a.id === source && tr.b.id === target) {
         return tr;
       }
@@ -262,26 +262,26 @@
   };
 
   envelope = function(node, pad) {
-    var box, point, tr, xValues, yValues, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
+    var box, i, j, k, len, len1, len2, point, ref, ref1, ref2, tr, xValues, yValues;
     if (pad == null) {
       pad = {};
     }
     xValues = [];
     yValues = [];
-    _ref = [].concat(node.children, node.controls);
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      box = _ref[_i];
+    ref = [].concat(node.children, node.controls);
+    for (i = 0, len = ref.length; i < len; i++) {
+      box = ref[i];
       xValues.push(box.x - box.w / 2);
       xValues.push(box.x + box.w / 2);
       yValues.push(box.y - box.h / 2);
       yValues.push(box.y + box.h / 2);
     }
-    _ref1 = node.controls;
-    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-      tr = _ref1[_j];
-      _ref2 = [].concat(tr.route.segment1, tr.route.segment2);
-      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-        point = _ref2[_k];
+    ref1 = node.controls;
+    for (j = 0, len1 = ref1.length; j < len1; j++) {
+      tr = ref1[j];
+      ref2 = [].concat(tr.route.segment1, tr.route.segment2);
+      for (k = 0, len2 = ref2.length; k < len2; k++) {
+        point = ref2[k];
         xValues.push(point[0]);
         yValues.push(point[1]);
       }
@@ -290,28 +290,31 @@
   };
 
   actionSvg = function(options) {
-    var actionR, actionT, h, w;
+    var actionR, actionT, bbox, h, w;
     actionR = options.g.append('rect');
     actionT = options.g.append('text').attr('y', 12);
     actionT.append('tspan').text(options.action.label);
     if (options.action.preview) {
       actionT.append('tspan').attr('x', 0).attr('dy', 16).text(options.action.preview);
     }
-    actionR.attr('height', h = $(actionT[0][0]).height()).attr('width', w = $(actionT[0][0]).width() + 10).attr('x', -w / 2).attr('rx', 10).attr('ry', 10);
+    bbox = actionT[0][0].getBBox();
+    h = bbox.height;
+    w = bbox.width + 10;
+    actionR.attr('height', h).attr('width', w).attr('x', -w / 2).attr('rx', 10).attr('ry', 10);
     return [w, h];
   };
 
   actionBlockSvg = function(actions, parentG) {
-    var action, actionG, h, maxw, w, y, _i, _len, _ref;
+    var action, actionG, h, i, len, maxw, ref, w, y;
     y = 0;
     maxw = 0;
-    for (_i = 0, _len = actions.length; _i < _len; _i++) {
-      action = actions[_i];
+    for (i = 0, len = actions.length; i < len; i++) {
+      action = actions[i];
       actionG = parentG.append('g').attr('class', 'action').attr('transform', "translate(0," + y + ")");
-      _ref = actionSvg({
+      ref = actionSvg({
         action: action,
         g: actionG
-      }), w = _ref[0], h = _ref[1];
+      }), w = ref[0], h = ref[1];
       y += h;
       maxw = d3.max([maxw, w]);
     }
@@ -319,17 +322,17 @@
   };
 
   toKielerFormat = function(node) {
-    var child, children, edges, node_header, node_min_size, rv, tr, _i, _j, _len, _len1, _ref, _ref1;
+    var child, children, edges, i, j, len, len1, node_header, node_min_size, ref, ref1, rv, tr;
     children = [];
     edges = [];
-    _ref = node.children || [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      child = _ref[_i];
+    ref = node.children || [];
+    for (i = 0, len = ref.length; i < len; i++) {
+      child = ref[i];
       children.push(toKielerFormat(child));
     }
-    _ref1 = node.controls || [];
-    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-      tr = _ref1[_j];
+    ref1 = node.controls || [];
+    for (j = 0, len1 = ref1.length; j < len1; j++) {
+      tr = ref1[j];
       children.push({
         id: tr.id,
         desmTransition: true,
@@ -337,11 +340,11 @@
         height: tr.h,
         ports: [
           {
-            id: "" + tr.id + "#enter",
+            id: tr.id + "#enter",
             x: 0,
             y: tr.yPort
           }, {
-            id: "" + tr.id + "#exit",
+            id: tr.id + "#exit",
             x: tr.w,
             y: tr.yPort
           }
@@ -351,16 +354,16 @@
         }
       });
       edges.push({
-        id: "" + tr.id + "#1",
+        id: tr.id + "#1",
         source: tr.a.id,
         target: tr.id,
-        targetPort: "" + tr.id + "#enter"
+        targetPort: tr.id + "#enter"
       });
       edges.push({
-        id: "" + tr.id + "#2",
+        id: tr.id + "#2",
         source: tr.id,
         target: tr.b.id,
-        sourcePort: "" + tr.id + "#exit"
+        sourcePort: tr.id + "#exit"
       });
     }
     node_header = node.header || CELL_MIN;
@@ -399,32 +402,32 @@
     });
     walk(graph, (function(_this) {
       return function(kNode) {
-        var kChild, kEdge, offset, padding, _i, _j, _len, _len1, _ref, _ref1, _results;
+        var i, j, kChild, kEdge, len, len1, offset, padding, ref, ref1, results;
         kNodeMap.set(kNode.id, kNode);
         offset = offsetMap.get(kNode.id);
         padding = _.extend({
           top: 0,
           left: 0
         }, kNode.padding);
-        _ref = kNode.children || [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          kChild = _ref[_i];
+        ref = kNode.children || [];
+        for (i = 0, len = ref.length; i < len; i++) {
+          kChild = ref[i];
           offsetMap.set(kChild.id, {
             x: offset.x + (kNode.x || 0) + (padding.left || 0),
             y: offset.y + (kNode.y || 0) + (padding.top || 0)
           });
         }
-        _ref1 = kNode.edges || [];
-        _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          kEdge = _ref1[_j];
-          _results.push(kEdgeMap.set(kEdge.id, kEdge));
+        ref1 = kNode.edges || [];
+        results = [];
+        for (j = 0, len1 = ref1.length; j < len1; j++) {
+          kEdge = ref1[j];
+          results.push(kEdgeMap.set(kEdge.id, kEdge));
         }
-        return _results;
+        return results;
       };
     })(this));
     traverse = function(kNode) {
-      var e1, e2, kChild, kTr, node, offset, offset1, offset2, tr, translate1, translate2, _i, _len, _ref, _results;
+      var e1, e2, i, kChild, kTr, len, node, offset, offset1, offset2, ref, results, tr, translate1, translate2;
       if (kNode.desmTransition) {
         tr = s.nodeMap.get(kNode.id);
         offset1 = offsetMap.get(tr.a.id);
@@ -432,8 +435,8 @@
         kTr = kNodeMap.get(tr.id);
         tr.x = offset2.x + kTr.x + kTr.width / 2;
         tr.y = offset2.y + kTr.y + kTr.height / 2;
-        e1 = kEdgeMap.get("" + tr.id + "#1");
-        e2 = kEdgeMap.get("" + tr.id + "#2");
+        e1 = kEdgeMap.get(tr.id + "#1");
+        e2 = kEdgeMap.get(tr.id + "#2");
         translate1 = function(d) {
           return [offset1.x + d.x, offset1.y + d.y];
         };
@@ -456,13 +459,13 @@
         node.x = offset.x + (kNode.x || 0) + node.w / 2;
         node.y = offset.y + (kNode.y || 0) + node.h / 2;
       }
-      _ref = kNode.children || [];
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        kChild = _ref[_i];
-        _results.push(traverse(kChild));
+      ref = kNode.children || [];
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        kChild = ref[i];
+        results.push(traverse(kChild));
       }
-      return _results;
+      return results;
     };
     return traverse(graph);
   };
@@ -472,6 +475,7 @@
     algorithm = options.algorithm || '__klayjs';
     top = s.top;
     graph = toKielerFormat(top);
+    console.log('graph ', graph);
     if (algorithm === '__klayjs') {
       klay_ready = Q.defer();
       $klay.layout({
@@ -510,7 +514,7 @@
 
   NewNodesAnimation = (function() {
     function NewNodesAnimation(newNodes) {
-      var node, _i, _len, _ref;
+      var i, len, node, ref;
       this.newNodes = newNodes;
       this.deferred = Q.defer();
       this.promise = this.deferred.promise;
@@ -519,9 +523,9 @@
       if (!(this.newNodes.length > 0)) {
         this.abort();
       }
-      _ref = this.newNodes;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        node = _ref[_i];
+      ref = this.newNodes;
+      for (i = 0, len = ref.length; i < len; i++) {
+        node = ref[i];
         this.targetMap.set(node.id, {
           w: node.w,
           h: node.h
@@ -531,14 +535,14 @@
     }
 
     NewNodesAnimation.prototype.tick = function() {
-      var changed, node, target, _i, _len, _ref;
+      var changed, i, len, node, ref, target;
       if (this.done) {
         return;
       }
       changed = false;
-      _ref = this.newNodes;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        node = _ref[_i];
+      ref = this.newNodes;
+      for (i = 0, len = ref.length; i < len; i++) {
+        node = ref[i];
         target = this.targetMap.get(node.id);
         if (node.w < target.w) {
           node.w += ANIMATION_SPEED;
@@ -694,13 +698,13 @@
     };
 
     Layout.prototype.mergeTree = function(tree) {
-      var makeId, newS, oldS, topNode, _i, _j, _len, _len1;
+      var i, j, len, len1, makeId, newS, oldS, topNode;
       oldS = this.s;
       newS = this._emptyState();
       newS.top.children = tree;
       makeId = idMaker();
-      for (_i = 0, _len = tree.length; _i < _len; _i++) {
-        topNode = tree[_i];
+      for (i = 0, len = tree.length; i < len; i++) {
+        topNode = tree[i];
         walk(topNode, (function(_this) {
           return function(node, parent) {
             var oldNode;
@@ -733,19 +737,19 @@
           };
         })(this));
       }
-      for (_j = 0, _len1 = tree.length; _j < _len1; _j++) {
-        topNode = tree[_j];
+      for (j = 0, len1 = tree.length; j < len1; j++) {
+        topNode = tree[j];
         walk(topNode, (function(_this) {
           return function(node) {
-            var a, b, c, label, link_source, link_target, oldTr, target, tr, _k, _l, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results;
-            _ref = node.transitions || [];
-            _results = [];
-            for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
-              tr = _ref[_k];
+            var a, b, c, k, l, label, len2, len3, link_source, link_target, oldTr, ref, ref1, ref2, ref3, results, target, tr;
+            ref = node.transitions || [];
+            results = [];
+            for (k = 0, len2 = ref.length; k < len2; k++) {
+              tr = ref[k];
               if ((target = newS.nodeMap.get(tr.target)) == null) {
                 throw Error("missing transition target: " + tr.target);
               }
-              _ref1 = path(node, target), a = _ref1[0], c = _ref1[1], b = _ref1[2];
+              ref1 = path(node, target), a = ref1[0], c = ref1[1], b = ref1[2];
               tr.parent = c || newS.top;
               tr.id = tr.id || makeId("_transition/" + node.id + "/" + target.id + "/");
               if ((oldTr = oldS.nodeMap.get(tr.id)) != null) {
@@ -760,9 +764,9 @@
               newS.nodeMap.set(tr.id, tr);
               tr.parent.controls.push(tr);
               newS.nodes.push(tr);
-              _ref2 = d3.pairs([a, tr, b]);
-              for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
-                _ref3 = _ref2[_l], link_source = _ref3[0], link_target = _ref3[1];
+              ref2 = d3.pairs([a, tr, b]);
+              for (l = 0, len3 = ref2.length; l < len3; l++) {
+                ref3 = ref2[l], link_source = ref3[0], link_target = ref3[1];
                 newS.links.push({
                   source: link_source,
                   target: link_target
@@ -775,15 +779,15 @@
               tr.label = label;
               newS.transitions.push(tr);
               if ((oldTr = findTransition(oldS.transitions, tr.a.id, tr.b.id)) != null) {
-                _results.push(_.extend(tr, {
+                results.push(_.extend(tr, {
                   x: oldTr.x,
                   y: oldTr.y
                 }));
               } else {
-                _results.push(_.extend(tr, midpoint(tr.a, tr.b)));
+                results.push(_.extend(tr, midpoint(tr.a, tr.b)));
               }
             }
-            return _results;
+            return results;
           };
         })(this));
       }
@@ -791,13 +795,13 @@
         children: tree
       }, (function(_this) {
         return function(node) {
-          var child, first, _k, _len2, _ref;
+          var child, first, k, len2, ref;
           if (!node.children.length) {
             return;
           }
-          _ref = node.children;
-          for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
-            child = _ref[_k];
+          ref = node.children;
+          for (k = 0, len2 = ref.length; k < len2; k++) {
+            child = ref[k];
             if (child.type === 'initial') {
               child.isInitial = true;
               return;
@@ -823,12 +827,12 @@
       };
       return JSON.stringify({
         nodes: (function() {
-          var _i, _len, _ref, _results;
-          _ref = this.s.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push({
+          var i, len, ref, results;
+          ref = this.s.nodes;
+          results = [];
+          for (i = 0, len = ref.length; i < len; i++) {
+            n = ref[i];
+            results.push({
               id: n.id,
               w: round(n.w),
               h: round(n.h),
@@ -836,42 +840,42 @@
               y: round(n.y)
             });
           }
-          return _results;
+          return results;
         }).call(this),
         transitions: (function() {
-          var _i, _len, _ref, _results;
-          _ref = this.s.transitions;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            tr = _ref[_i];
-            _results.push({
+          var i, len, ref, results;
+          ref = this.s.transitions;
+          results = [];
+          for (i = 0, len = ref.length; i < len; i++) {
+            tr = ref[i];
+            results.push({
               id: tr.id,
               route: tr.route
             });
           }
-          return _results;
+          return results;
         }).call(this),
         version: GEOMETRY_VERSION
       });
     };
 
     Layout.prototype.applyGeometry = function(geom_json) {
-      var geom, node, saved, tr, _i, _j, _len, _len1, _ref, _ref1;
+      var geom, i, j, len, len1, node, ref, ref1, saved, tr;
       geom = JSON.parse(geom_json);
       if (geom.version !== GEOMETRY_VERSION) {
         return;
       }
-      _ref = geom.nodes;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        saved = _ref[_i];
+      ref = geom.nodes;
+      for (i = 0, len = ref.length; i < len; i++) {
+        saved = ref[i];
         if ((node = this.s.nodeMap.get(saved.id)) != null) {
           node.w = saved.w;
           node.h = saved.h;
         }
       }
-      _ref1 = geom.transitions || [];
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        saved = _ref1[_j];
+      ref1 = geom.transitions || [];
+      for (j = 0, len1 = ref1.length; j < len1; j++) {
+        saved = ref1[j];
         if ((tr = this.s.nodeMap.get(saved.id)) != null) {
           tr.route = saved.route;
         }
@@ -894,7 +898,7 @@
           return _this.container.attr('transform', "translate(" + e.translate + "),scale(" + e.scale + ")");
         };
       })(this));
-      defs.append('marker').attr('id', "" + this.id + "-arrow").attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
+      defs.append('marker').attr('id', this.id + "-arrow").attr('refX', '7').attr('refY', '5').attr('markerWidth', '10').attr('markerHeight', '10').attr('orient', 'auto').append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z').attr('class', 'arrow');
       return this.invalidateSize();
     };
 
@@ -917,7 +921,7 @@
       newCell.append('rect').attr('class', 'border');
       newCell.append('g').attr('class', 'cell-header');
       cellUpdate.each(function(node) {
-        var corner_radius, h, hEntry, hExit, header, label, labelTextWidth, label_text, onentry, onexit, w, wEntry, wExit, wLabel, _ref, _ref1;
+        var corner_radius, h, hEntry, hExit, header, label, labelTextWidth, label_text, onentry, onexit, ref, ref1, w, wEntry, wExit, wLabel;
         d3.select(this).attr('class', "cell cell-" + (node.type || 'state') + " " + (node.isInitial ? 'cell-isInitial' : '')).classed('parallel-child', node.parent.type === 'parallel');
         header = d3.select(this).select('.cell-header');
         header.selectAll('*').remove();
@@ -941,13 +945,13 @@
         }
         d3.select(this).select('.border').attr('rx', corner_radius).attr('ry', corner_radius);
         label = header.append('text').text(label_text).attr('y', 12);
-        labelTextWidth = $(label[0][0]).width();
+        labelTextWidth = label[0][0].getBBox().width;
         wLabel = d3.min([labelTextWidth + 2 * ROUND_CORNER, LABEL_SPACE]);
         node.textWidth = wLabel;
         onentry = header.append('g');
         onexit = header.append('g');
-        _ref = actionBlockSvg(node.onentry || [], onentry), wEntry = _ref[0], hEntry = _ref[1];
-        _ref1 = actionBlockSvg(node.onexit || [], onexit), wExit = _ref1[0], hExit = _ref1[1];
+        ref = actionBlockSvg(node.onentry || [], onentry), wEntry = ref[0], hEntry = ref[1];
+        ref1 = actionBlockSvg(node.onexit || [], onexit), wExit = ref1[0], hExit = ref1[1];
         w = wEntry + wLabel + wExit;
         h = d3.max([16, hEntry, hExit]);
         if (node.type === 'history') {
@@ -976,13 +980,13 @@
       transitionG.append('path').attr('class', 'transitionMask');
       transitionG.append('path').attr('class', 'transitionLine').attr('style', "marker-end: url(#" + this.id + "-arrow)").attr('id', (function(_this) {
         return function(tr) {
-          return "" + _this.id + "-transition/" + tr.id;
+          return _this.id + "-transition/" + tr.id;
         };
       })(this));
       transitionG.append('g').attr('class', 'transition-label').append('g').attr('class', 'transition-label-offset');
       transitionUpdate.exit().remove();
       transitionUpdate.each(function(tr) {
-        var actionBlockG, h, offsetG, transitionRect, transitionText, w, y, _ref;
+        var actionBlockG, h, offsetG, ref, transitionRect, transitionText, w, y;
         offsetG = d3.select(this).select('.transition-label-offset');
         offsetG.selectAll('*').remove();
         transitionRect = offsetG.append('rect');
@@ -995,9 +999,9 @@
         y = $(transitionText[0][0]).height() + 4;
         tr.yPort = y - 2;
         actionBlockG = offsetG.append('g').attr('transform', "translate(0," + y + ")");
-        _ref = actionBlockSvg(tr.actions || [], actionBlockG), w = _ref[0], h = _ref[1];
+        ref = actionBlockSvg(tr.actions || [], actionBlockG), w = ref[0], h = ref[1];
         y += h;
-        tr.textWidth = d3.min([$(transitionText[0][0]).width() + 5, LABEL_SPACE]);
+        tr.textWidth = d3.min([transitionText[0][0].getBBox().width + 5, LABEL_SPACE]);
         tr.w = d3.max([tr.w, tr.textWidth, w]);
         tr.h = y + 4;
         offsetG.attr('transform', "translate(0," + (-tr.h / 2) + ")");
@@ -1056,7 +1060,7 @@
     };
 
     Layout.prototype.moveNode = function(node, dx, dy) {
-      var child, control, tr, translate, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+      var child, control, i, j, k, len, len1, len2, ref, ref1, ref2, results, tr, translate;
       node.x += dx;
       node.y += dy;
       translate = function(p, dx, dy) {
@@ -1067,9 +1071,9 @@
         translate(node.route.label1, dx, dy);
         translate(node.route.label2, dx, dy);
       } else {
-        _ref = this.s.transitions;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          tr = _ref[_i];
+        ref = this.s.transitions;
+        for (i = 0, len = ref.length; i < len; i++) {
+          tr = ref[i];
           if (tr.a.id === node.id) {
             translate(tr.route.src, dx, dy);
           }
@@ -1078,30 +1082,30 @@
           }
         }
       }
-      _ref1 = node.children || [];
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        child = _ref1[_j];
+      ref1 = node.children || [];
+      for (j = 0, len1 = ref1.length; j < len1; j++) {
+        child = ref1[j];
         this.moveNode(child, dx, dy);
       }
-      _ref2 = node.controls || [];
-      _results = [];
-      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-        control = _ref2[_k];
-        _results.push(this.moveNode(control, dx, dy));
+      ref2 = node.controls || [];
+      results = [];
+      for (k = 0, len2 = ref2.length; k < len2; k++) {
+        control = ref2[k];
+        results.push(this.moveNode(control, dx, dy));
       }
-      return _results;
+      return results;
     };
 
     Layout.prototype.adjustLayout = function() {
-      var adjustNode, handleCollisions, node, _i, _len, _ref;
+      var adjustNode, handleCollisions, i, len, node, ref;
       handleCollisions = (function(_this) {
         return function(parent, center) {
-          var collide, node, nx1, nx2, ny1, ny2, objects, q, _i, _len, _results;
+          var collide, i, len, node, nx1, nx2, ny1, ny2, objects, q, results;
           objects = [].concat(parent.children, parent.controls);
           q = d3.geom.quadtree(objects);
-          _results = [];
-          for (_i = 0, _len = objects.length; _i < _len; _i++) {
-            node = objects[_i];
+          results = [];
+          for (i = 0, len = objects.length; i < len; i++) {
+            node = objects[i];
             nx1 = node.x - node.w - 100;
             nx2 = node.x + node.w + 100;
             ny1 = node.y - node.h - 100;
@@ -1137,17 +1141,17 @@
               }
               return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
             };
-            _results.push(q.visit(collide));
+            results.push(q.visit(collide));
           }
-          return _results;
+          return results;
         };
       })(this);
       adjustNode = (function(_this) {
         return function(node) {
-          var dx, dy, grow, xMax, xMin, yMax, yMin, _ref;
+          var dx, dy, grow, ref, xMax, xMin, yMax, yMin;
           if (node.children.length > 0) {
             handleCollisions(node, node);
-            _ref = envelope(node, CELL_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
+            ref = envelope(node, CELL_PAD), xMin = ref[0], xMax = ref[1], yMin = ref[2], yMax = ref[3];
             grow = node.textWidth - (xMax - xMin);
             if (grow > 0) {
               xMin -= grow / 2;
@@ -1166,9 +1170,9 @@
           return node.weight = node.w * node.h;
         };
       })(this);
-      _ref = this.s.top.children;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        node = _ref[_i];
+      ref = this.s.top.children;
+      for (i = 0, len = ref.length; i < len; i++) {
+        node = ref[i];
         walk(node, adjustNode, null, true);
       }
       return handleCollisions(this.s.top, {
@@ -1216,9 +1220,9 @@
     Layout.prototype.fit = function() {
       return this.queue.push((function(_this) {
         return function(cb) {
-          var h, scale, w, xMax, xMin, yMax, yMin, _ref, _ref1;
-          _ref = envelope(_this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
-          _ref1 = _this.zoomBehavior.size(), w = _ref1[0], h = _ref1[1];
+          var h, ref, ref1, scale, w, xMax, xMin, yMax, yMin;
+          ref = envelope(_this.s.top, EXPORT_PAD), xMin = ref[0], xMax = ref[1], yMin = ref[2], yMax = ref[3];
+          ref1 = _this.zoomBehavior.size(), w = ref1[0], h = ref1[1];
           scale = d3.min([w / (xMax - xMin), h / (yMax - yMin)]);
           _this.zoomBehavior.translate([w / 2 - (xMax + xMin) * scale / 2, h / 2 - (yMax + yMin) * scale / 2]);
           _this.zoomBehavior.scale(scale);
@@ -1229,8 +1233,8 @@
     };
 
     Layout.prototype.exportSvg = function(options) {
-      var bbox, container, defs, div, svg, xMax, xMin, yMax, yMin, _ref;
-      _ref = envelope(this.s.top, EXPORT_PAD), xMin = _ref[0], xMax = _ref[1], yMin = _ref[2], yMax = _ref[3];
+      var bbox, container, defs, div, ref, svg, xMax, xMin, yMax, yMin;
+      ref = envelope(this.s.top, EXPORT_PAD), xMin = ref[0], xMax = ref[1], yMin = ref[2], yMax = ref[3];
       div = $('<div style="positoin:relative">')[0];
       svg = d3.select(div).append('svg').attr('xmlns', 'http://www.w3.org/2000/svg').classed('force-layout', true);
       defs = d3.select(this.el).select('defs')[0][0].cloneNode(true);
@@ -1242,7 +1246,7 @@
       $('body').append(div);
       bbox = container.getBBox();
       $(div).remove();
-      svg.attr('viewBox', "" + bbox.x + " " + bbox.y + " " + bbox.width + " " + bbox.height);
+      svg.attr('viewBox', bbox.x + " " + bbox.y + " " + bbox.width + " " + bbox.height);
       return div.innerHTML;
     };
 
